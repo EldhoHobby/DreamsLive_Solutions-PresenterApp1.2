@@ -1,0 +1,438 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Presenter Remote</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        h1 {
+            text-align: center;
+        }
+
+        body {
+            font-family: sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+            body.dark-mode {
+                background-color: #121212;
+                color: #e0e0e0;
+            }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .preview {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+            .preview img {
+                border: 5px solid #ccc; /* Thicker border */
+                width: 50%;
+                object-fit: contain;
+                background-color: #000;
+                box-sizing: border-box; /* Include border in width calculation */
+            }
+
+        body.dark-mode .preview img {
+            border-color: #555;
+        }
+
+        .controls, .pdf-controls, .upload {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 1em;
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode button {
+            background-color: #333;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
+        .button-disabled {
+            opacity: 0.5;
+        }
+
+        .pdf-page-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #txtRemoteCurrentPage {
+            width: 50px;
+            text-align: center;
+            font-size: 1.1em;
+            margin: 0 5px;
+        }
+
+        #lblRemoteTotalPages {
+            font-size: 1.1em;
+            margin-left: 5px;
+        }
+
+        #theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .message-box {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-top: 1px solid #ccc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark-mode .message-box {
+            background-color: #333;
+            border-top-color: #555;
+        }
+
+        .message-box span {
+            flex-grow: 1;
+        }
+
+        #message-okay-btn {
+            margin-left: 10px;
+        }
+
+            .message-box.error {
+                color: red;
+            }
+
+            .message-box.warning {
+                color: orange;
+            }
+
+            .message-box.info {
+                color: blue;
+            }
+
+        @media (max-width: 768px) {
+            .preview {
+                flex-direction: row;
+            }
+
+                .preview img {
+                    width: 50%;
+                }
+
+            .controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner-text {
+            color: #333;
+            margin-top: 20px;
+            font-size: 1.5em;
+        }
+
+        body.dark-mode .spinner-overlay {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        body.dark-mode .spinner-text {
+            color: #e0e0e0;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="spinner" class="spinner-overlay">
+        <img src="splash.png" alt="Loading..." style="width: 80%; max-width: 400px; margin-bottom: 20px;">
+        <div class="spinner"></div>
+        <div class="spinner-text">Loading...</div>
+    </div>
+    <div class="container">
+        <button id="theme-toggle">Toggle Theme</button>
+        <h1>Dreams LIVE Solutions Presenter App Remote</h1>
+        <div class="preview">
+            <img id="picSecondaryPreview" src="">
+            <img id="picPreview" src="">
+        </div>
+        <div class="controls">
+            <button id="btnStageContent" onclick="performAction('stage')">Stage Preview</button>
+            <button id="btnPushToPresenter" onclick="performAction('push')">Go Live</button>
+            <button id="btnClearPresenterDisplay" onclick="performAction('blackout')">Blackout</button>
+            <button id="btnCloseLivePresenter" onclick="performAction('close')">Close Live</button>
+        </div>
+        <div class="pdf-controls" style="display: none;">
+            <button id="btnPdfPrev" onclick="performAction('pdf-prev')">Prev</button>
+            <div class="pdf-page-selector">
+                <input type="text" id="txtRemoteCurrentPage" />
+                <span id="lblRemoteTotalPages"></span>
+            </div>
+            <button id="btnPdfNext" onclick="performAction('pdf-next')">Next</button>
+        </div>
+        <div class="upload">
+            <input type="file" id="file-input">
+            <button onclick="uploadFile()">Upload</button>
+        </div>
+        <div id="message-box" class="message-box" style="display: none;">
+            <span id="message-text"></span>
+            <button id="message-okay-btn" onclick="clearMessage()">Okay</button>
+        </div>
+        <div class="settings">
+            <label>
+                <input type="checkbox" id="chkLinkLocalPreviewToPresenter" onchange="updateAutoSend()">
+                Auto Send to Presenter
+            </label>
+        </div>
+    </div>
+    <script>
+        const startTime = new Date().getTime();
+        let uploadErrorLock = false;
+        let isPageInputFocused = false;
+
+        async function performAction(action) {
+            await fetch(`/action/${action}`);
+        }
+
+        async function updateAutoSend() {
+            const checkbox = document.getElementById('chkLinkLocalPreviewToPresenter');
+            await fetch(`/action/auto-send?enable=${checkbox.checked}`);
+        }
+
+        async function clearMessage() {
+            uploadErrorLock = false; // Manually clearing the message unlocks it
+            await fetch('/action/clear-message');
+            // We don't call adjustThemeTogglePosition here, because the updateStatus loop will handle it
+        }
+
+        function showMessage(text, type) {
+            const messageBox = document.getElementById('message-box');
+            const messageText = document.getElementById('message-text');
+
+            messageText.textContent = text;
+            messageBox.className = 'message-box ' + type;
+            messageBox.style.display = 'flex';
+            adjustThemeTogglePosition();
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            if (!file) {
+                uploadErrorLock = true;
+                showMessage('Please select a file first.', 'warning');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file, file.name);
+
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const responseText = await response.text();
+                if (response.ok) {
+                    uploadErrorLock = false; // Clear lock on success
+                    showMessage(responseText, 'info');
+                    fileInput.value = ''; // Clear the input
+                } else {
+                    uploadErrorLock = true; // Lock message on screen
+                    showMessage(responseText, 'error');
+                }
+            } catch (err) {
+                uploadErrorLock = true;
+                showMessage('Upload failed: ' + err.message, 'error');
+            }
+        }
+
+        function adjustThemeTogglePosition() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const messageBox = document.getElementById('message-box');
+
+            if (messageBox.style.display !== 'none') {
+                const messageBoxHeight = messageBox.offsetHeight;
+                themeToggle.style.bottom = `${messageBoxHeight + 20}px`;
+            } else {
+                themeToggle.style.bottom = '20px';
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/status');
+                const status = await response.json();
+
+                if (uploadErrorLock) {
+                    // Don't clear a locked message
+                } else if (status.message) {
+                    showMessage(status.message, status.messageType);
+                } else {
+                    document.getElementById('message-box').style.display = 'none';
+                }
+
+                adjustThemeTogglePosition();
+
+                // The "secondary" preview is now physically the first element
+                const firstPreview = document.getElementById('picSecondaryPreview');
+                firstPreview.src = status.secondaryPreview;
+                firstPreview.style.aspectRatio = status.secondaryPreviewAspectRatio;
+                firstPreview.style.borderColor = status.secondaryPreviewBorderColor;
+
+                // The "main" preview is now physically the second element
+                const secondPreview = document.getElementById('picPreview');
+                secondPreview.src = status.mainPreview;
+                secondPreview.style.aspectRatio = status.mainPreviewAspectRatio;
+
+                const pdfControls = document.querySelector('.pdf-controls');
+                if (status.pdfTotalPages > 0) {
+                    pdfControls.style.display = 'grid';
+                    const currentPageInput = document.getElementById('txtRemoteCurrentPage');
+                    if (!isPageInputFocused) {
+                        currentPageInput.value = status.pdfCurrentPage + 1;
+                    }
+                    document.getElementById('lblRemoteTotalPages').textContent = `/ ${status.pdfTotalPages}`;
+                } else {
+                    pdfControls.style.display = 'none';
+                }
+
+                const autoSendCheckbox = document.getElementById('chkLinkLocalPreviewToPresenter');
+                if (autoSendCheckbox) {
+                    autoSendCheckbox.checked = status.autoSend;
+                }
+
+                const goLiveButton = document.getElementById('btnPushToPresenter');
+                if (goLiveButton) {
+                    goLiveButton.textContent = status.goLiveButtonText;
+                    goLiveButton.classList.toggle('button-disabled', status.goLiveButtonEnabled !== true);
+                }
+
+                const closeLiveButton = document.getElementById('btnCloseLivePresenter');
+                if (closeLiveButton) {
+                    closeLiveButton.textContent = status.closeLiveButtonText;
+                    closeLiveButton.classList.toggle('button-disabled', status.closeLiveButtonEnabled !== true);
+                }
+
+                const blackoutButton = document.getElementById('btnClearPresenterDisplay');
+                if (blackoutButton) {
+                    blackoutButton.textContent = status.blackoutButtonText;
+                    blackoutButton.classList.toggle('button-disabled', status.blackoutButtonEnabled !== true);
+                }
+
+                const pdfPrevButton = document.getElementById('btnPdfPrev');
+                if (pdfPrevButton) {
+                    pdfPrevButton.classList.toggle('button-disabled', status.pdfPrevButtonEnabled !== true);
+                }
+
+                const pdfNextButton = document.getElementById('btnPdfNext');
+                if (pdfNextButton) {
+                    pdfNextButton.classList.toggle('button-disabled', status.pdfNextButtonEnabled !== true);
+                }
+            } catch (error) {
+                console.error('Error fetching status:', error);
+            }
+        }
+
+        const pageInput = document.getElementById('txtRemoteCurrentPage');
+        pageInput.addEventListener('focus', () => {
+            isPageInputFocused = true;
+        });
+        pageInput.addEventListener('blur', () => {
+            isPageInputFocused = false;
+        });
+        pageInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Stop default form submission
+                const pageNum = parseInt(this.value, 10);
+                if (!isNaN(pageNum)) {
+                    performAction(`pdf-goto?page=${pageNum}`);
+                    this.blur(); // Remove focus from the input
+                }
+            }
+        });
+
+        setInterval(updateStatus, 1000);
+        updateStatus();
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+
+        // Apply the saved theme on page load
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const elapsedTime = new Date().getTime() - startTime;
+            const remainingTime = 2000 - elapsedTime;
+            if (remainingTime > 0) {
+                setTimeout(() => {
+                    document.getElementById('spinner').style.display = 'none';
+                }, remainingTime);
+            } else {
+                document.getElementById('spinner').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
