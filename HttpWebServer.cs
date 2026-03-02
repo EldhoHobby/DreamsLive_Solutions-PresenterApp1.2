@@ -155,6 +155,15 @@ namespace DreamsLive_Solutions_PresenterApp1
                     case "/upload":
                         await HandleFileUpload(request, response);
                         break;
+                    case "/database/folders":
+                        await HandleGetFolders(response);
+                        break;
+                    case "/database/gallery":
+                        await HandleGetGallery(response);
+                        break;
+                    case "/database/file":
+                        await HandleGetDatabaseFile(request, response);
+                        break;
                     default:
                         if (path.StartsWith("/action/"))
                         {
@@ -201,30 +210,91 @@ namespace DreamsLive_Solutions_PresenterApp1
                     await request.InputStream.CopyToAsync(ms);
                     byte[] bodyBytes = ms.ToArray();
 
-                    int boundaryIndex = FindBytes(bodyBytes, 0, boundaryBytes);
-                    if (boundaryIndex == -1) throw new Exception("Boundary not found");
+                    // Parse parts manually
+                    int currentPos = 0;
+                    string targetSubfolder = "";
+                    string customName = "";
+                    byte[] fileData = null;
+                    string originalFilename = "";
 
-                    int headersStartIndex = boundaryIndex + boundaryBytes.Length + 2;
-                    int headersEndIndex = FindBytes(bodyBytes, headersStartIndex, new byte[] { 13, 10, 13, 10 });
-                    if (headersEndIndex == -1) throw new Exception("Header terminator not found");
-
-                    string headers = Encoding.UTF8.GetString(bodyBytes, headersStartIndex, headersEndIndex - headersStartIndex);
-                    Match filenameMatch = Regex.Match(headers, @"filename=""(.+)""");
-                    if (!filenameMatch.Success) throw new Exception("Filename not found in headers");
-                    string filename = filenameMatch.Groups[1].Value;
-
-                    int fileStartIndex = headersEndIndex + 4;
-                    int fileEndIndex = FindBytes(bodyBytes, fileStartIndex, boundaryBytes);
-                    if (fileEndIndex == -1) throw new Exception("End boundary not found");
-                    fileEndIndex -= 2;
-
-                    string tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-                    using (var fs = new FileStream(tempFilePath, FileMode.Create))
+                    while (true)
                     {
-                        fs.Write(bodyBytes, fileStartIndex, fileEndIndex - fileStartIndex);
+                        int boundaryIndex = FindBytes(bodyBytes, currentPos, boundaryBytes);
+                        if (boundaryIndex == -1) break;
+
+                        int headersStartIndex = boundaryIndex + boundaryBytes.Length + 2;
+                        if (headersStartIndex >= bodyBytes.Length) break;
+
+                        int headersEndIndex = FindBytes(bodyBytes, headersStartIndex, new byte[] { 13, 10, 13, 10 });
+                        if (headersEndIndex == -1) break;
+
+                        string headers = Encoding.UTF8.GetString(bodyBytes, headersStartIndex, headersEndIndex - headersStartIndex);
+                        int dataStartIndex = headersEndIndex + 4;
+                        int nextBoundaryIndex = FindBytes(bodyBytes, dataStartIndex, boundaryBytes);
+                        if (nextBoundaryIndex == -1) break;
+                        int dataEndIndex = nextBoundaryIndex - 2;
+
+                        Match nameMatch = Regex.Match(headers, @"name=""([^""]+)""");
+                        if (nameMatch.Success)
+                        {
+                            string fieldName = nameMatch.Groups[1].Value;
+                            if (fieldName == "subfolder")
+                            {
+                                targetSubfolder = Encoding.UTF8.GetString(bodyBytes, dataStartIndex, dataEndIndex - dataStartIndex).Trim();
+                            }
+                            else if (fieldName == "customName")
+                            {
+                                customName = Encoding.UTF8.GetString(bodyBytes, dataStartIndex, dataEndIndex - dataStartIndex).Trim();
+                            }
+                            else if (fieldName == "file")
+                            {
+                                Match filenameMatch = Regex.Match(headers, @"filename=""([^""]+)""");
+                                if (filenameMatch.Success) originalFilename = filenameMatch.Groups[1].Value;
+                                fileData = new byte[dataEndIndex - dataStartIndex];
+                                Array.Copy(bodyBytes, dataStartIndex, fileData, 0, fileData.Length);
+                            }
+                        }
+                        currentPos = nextBoundaryIndex;
                     }
 
-                    _mainForm.Invoke((Action)(() => _mainForm.ProcessUploadedFile(tempFilePath, filename)));
+                    if (fileData == null) throw new Exception("No file data found");
+
+                    string finalFilename = !string.IsNullOrEmpty(customName) ? customName + Path.GetExtension(originalFilename) : originalFilename;
+                    string targetDir = "";
+
+                    if (!string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
+                    {
+                        targetDir = string.IsNullOrEmpty(targetSubfolder) ? _mainForm.DatabaseFolderPath : Path.Combine(_mainForm.DatabaseFolderPath, targetSubfolder);
+                    }
+
+                    if (string.IsNullOrEmpty(targetDir))
+                    {
+                        // Fallback to temp file behavior if no database folder or not checked
+                        string tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+                        File.WriteAllBytes(tempFilePath, fileData);
+                        _mainForm.Invoke((Action)(() => _mainForm.ProcessUploadedFile(tempFilePath, originalFilename)));
+                    }
+                    else
+                    {
+                        Directory.CreateDirectory(targetDir);
+                        string destPath = Path.Combine(targetDir, finalFilename);
+
+                        // Handle renaming if exists
+                        if (File.Exists(destPath))
+                        {
+                            string nameWithoutExt = Path.GetFileNameWithoutExtension(finalFilename);
+                            string ext = Path.GetExtension(finalFilename);
+                            int counter = 1;
+                            while (File.Exists(destPath))
+                            {
+                                destPath = Path.Combine(targetDir, $"{nameWithoutExt}_{counter}{ext}");
+                                counter++;
+                            }
+                        }
+
+                        File.WriteAllBytes(destPath, fileData);
+                        _mainForm.Invoke((Action)(() => _mainForm.ProcessNewImage(destPath)));
+                    }
 
                     response.StatusCode = (int)HttpStatusCode.OK;
                     byte[] buffer = Encoding.UTF8.GetBytes("Upload successful");
@@ -257,11 +327,76 @@ namespace DreamsLive_Solutions_PresenterApp1
             return -1;
         }
 
+        private async Task HandleGetFolders(HttpListenerResponse response)
+        {
+            var folders = _mainForm.GetDatabaseSubfolders();
+            byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(folders));
+            response.ContentType = "application/json";
+            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
+        private async Task HandleGetDatabaseFile(HttpListenerRequest request, HttpListenerResponse response)
+        {
+            string relativePath = request.QueryString.Get("path");
+            if (string.IsNullOrEmpty(relativePath) || string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
+            {
+                response.StatusCode = (int)HttpStatusCode.BadRequest;
+                return;
+            }
+
+            try
+            {
+                string fullPath = Path.GetFullPath(Path.Combine(_mainForm.DatabaseFolderPath, relativePath));
+                string dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
+
+                if (File.Exists(fullPath) && fullPath.StartsWith(dbPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    string ext = Path.GetExtension(fullPath).ToLowerInvariant();
+                    string contentType = "application/octet-stream";
+                    if (ext == ".jpg" || ext == ".jpeg") contentType = "image/jpeg";
+                    else if (ext == ".png") contentType = "image/png";
+                    else if (ext == ".gif") contentType = "image/gif";
+                    else if (ext == ".bmp") contentType = "image/bmp";
+                    else if (ext == ".pdf") contentType = "application/pdf";
+
+                    byte[] buffer = File.ReadAllBytes(fullPath);
+                    response.ContentType = contentType;
+                    response.ContentLength64 = buffer.Length;
+                    await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                }
+                else
+                {
+                    response.StatusCode = (int)HttpStatusCode.NotFound;
+                }
+            }
+            catch
+            {
+                response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            }
+        }
+
+        private async Task HandleGetGallery(HttpListenerResponse response)
+        {
+            var files = _mainForm.GetDatabaseMediaFiles();
+            byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(files));
+            response.ContentType = "application/json";
+            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
         private void HandleAction(string path, HttpListenerRequest request, HttpListenerResponse response)
         {
             string action = path.Substring("/action/".Length);
 
-            if (action.StartsWith("auto-send"))
+            if (action.StartsWith("open"))
+            {
+                var query = request.QueryString;
+                string relativePath = query.Get("path");
+                if (!string.IsNullOrEmpty(relativePath))
+                {
+                    _mainForm.OpenMediaFile(relativePath);
+                }
+            }
+            else if (action.StartsWith("auto-send"))
             {
                 var query = request.QueryString;
                 bool.TryParse(query.Get("enable"), out bool isEnabled);

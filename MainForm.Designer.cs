@@ -64,6 +64,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.picSecondaryPreview = new System.Windows.Forms.PictureBox();
             this.picPreview = new System.Windows.Forms.PictureBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.btnSetDatabaseFolder = new System.Windows.Forms.Button();
+            this.lblDatabaseFolderPath = new System.Windows.Forms.Label();
             this.panelSecondaryPreviewBorder.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).BeginInit();
@@ -418,6 +420,27 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.label1.TabIndex = 35;
             this.label1.Text = "Where Ideas Go Live.";
             // 
+            // btnSetDatabaseFolder
+            //
+            this.btnSetDatabaseFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnSetDatabaseFolder.Location = new System.Drawing.Point(250, 544);
+            this.btnSetDatabaseFolder.Name = "btnSetDatabaseFolder";
+            this.btnSetDatabaseFolder.Size = new System.Drawing.Size(120, 23);
+            this.btnSetDatabaseFolder.TabIndex = 36;
+            this.btnSetDatabaseFolder.Text = "Set Database Folder";
+            this.btnSetDatabaseFolder.UseVisualStyleBackColor = true;
+            this.btnSetDatabaseFolder.Click += new System.EventHandler(this.btnSetDatabaseFolder_Click);
+            //
+            // lblDatabaseFolderPath
+            //
+            this.lblDatabaseFolderPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblDatabaseFolderPath.AutoSize = true;
+            this.lblDatabaseFolderPath.Location = new System.Drawing.Point(376, 549);
+            this.lblDatabaseFolderPath.Name = "lblDatabaseFolderPath";
+            this.lblDatabaseFolderPath.Size = new System.Drawing.Size(121, 13);
+            this.lblDatabaseFolderPath.TabIndex = 37;
+            this.lblDatabaseFolderPath.Text = "Database Folder: Not Set";
+            //
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -458,6 +481,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.chkLaserPointer);
             this.Controls.Add(this.btnHighlighter);
             this.Controls.Add(this.picPreview);
+            this.Controls.Add(this.btnSetDatabaseFolder);
+            this.Controls.Add(this.lblDatabaseFolderPath);
             this.Name = "MainForm";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.MainForm_Load);
@@ -508,5 +533,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnMessageOkay;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btnSetDatabaseFolder;
+        private System.Windows.Forms.Label lblDatabaseFolderPath;
     }
 }

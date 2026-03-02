@@ -64,6 +64,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         private Color highlighterColor = Color.Yellow;
         private bool isHighlighting = false;
 
+        public string DatabaseFolderPath { get; private set; }
+
 
         public MainForm()
         {
@@ -471,12 +473,134 @@ namespace DreamsLive_Solutions_PresenterApp1
             return 0.0f; // Fallback: no constraint or error (e.g. no display selected, or a display with zero width/height). Using 0.0f for clarity.
         }
 
-        private string GetSelectionsFilePath()
+        private string GetAppDataFolderPath()
         {
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string appSpecificFolder = Path.Combine(appDataPath, "DreamsLivePresenterApp"); // Or your app's specific name
-            Directory.CreateDirectory(appSpecificFolder); // Ensure the directory exists
-            return Path.Combine(appSpecificFolder, "selections.json");
+            string appSpecificFolder = Path.Combine(appDataPath, "DreamsLivePresenterApp");
+            Directory.CreateDirectory(appSpecificFolder);
+            return appSpecificFolder;
+        }
+
+        private string GetSelectionsFilePath()
+        {
+            return Path.Combine(GetAppDataFolderPath(), "selections.json");
+        }
+
+        private string GetSettingsFilePath()
+        {
+            return Path.Combine(GetAppDataFolderPath(), "settings.json");
+        }
+
+        private void LoadSettings()
+        {
+            string filePath = GetSettingsFilePath();
+            if (File.Exists(filePath))
+            {
+                try
+                {
+                    string json = File.ReadAllText(filePath);
+                    var settings = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                    if (settings != null && settings.ContainsKey("DatabaseFolderPath"))
+                    {
+                        DatabaseFolderPath = settings["DatabaseFolderPath"];
+                        lblDatabaseFolderPath.Text = "Database Folder: " + DatabaseFolderPath;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error loading settings: {ex.Message}");
+                }
+            }
+        }
+
+        private void SaveSettings()
+        {
+            string filePath = GetSettingsFilePath();
+            try
+            {
+                var settings = new Dictionary<string, string>
+                {
+                    { "DatabaseFolderPath", DatabaseFolderPath }
+                };
+                string json = JsonConvert.SerializeObject(settings, Formatting.Indented);
+                File.WriteAllText(filePath, json);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error saving settings: {ex.Message}");
+            }
+        }
+
+        private void btnSetDatabaseFolder_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog fbd = new FolderBrowserDialog())
+            {
+                fbd.Description = "Select the Database Folder for Media Files";
+                if (fbd.ShowDialog(this) == DialogResult.OK)
+                {
+                    DatabaseFolderPath = fbd.SelectedPath;
+                    lblDatabaseFolderPath.Text = "Database Folder: " + DatabaseFolderPath;
+                    SaveSettings();
+                }
+            }
+        }
+
+        public List<string> GetDatabaseSubfolders()
+        {
+            List<string> subfolders = new List<string>();
+            if (string.IsNullOrEmpty(DatabaseFolderPath) || !Directory.Exists(DatabaseFolderPath))
+                return subfolders;
+
+            try
+            {
+                subfolders.AddRange(Directory.GetDirectories(DatabaseFolderPath, "*", SearchOption.AllDirectories)
+                    .Select(d => d.Substring(DatabaseFolderPath.Length).TrimStart(Path.DirectorySeparatorChar)));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error getting subfolders: {ex.Message}");
+            }
+            return subfolders;
+        }
+
+        public List<object> GetDatabaseMediaFiles()
+        {
+            List<object> files = new List<object>();
+            if (string.IsNullOrEmpty(DatabaseFolderPath) || !Directory.Exists(DatabaseFolderPath))
+                return files;
+
+            try
+            {
+                string[] extensions = { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".pdf" };
+                var allFiles = Directory.EnumerateFiles(DatabaseFolderPath, "*.*", SearchOption.AllDirectories)
+                    .Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
+
+                foreach (var file in allFiles)
+                {
+                    files.Add(new
+                    {
+                        Name = Path.GetFileName(file),
+                        RelativePath = file.Substring(DatabaseFolderPath.Length).TrimStart(Path.DirectorySeparatorChar),
+                        FullPath = file,
+                        Extension = Path.GetExtension(file).ToLowerInvariant()
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error getting media files: {ex.Message}");
+            }
+            return files;
+        }
+
+        public void OpenMediaFile(string relativePath)
+        {
+            if (string.IsNullOrEmpty(DatabaseFolderPath)) return;
+            string fullPath = Path.Combine(DatabaseFolderPath, relativePath);
+            if (File.Exists(fullPath))
+            {
+                this.Invoke((Action)(() => ProcessNewImage(fullPath)));
+            }
         }
 
         private List<ImageSelectionData> LoadSelections()
@@ -1174,6 +1298,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            LoadSettings();
             PopulateDisplayComboBox();
             UpdateSecondaryPreviewAspectRatio(); // Call after populating and selecting a default display
             DisplayConnectionInfo();

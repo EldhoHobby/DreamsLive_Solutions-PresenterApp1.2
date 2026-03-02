@@ -45,11 +45,49 @@
             border-color: #555;
         }
 
-        .controls, .pdf-controls, .upload {
+        .controls, .pdf-controls, .upload, .database-controls {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 10px;
             margin-bottom: 20px;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .gallery-item {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        body.dark-mode .gallery-item {
+            background-color: #333;
+            border-color: #555;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+        }
+
+        .gallery-item img {
+            max-width: 100%;
+            height: 100px;
+            object-fit: contain;
+            margin-bottom: 5px;
+        }
+
+        .gallery-item span {
+            font-size: 0.8em;
+            word-break: break-all;
+            display: block;
         }
 
         button {
@@ -220,8 +258,25 @@
         </div>
         <div class="upload">
             <input type="file" id="file-input">
+            <div id="db-upload-options" style="display: none; grid-column: 1 / -1; gap: 10px; grid-template-columns: 1fr 1fr;">
+                <select id="subfolder-select"></select>
+                <input type="text" id="custom-filename" placeholder="Custom filename (optional)">
+            </div>
             <button onclick="uploadFile()">Upload</button>
+            <div style="grid-column: 1 / -1;">
+                <label>
+                    <input type="checkbox" id="chkUploadToDatabase" onchange="toggleDatabaseUpload()">
+                    Upload to Database
+                </label>
+            </div>
         </div>
+
+        <div id="gallery-section">
+            <h2>Gallery</h2>
+            <button onclick="refreshGallery()">Refresh Gallery</button>
+            <div id="gallery" class="gallery"></div>
+        </div>
+
         <div id="message-box" class="message-box" style="display: none;">
             <span id="message-text"></span>
             <button id="message-okay-btn" onclick="clearMessage()">Okay</button>
@@ -263,6 +318,50 @@
             adjustThemeTogglePosition();
         }
 
+        async function toggleDatabaseUpload() {
+            const isChecked = document.getElementById('chkUploadToDatabase').checked;
+            const options = document.getElementById('db-upload-options');
+            options.style.display = isChecked ? 'grid' : 'none';
+            if (isChecked) {
+                const response = await fetch('/database/folders');
+                const folders = await response.json();
+                const select = document.getElementById('subfolder-select');
+                select.innerHTML = '<option value="">(Root)</option>';
+                folders.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = f;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        async function refreshGallery() {
+            const response = await fetch('/database/gallery');
+            const files = await response.json();
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';
+            files.forEach(f => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.onclick = () => performAction(`open?path=${encodeURIComponent(f.RelativePath)}`);
+
+                const img = document.createElement('img');
+                if (f.Extension === '.pdf') {
+                    img.src = 'splash.png'; // Placeholder for PDFs
+                } else {
+                    img.src = `/database/file?path=${encodeURIComponent(f.RelativePath)}`;
+                }
+
+                const span = document.createElement('span');
+                span.textContent = f.RelativePath;
+
+                item.appendChild(img);
+                item.appendChild(span);
+                gallery.appendChild(item);
+            });
+        }
+
         async function uploadFile() {
             const fileInput = document.getElementById('file-input');
             const file = fileInput.files[0];
@@ -276,6 +375,12 @@
                 const formData = new FormData();
                 formData.append('file', file, file.name);
 
+                const chkDb = document.getElementById('chkUploadToDatabase');
+                if (chkDb.checked) {
+                    formData.append('subfolder', document.getElementById('subfolder-select').value);
+                    formData.append('customName', document.getElementById('custom-filename').value);
+                }
+
                 const response = await fetch('/upload', {
                     method: 'POST',
                     body: formData
@@ -286,6 +391,7 @@
                     uploadErrorLock = false; // Clear lock on success
                     showMessage(responseText, 'info');
                     fileInput.value = ''; // Clear the input
+                    if (chkDb.checked) refreshGallery();
                 } else {
                     uploadErrorLock = true; // Lock message on screen
                     showMessage(responseText, 'error');
@@ -403,6 +509,7 @@
 
         setInterval(updateStatus, 1000);
         updateStatus();
+        refreshGallery();
 
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
