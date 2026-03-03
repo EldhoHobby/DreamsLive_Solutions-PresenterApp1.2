@@ -332,10 +332,19 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private async Task HandleGetGallery(HttpListenerResponse response)
         {
-            var files = _mainForm.GetDatabaseMediaFiles();
-            byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(files));
-            response.ContentType = "application/json";
-            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            try
+            {
+                var files = _mainForm.GetDatabaseMediaFiles();
+                byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(files));
+                response.ContentType = "application/json";
+                await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            }
+            catch (Exception ex)
+            {
+                response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { error = ex.Message }));
+                await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            }
         }
 
         private async Task HandleGetDatabaseFile(HttpListenerRequest request, HttpListenerResponse response)
