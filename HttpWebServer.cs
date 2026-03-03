@@ -159,7 +159,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                         await HandleGetFolders(response);
                         break;
                     case "/database/gallery":
-                        await HandleGetGallery(response);
+                        await HandleGetGallery(request, response);
                         break;
                     case "/database/file":
                         await HandleGetDatabaseFile(request, response);
@@ -213,6 +213,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     int currentPos = 0;
                     string targetSubfolder = "";
                     string customName = "";
+                    bool isDatabase = false;
                     byte[] fileData = null;
                     string originalFilename = "";
 
@@ -245,6 +246,11 @@ namespace DreamsLive_Solutions_PresenterApp1
                             {
                                 customName = Encoding.UTF8.GetString(bodyBytes, dataStartIndex, dataEndIndex - dataStartIndex).Trim();
                             }
+                            else if (fieldName == "isDatabase")
+                            {
+                                string val = Encoding.UTF8.GetString(bodyBytes, dataStartIndex, dataEndIndex - dataStartIndex).Trim();
+                                bool.TryParse(val, out isDatabase);
+                            }
                             else if (fieldName == "file")
                             {
                                 Match filenameMatch = Regex.Match(headers, @"filename=""([^""]+)""");
@@ -261,7 +267,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     string finalFilename = !string.IsNullOrEmpty(customName) ? customName + Path.GetExtension(originalFilename) : originalFilename;
                     string targetDir = "";
 
-                    if (!string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
+                    if (isDatabase && !string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
                     {
                         targetDir = string.IsNullOrEmpty(targetSubfolder) ? _mainForm.DatabaseFolderPath : Path.Combine(_mainForm.DatabaseFolderPath, targetSubfolder);
                     }
@@ -330,11 +336,12 @@ namespace DreamsLive_Solutions_PresenterApp1
             await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
         }
 
-        private async Task HandleGetGallery(HttpListenerResponse response)
+        private async Task HandleGetGallery(HttpListenerRequest request, HttpListenerResponse response)
         {
             try
             {
-                var files = _mainForm.GetDatabaseMediaFiles();
+                string subfolder = request.QueryString.Get("subfolder") ?? "";
+                var files = _mainForm.GetDatabaseMediaFiles(subfolder);
                 byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(files));
                 response.ContentType = "application/json";
                 await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);

@@ -564,7 +564,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             return subfolders;
         }
 
-        public List<object> GetDatabaseMediaFiles()
+        public List<object> GetDatabaseMediaFiles(string subfolder = "")
         {
             List<object> files = new List<object>();
             if (string.IsNullOrEmpty(DatabaseFolderPath) || !Directory.Exists(DatabaseFolderPath))
@@ -572,8 +572,13 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             try
             {
+                string targetPath = string.IsNullOrEmpty(subfolder) ? DatabaseFolderPath : Path.Combine(DatabaseFolderPath, subfolder);
+                if (!Directory.Exists(targetPath)) return files;
+
                 string[] extensions = { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".pdf" };
-                var allFiles = Directory.EnumerateFiles(DatabaseFolderPath, "*.*", SearchOption.AllDirectories)
+                // Option B: Specific folder only (not recursive for simpler Option B experience, or recursive if preferred)
+                // The user said "show the gallery the pictures or pdf from the folder that i have selected"
+                var allFiles = Directory.EnumerateFiles(targetPath, "*.*", SearchOption.TopDirectoryOnly)
                     .Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
 
                 foreach (var file in allFiles)
