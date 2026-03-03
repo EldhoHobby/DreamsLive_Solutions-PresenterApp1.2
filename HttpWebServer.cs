@@ -164,6 +164,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                     case "/database/file":
                         await HandleGetDatabaseFile(request, response);
                         break;
+                    case "/database/current":
+                        await HandleGetCurrentFile(response);
+                        break;
                     default:
                         if (path.StartsWith("/action/"))
                         {
@@ -425,6 +428,15 @@ namespace DreamsLive_Solutions_PresenterApp1
                     _mainForm.Invoke((Action)(() => _mainForm.GoToPdfPage(pageNum)));
                 }
             }
+            else if (action.StartsWith("remote-crop"))
+            {
+                var query = request.QueryString;
+                float.TryParse(query.Get("x"), out float x);
+                float.TryParse(query.Get("y"), out float y);
+                float.TryParse(query.Get("w"), out float w);
+                float.TryParse(query.Get("h"), out float h);
+                _mainForm.RemoteCrop(x, y, w, h);
+            }
             else
             {
                 _mainForm.Invoke((Action)(() =>
@@ -442,6 +454,53 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }));
             }
             response.StatusCode = (int)HttpStatusCode.OK;
+        }
+
+        private async Task HandleGetCurrentFile(HttpListenerResponse response)
+        {
+            string path = _mainForm.SelectedImagePath;
+            if (string.IsNullOrEmpty(path))
+            {
+                response.StatusCode = (int)HttpStatusCode.NotFound;
+                return;
+            }
+
+            string ext = Path.GetExtension(path).ToLowerInvariant();
+            if (ext == ".pdf")
+            {
+                // For PDF, we render the current page
+                using (var doc = PdfiumViewer.PdfDocument.Load(path))
+                {
+                    using (var img = doc.Render(_mainForm.CurrentPageNumber, 300, 300, true))
+                    {
+                        await WriteImageResponse(response, img);
+                    }
+                }
+            }
+            else
+            {
+                // For standard images, we serve the file
+                string contentType = "image/jpeg";
+                if (ext == ".png") contentType = "image/png";
+                else if (ext == ".gif") contentType = "image/gif";
+                else if (ext == ".bmp") contentType = "image/bmp";
+                await WriteFileResponseFull(response, path, contentType);
+            }
+        }
+
+        private async Task WriteFileResponseFull(HttpListenerResponse response, string filePath, string contentType)
+        {
+            if (File.Exists(filePath))
+            {
+                byte[] buffer = File.ReadAllBytes(filePath);
+                response.ContentType = contentType;
+                response.ContentLength64 = buffer.Length;
+                await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            }
+            else
+            {
+                response.StatusCode = (int)HttpStatusCode.NotFound;
+            }
         }
 
         private string GetStatusJson()
@@ -464,6 +523,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             bool blackoutButtonEnabled = false;
             bool pdfPrevButtonEnabled = false;
             bool pdfNextButtonEnabled = false;
+            string currentFilePath = "";
+            int currentPage = -1;
 
             _mainForm.Invoke((Action)(() =>
             {
@@ -504,11 +565,15 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                 pdfPrevButtonEnabled = _mainForm.IsPdfPrevButtonEnabled;
                 pdfNextButtonEnabled = _mainForm.IsPdfNextButtonEnabled;
+                currentFilePath = _mainForm.SelectedImagePath;
+                currentPage = _mainForm.CurrentPageNumber;
             }));
 
             var statusObject = new
             {
                 mainPreview = mainPreviewAvailable ? $"/preview/main?t={DateTime.UtcNow.Ticks}" : "",
+                currentFilePath,
+                currentPage,
                 secondaryPreview = secondaryPreviewAvailable ? $"/preview/secondary?t={DateTime.UtcNow.Ticks}" : "",
                 pdfCurrentPage,
                 pdfTotalPages,

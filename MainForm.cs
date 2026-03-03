@@ -65,6 +65,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool isHighlighting = false;
 
         public string DatabaseFolderPath { get; private set; }
+        public string SelectedImagePath => selectedImagePath;
+        public int CurrentPageNumber => currentPageNumber;
 
 
         public MainForm()
@@ -1334,6 +1336,56 @@ namespace DreamsLive_Solutions_PresenterApp1
         public int GetTotalPdfPages()
         {
             return totalPdfPages;
+        }
+
+        public void RemoteCrop(float x, float y, float w, float h)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => RemoteCrop(x, y, w, h)));
+                return;
+            }
+
+            if (string.IsNullOrEmpty(selectedImagePath)) return;
+
+            // Update staged content region
+            this.stagedContentPath = selectedImagePath;
+            this.stagedContentPageNum = (this.currentPdfDocument != null) ? this.currentPageNumber : -1;
+            this.stagedContentRegion = new RectangleF(x, y, w, h);
+            this.stagedContentIsNormalized = true;
+
+            // Render to secondary preview
+            RenderContentToPictureBox(
+                this.picSecondaryPreview,
+                this.stagedContentPath,
+                this.stagedContentPageNum,
+                this.stagedContentRegion,
+                this.stagedContentIsNormalized
+            );
+
+            this.isSecondaryPreviewPopulated = (this.picSecondaryPreview.Image != null);
+            this.secondaryPreviewPan = PointF.Empty;
+            this.secondaryPreviewZoom = 1.0f;
+            this.picSecondaryPreview.Invalidate();
+
+            UpdateButtonAppearanceAndState();
+            UpdateButtonEnableStates();
+            UpdateSecondaryPreviewBorderColor();
+
+            // Auto-Update Main Presentation (if linked)
+            if (this.chkLinkLocalPreviewToPresenter != null && this.chkLinkLocalPreviewToPresenter.Checked)
+            {
+                if (this.isSecondaryPreviewPopulated)
+                {
+                    UpdateMainPresentation(
+                        this.stagedContentPath,
+                        this.stagedContentPageNum,
+                        this.stagedContentRegion,
+                        this.stagedContentIsNormalized,
+                        this.stagedStitchedImage
+                    );
+                }
+            }
         }
 
         public bool IsPdfPrevButtonEnabled
