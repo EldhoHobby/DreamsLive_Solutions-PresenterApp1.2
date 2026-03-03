@@ -210,7 +210,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                     await request.InputStream.CopyToAsync(ms);
                     byte[] bodyBytes = ms.ToArray();
 
-                    // Parse parts manually
                     int currentPos = 0;
                     string targetSubfolder = "";
                     string customName = "";
@@ -269,7 +268,6 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                     if (string.IsNullOrEmpty(targetDir))
                     {
-                        // Fallback to temp file behavior if no database folder or not checked
                         string tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
                         File.WriteAllBytes(tempFilePath, fileData);
                         _mainForm.Invoke((Action)(() => _mainForm.ProcessUploadedFile(tempFilePath, originalFilename)));
@@ -278,8 +276,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                     {
                         Directory.CreateDirectory(targetDir);
                         string destPath = Path.Combine(targetDir, finalFilename);
-
-                        // Handle renaming if exists
                         if (File.Exists(destPath))
                         {
                             string nameWithoutExt = Path.GetFileNameWithoutExtension(finalFilename);
@@ -291,7 +287,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                                 counter++;
                             }
                         }
-
                         File.WriteAllBytes(destPath, fileData);
                         _mainForm.Invoke((Action)(() => _mainForm.ProcessNewImage(destPath)));
                     }
@@ -335,6 +330,14 @@ namespace DreamsLive_Solutions_PresenterApp1
             await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
         }
 
+        private async Task HandleGetGallery(HttpListenerResponse response)
+        {
+            var files = _mainForm.GetDatabaseMediaFiles();
+            byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(files));
+            response.ContentType = "application/json";
+            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
         private async Task HandleGetDatabaseFile(HttpListenerRequest request, HttpListenerResponse response)
         {
             string relativePath = request.QueryString.Get("path");
@@ -373,14 +376,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
-        }
-
-        private async Task HandleGetGallery(HttpListenerResponse response)
-        {
-            var files = _mainForm.GetDatabaseMediaFiles();
-            byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(files));
-            response.ContentType = "application/json";
-            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
         }
 
         private void HandleAction(string path, HttpListenerRequest request, HttpListenerResponse response)

@@ -33,83 +33,6 @@
             margin-bottom: 20px;
         }
 
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            width: 90%;
-            max-width: 600px;
-            position: relative;
-        }
-
-        #camera-video, #editor-canvas {
-            width: 100%;
-            max-height: 70vh;
-            background-color: #000;
-        }
-
-        .camera-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 2px dashed rgba(255,255,255,0.5);
-            pointer-events: none;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .camera-overlay::after {
-            content: 'PRESENTER AREA';
-            color: rgba(255,255,255,0.5);
-            font-size: 0.8em;
-        }
-
-        .modal-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .modal-controls button {
-            min-width: 80px;
-        }
-
-            .preview img {
-                border: 5px solid #ccc; /* Thicker border */
-                width: 50%;
-                object-fit: contain;
-                background-color: #000;
-                box-sizing: border-box; /* Include border in width calculation */
-            }
-
-        body.dark-mode .preview img {
-            border-color: #555;
-        }
-
-        .controls, .pdf-controls, .upload, .database-controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
         .gallery {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -146,6 +69,25 @@
             font-size: 0.8em;
             word-break: break-all;
             display: block;
+        }
+
+            .preview img {
+                border: 5px solid #ccc; /* Thicker border */
+                width: 50%;
+                object-fit: contain;
+                background-color: #000;
+                box-sizing: border-box; /* Include border in width calculation */
+            }
+
+        body.dark-mode .preview img {
+            border-color: #555;
+        }
+
+        .controls, .pdf-controls, .upload {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         button {
@@ -315,15 +257,12 @@
             <button id="btnPdfNext" onclick="performAction('pdf-next')">Next</button>
         </div>
         <div class="upload">
-            <div style="grid-column: 1 / -1; display: flex; gap: 10px;">
-                <input type="file" id="file-input" style="flex-grow: 1;" onchange="handleFileSelect(event)">
-                <button onclick="startCamera()">📷 Camera</button>
-            </div>
+            <input type="file" id="file-input">
             <div id="db-upload-options" style="display: none; grid-column: 1 / -1; gap: 10px; grid-template-columns: 1fr 1fr;">
                 <select id="subfolder-select"></select>
                 <input type="text" id="custom-filename" placeholder="Custom filename (optional)">
             </div>
-            <button id="btnUpload" onclick="uploadFile()">Upload</button>
+            <button onclick="uploadFile()">Upload</button>
             <div style="grid-column: 1 / -1;">
                 <label>
                     <input type="checkbox" id="chkUploadToDatabase" onchange="toggleDatabaseUpload()">
@@ -337,34 +276,6 @@
             <button onclick="refreshGallery()">Refresh Gallery</button>
             <div id="gallery" class="gallery"></div>
         </div>
-
-        <div id="camera-modal" class="modal">
-            <div class="modal-content">
-                <video id="camera-video" autoplay playsinline></video>
-                <div id="camera-overlay" class="camera-overlay"></div>
-            </div>
-            <div class="modal-controls">
-                <button onclick="capturePhoto()">📸 Capture</button>
-                <button onclick="stopCamera()">Cancel</button>
-            </div>
-        </div>
-
-        <div id="editor-modal" class="modal">
-            <div class="modal-content">
-                <canvas id="editor-canvas"></canvas>
-                <div id="editor-overlay" class="camera-overlay"></div>
-            </div>
-            <div class="modal-controls">
-                <button onclick="rotateImage()">🔄 Rotate</button>
-                <button onclick="zoomImage(1.2)">➕ Zoom In</button>
-                <button onclick="zoomImage(0.8)">➖ Zoom Out</button>
-                <button onclick="resetEditor()">Reset</button>
-                <button id="btnEditorUpload" onclick="uploadProcessedImage()" style="background-color: #2ecc71; color: white;">Confirm & Upload</button>
-                <button onclick="closeEditor()">Cancel</button>
-            </div>
-            <p style="color: white; font-size: 0.8em; margin-top: 5px;">Drag to pan</p>
-        </div>
-
         <div id="message-box" class="message-box" style="display: none;">
             <span id="message-text"></span>
             <button id="message-okay-btn" onclick="clearMessage()">Okay</button>
@@ -380,17 +291,6 @@
         const startTime = new Date().getTime();
         let uploadErrorLock = false;
         let isPageInputFocused = false;
-
-        // Editor state
-        let editorImg = new Image();
-        let editorRotation = 0;
-        let editorScale = 1;
-        let editorPanX = 0;
-        let editorPanY = 0;
-        let currentPresenterAspectRatio = 1.6; // Default fallback
-        let isPanningEditor = false;
-        let lastMouseX = 0;
-        let lastMouseY = 0;
 
         async function performAction(action) {
             await fetch(`/action/${action}`);
@@ -518,9 +418,6 @@
                 const response = await fetch('/status');
                 const status = await response.json();
 
-                currentPresenterAspectRatio = status.secondaryPreviewAspectRatio || 1.6;
-                updateOverlayBoxes();
-
                 if (uploadErrorLock) {
                     // Don't clear a locked message
                 } else if (status.message) {
@@ -608,230 +505,6 @@
                 }
             }
         });
-
-        // Camera functions
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                const video = document.getElementById('camera-video');
-                video.srcObject = stream;
-                document.getElementById('camera-modal').style.display = 'flex';
-                updateOverlayBoxes();
-            } catch (err) {
-                showMessage('Could not access camera: ' + err.message, 'error');
-            }
-        }
-
-        function stopCamera() {
-            const video = document.getElementById('camera-video');
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
-            }
-            document.getElementById('camera-modal').style.display = 'none';
-        }
-
-        function capturePhoto() {
-            const video = document.getElementById('camera-video');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
-
-            stopCamera();
-            openEditor(canvas.toDataURL('image/png'));
-        }
-
-        // Editor functions
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (e) => openEditor(e.target.result);
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function openEditor(imageSrc) {
-            editorImg = new Image();
-            editorImg.onload = () => {
-                resetEditor();
-                document.getElementById('editor-modal').style.display = 'flex';
-                renderEditor();
-            };
-            editorImg.src = imageSrc;
-        }
-
-        function resetEditor() {
-            editorRotation = 0;
-            editorScale = 1;
-            editorPanX = 0;
-            editorPanY = 0;
-            renderEditor();
-        }
-
-        function closeEditor() {
-            document.getElementById('editor-modal').style.display = 'none';
-            document.getElementById('file-input').value = '';
-        }
-
-        function rotateImage() {
-            editorRotation = (editorRotation + 90) % 360;
-            renderEditor();
-        }
-
-        function zoomImage(factor) {
-            editorScale *= factor;
-            renderEditor();
-        }
-
-        function updateOverlayBoxes() {
-            const boxes = [document.getElementById('camera-overlay'), document.getElementById('editor-overlay')];
-            boxes.forEach(box => {
-                if (!box) return;
-                const parent = box.parentElement;
-                const pWidth = parent.clientWidth;
-                const pHeight = parent.clientHeight;
-
-                let w = pWidth;
-                let h = w / currentPresenterAspectRatio;
-
-                if (h > pHeight) {
-                    h = pHeight;
-                    w = h * currentPresenterAspectRatio;
-                }
-
-                box.style.width = w + 'px';
-                box.style.height = h + 'px';
-                box.style.top = (pHeight - h) / 2 + 'px';
-                box.style.left = (pWidth - w) / 2 + 'px';
-            });
-        }
-
-        function renderEditor() {
-            const canvas = document.getElementById('editor-canvas');
-            const ctx = canvas.getContext('2d');
-            const container = canvas.parentElement;
-
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.save();
-
-            ctx.translate(canvas.width / 2 + editorPanX, canvas.height / 2 + editorPanY);
-            ctx.rotate((editorRotation * Math.PI) / 180);
-            ctx.scale(editorScale, editorScale);
-
-            const drawW = editorImg.width;
-            const drawH = editorImg.height;
-
-            // Initial fit
-            const fitScale = Math.min(canvas.width / drawW, canvas.height / drawH) * 0.8;
-            ctx.drawImage(editorImg, -drawW / 2 * fitScale, -drawH / 2 * fitScale, drawW * fitScale, drawH * fitScale);
-
-            ctx.restore();
-            updateOverlayBoxes();
-        }
-
-        // Panning in Editor
-        const editorCanvas = document.getElementById('editor-canvas');
-        editorCanvas.addEventListener('mousedown', (e) => { isPanningEditor = true; lastMouseX = e.clientX; lastMouseY = e.clientY; });
-        editorCanvas.addEventListener('touchstart', (e) => { isPanningEditor = true; lastMouseX = e.touches[0].clientX; lastMouseY = e.touches[0].clientY; });
-
-        window.addEventListener('mousemove', (e) => {
-            if (isPanningEditor) {
-                editorPanX += e.clientX - lastMouseX;
-                editorPanY += e.clientY - lastMouseY;
-                lastMouseX = e.clientX;
-                lastMouseY = e.clientY;
-                renderEditor();
-            }
-        });
-        window.addEventListener('touchmove', (e) => {
-            if (isPanningEditor) {
-                editorPanX += e.touches[0].clientX - lastMouseX;
-                editorPanY += e.touches[0].clientY - lastMouseY;
-                lastMouseX = e.touches[0].clientX;
-                lastMouseY = e.touches[0].clientY;
-                renderEditor();
-            }
-        });
-        window.addEventListener('mouseup', () => isPanningEditor = false);
-        window.addEventListener('touchend', () => isPanningEditor = false);
-
-        async function uploadProcessedImage() {
-            const canvas = document.createElement('canvas');
-            const overlay = document.getElementById('editor-overlay');
-            const rect = overlay.getBoundingClientRect();
-            const canvasRect = document.getElementById('editor-canvas').getBoundingClientRect();
-
-            // We want the output to be high res, let's target 1920 width or proportional
-            const outputWidth = 1920;
-            const outputHeight = outputWidth / currentPresenterAspectRatio;
-
-            canvas.width = outputWidth;
-            canvas.height = outputHeight;
-            const ctx = canvas.getContext('2d');
-
-            // Map the area inside the overlay to the output canvas
-            const mainCanvas = document.getElementById('editor-canvas');
-
-            // To get high quality, we'll re-render the original image onto the output canvas
-            // with the same transformations but scaled to output resolution
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.save();
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-
-            // Calculate how the pan/scale on screen translates to the output
-            // Overlay size on screen
-            const ovW = parseFloat(overlay.style.width);
-            const ovH = parseFloat(overlay.style.height);
-
-            const screenToOutputScale = outputWidth / ovW;
-
-            ctx.rotate((editorRotation * Math.PI) / 180);
-
-            // The editor scale is relative to the "fit" size in the editor
-            const fitScale = Math.min(mainCanvas.width / editorImg.width, mainCanvas.height / editorImg.height) * 0.8;
-            const finalScale = editorScale * fitScale * screenToOutputScale;
-
-            ctx.scale(finalScale, finalScale);
-
-            // Pan values are in screen pixels, need to scale to output and account for center translation
-            ctx.drawImage(editorImg, (editorPanX * screenToOutputScale) / finalScale - editorImg.width/2, (editorPanY * screenToOutputScale) / finalScale - editorImg.height/2);
-
-            ctx.restore();
-
-            canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                const filename = (document.getElementById('custom-filename').value || 'captured_image') + '.png';
-                formData.append('file', blob, filename);
-
-                const chkDb = document.getElementById('chkUploadToDatabase');
-                if (chkDb.checked) {
-                    formData.append('subfolder', document.getElementById('subfolder-select').value);
-                    formData.append('customName', document.getElementById('custom-filename').value);
-                }
-
-                try {
-                    showMessage('Uploading processed image...', 'info');
-                    const response = await fetch('/upload', { method: 'POST', body: formData });
-                    const responseText = await response.text();
-                    if (response.ok) {
-                        showMessage(responseText, 'info');
-                        closeEditor();
-                        if (chkDb.checked) refreshGallery();
-                    } else {
-                        showMessage(responseText, 'error');
-                    }
-                } catch (err) {
-                    showMessage('Upload failed: ' + err.message, 'error');
-                }
-            }, 'image/png');
-        }
 
         setInterval(updateStatus, 1000);
         updateStatus();

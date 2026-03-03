@@ -473,6 +473,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             return 0.0f; // Fallback: no constraint or error (e.g. no display selected, or a display with zero width/height). Using 0.0f for clarity.
         }
 
+
         private string GetAppDataFolderPath()
         {
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -602,6 +603,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.Invoke((Action)(() => ProcessNewImage(fullPath)));
             }
         }
+
 
         private List<ImageSelectionData> LoadSelections()
         {
