@@ -370,6 +370,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 string fullPath = Path.GetFullPath(Path.Combine(_mainForm.DatabaseFolderPath, relativePath));
                 string dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
+                if (!dbPath.EndsWith(Path.DirectorySeparatorChar.ToString())) dbPath += Path.DirectorySeparatorChar;
 
                 if (File.Exists(fullPath) && fullPath.StartsWith(dbPath, StringComparison.OrdinalIgnoreCase))
                 {

@@ -442,7 +442,11 @@
                 files.forEach(f => {
                     const item = document.createElement('div');
                     item.className = 'gallery-item';
-                    item.onclick = () => performAction(`open?path=${encodeURIComponent(f.RelativePath)}`);
+                    item.onclick = async () => {
+                        await performAction(`open?path=${encodeURIComponent(f.RelativePath)}`);
+                        // Automatically open editor after selecting from gallery
+                        setTimeout(openEditor, 500);
+                    };
                     const img = document.createElement('img');
                     if (f.Extension === '.pdf') {
                         img.src = 'splash.png';
@@ -492,6 +496,9 @@
                     showMessage(responseText, 'info');
                     fileInput.value = ''; // Clear the input
                     if (document.getElementById('chkUploadToDatabase').checked) refreshGallery();
+
+                    // Automatically open editor after upload
+                    setTimeout(openEditor, 500);
                 } else {
                     uploadErrorLock = true; // Lock message on screen
                     showMessage(responseText, 'error');

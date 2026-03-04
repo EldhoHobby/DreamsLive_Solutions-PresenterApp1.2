@@ -58,6 +58,9 @@ namespace DreamsLive_Solutions_PresenterApp1
         private float secondaryPreviewZoom = 1.0f;
         private Point secondaryPreviewLastMousePosition = Point.Empty;
         private bool isPanningSecondaryPreview = false;
+        private Rectangle secondarySelectionRectangle = Rectangle.Empty;
+        private Point secondarySelectionStartPoint = Point.Empty;
+        private bool isSelectingSecondary = false;
         private PointF? laserPointNormalized = null; // Normalized laser position (0-1) relative to picSecondaryPreview
         private List<List<PointF>> highlightsNormalized = new List<List<PointF>>();
         private bool highlighterActive = false;
@@ -1172,6 +1175,25 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
+        private void CorrectRotation(Image img)
+        {
+            if (img.PropertyIdList.Contains(0x0112))
+            {
+                int rotationValue = img.GetPropertyItem(0x0112).Value[0];
+                switch (rotationValue)
+                {
+                    case 1: break; // Normal
+                    case 2: img.RotateFlip(RotateFlipType.RotateNoneFlipX); break;
+                    case 3: img.RotateFlip(RotateFlipType.Rotate180FlipNone); break;
+                    case 4: img.RotateFlip(RotateFlipType.Rotate180FlipX); break;
+                    case 5: img.RotateFlip(RotateFlipType.Rotate90FlipX); break;
+                    case 6: img.RotateFlip(RotateFlipType.Rotate90FlipNone); break;
+                    case 7: img.RotateFlip(RotateFlipType.Rotate270FlipX); break;
+                    case 8: img.RotateFlip(RotateFlipType.Rotate270FlipNone); break;
+                }
+            }
+        }
+
         private void HandleImageLoading(string imagePath)
         {
             // If a PDF was previously loaded, clean up its resources.
@@ -1192,6 +1214,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 // Load the image into the preview PictureBox.
                 using (var bmpTemp = new Bitmap(this.selectedImagePath))
                 {
+                    CorrectRotation(bmpTemp);
                     this.picPreview.Image = new Bitmap(bmpTemp);
                 }
 
@@ -1368,6 +1391,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.secondaryPreviewZoom = 1.0f;
             this.picSecondaryPreview.Invalidate();
 
+            // Sync back to main preview
+            SyncStagedSelectionToMain();
+
             UpdateButtonAppearanceAndState();
             UpdateButtonEnableStates();
             UpdateSecondaryPreviewBorderColor();
@@ -1385,6 +1411,52 @@ namespace DreamsLive_Solutions_PresenterApp1
                         this.stagedStitchedImage
                     );
                 }
+            }
+        }
+
+        private void SyncStagedSelectionToMain()
+        {
+            if (this.picPreview.Image == null || !this.stagedContentRegion.HasValue) return;
+
+            RectangleF normRegion;
+            if (this.stagedContentIsNormalized)
+            {
+                normRegion = this.stagedContentRegion.Value;
+            }
+            else
+            {
+                // Convert pixel region to normalized
+                float imgW = this.picPreview.Image.Width;
+                float imgH = this.picPreview.Image.Height;
+                normRegion = new RectangleF(
+                    this.stagedContentRegion.Value.X / imgW,
+                    this.stagedContentRegion.Value.Y / imgH,
+                    this.stagedContentRegion.Value.Width / imgW,
+                    this.stagedContentRegion.Value.Height / imgH
+                );
+            }
+
+            // Convert normalized to source image pixel coords
+            float sourceImgW = this.picPreview.Image.Width;
+            float sourceImgH = this.picPreview.Image.Height;
+            RectangleF pixelRegionOnSource = new RectangleF(
+                normRegion.X * sourceImgW,
+                normRegion.Y * sourceImgH,
+                normRegion.Width * sourceImgW,
+                normRegion.Height * sourceImgH
+            );
+
+            this.selectionRectangle = ConvertOriginalImageRectToPreviewRect(pixelRegionOnSource);
+            UpdateSelectionSizeLabel();
+            this.picPreview.Invalidate();
+
+            // Also update the saved selection for this image
+            if (this.selectedImagePath != null)
+            {
+                List<ImageSelectionData> selections = LoadSelections();
+                selections.RemoveAll(s => s.ImagePath.Equals(this.selectedImagePath, StringComparison.OrdinalIgnoreCase));
+                selections.Add(new ImageSelectionData(this.selectedImagePath, pixelRegionOnSource));
+                SaveSelections(selections);
             }
         }
 
@@ -1751,6 +1823,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 else if (File.Exists(contentPath)) // Standard image
                 {
                     sourceBitmap = new Bitmap(contentPath);
+                    CorrectRotation(sourceBitmap);
                 }
                 else
                 {
@@ -2497,23 +2570,28 @@ namespace DreamsLive_Solutions_PresenterApp1
         // Event Handlers for picSecondaryPreview interactivity
         private void picSecondaryPreview_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left && this.picSecondaryPreview.Image != null)
+            if (this.picSecondaryPreview.Image == null) return;
+
+            if (this.highlighterActive && e.Button == MouseButtons.Left)
             {
-                if (this.highlighterActive)
-                {
-                    this.isHighlighting = true;
-                    this.highlightsNormalized.Add(new List<PointF>());
-                    // Add first point
-                    this.highlightsNormalized.Last().Add(MapControlToDocNormalized(e.Location));
-                    this.picSecondaryPreview.Invalidate();
-                    NotifyPresenterOfHighlights();
-                }
-                else
-                {
-                    this.isPanningSecondaryPreview = true;
-                    this.secondaryPreviewLastMousePosition = e.Location;
-                    this.picSecondaryPreview.Cursor = Cursors.SizeAll; // Change cursor to hand/grabbing
-                }
+                this.isHighlighting = true;
+                this.highlightsNormalized.Add(new List<PointF>());
+                // Add first point
+                this.highlightsNormalized.Last().Add(MapControlToDocNormalized(e.Location));
+                this.picSecondaryPreview.Invalidate();
+                NotifyPresenterOfHighlights();
+            }
+            else if (e.Button == MouseButtons.Right)
+            {
+                this.isPanningSecondaryPreview = true;
+                this.secondaryPreviewLastMousePosition = e.Location;
+                this.picSecondaryPreview.Cursor = Cursors.SizeAll;
+            }
+            else if (e.Button == MouseButtons.Left)
+            {
+                this.secondarySelectionStartPoint = e.Location;
+                this.isSelectingSecondary = true;
+                this.secondarySelectionRectangle = new Rectangle(e.Location, Size.Empty);
             }
         }
 
@@ -2526,19 +2604,51 @@ namespace DreamsLive_Solutions_PresenterApp1
                 NotifyPresenterOfHighlights();
             }
 
+            if (this.isSelectingSecondary)
+            {
+                float targetAspectRatio = GetTargetAspectRatio();
+                int dx = e.X - this.secondarySelectionStartPoint.X;
+                int dy = e.Y - this.secondarySelectionStartPoint.Y;
+                int newWidthAbs = Math.Abs(dx);
+                int newHeightAbs = Math.Abs(dy);
+                int constrainedWidth, constrainedHeight;
+
+                if (targetAspectRatio > 0.0f)
+                {
+                    if ((float)newWidthAbs / targetAspectRatio >= (float)newHeightAbs)
+                    {
+                        constrainedWidth = newWidthAbs;
+                        constrainedHeight = (int)Math.Round((float)constrainedWidth / targetAspectRatio);
+                    }
+                    else
+                    {
+                        constrainedHeight = newHeightAbs;
+                        constrainedWidth = (int)Math.Round((float)constrainedHeight * targetAspectRatio);
+                    }
+                }
+                else
+                {
+                    constrainedWidth = newWidthAbs;
+                    constrainedHeight = newHeightAbs;
+                }
+
+                int finalX = (dx > 0) ? this.secondarySelectionStartPoint.X : this.secondarySelectionStartPoint.X - constrainedWidth;
+                int finalY = (dy > 0) ? this.secondarySelectionStartPoint.Y : this.secondarySelectionStartPoint.Y - constrainedHeight;
+
+                this.secondarySelectionRectangle = new Rectangle(finalX, finalY, constrainedWidth, constrainedHeight);
+                this.picSecondaryPreview.Invalidate();
+            }
+
             if (this.isPanningSecondaryPreview && this.picSecondaryPreview.Image != null)
             {
-                Debug.WriteLine($"MouseMove - Zoom: {this.secondaryPreviewZoom}, Pan: {this.secondaryPreviewPan.X},{this.secondaryPreviewPan.Y}");
                 float dx = e.Location.X - this.secondaryPreviewLastMousePosition.X;
                 float dy = e.Location.Y - this.secondaryPreviewLastMousePosition.Y;
 
-                // Panning needs to be scaled by the current zoom level
-                // Subtracting dx/dy makes the image content follow the mouse cursor
                 this.secondaryPreviewPan.X -= dx / this.secondaryPreviewZoom;
                 this.secondaryPreviewPan.Y -= dy / this.secondaryPreviewZoom;
 
                 this.secondaryPreviewLastMousePosition = e.Location;
-                this.picSecondaryPreview.Invalidate(); // Request repaint
+                this.picSecondaryPreview.Invalidate();
             }
 
             if (this.chkLaserPointer != null && this.chkLaserPointer.Checked && this.picSecondaryPreview.Image != null)
@@ -2557,20 +2667,73 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void picSecondaryPreview_MouseUp(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
+            if (e.Button == MouseButtons.Left && this.isSelectingSecondary)
+            {
+                this.isSelectingSecondary = false;
+                this.isHighlighting = false;
+
+                if (this.secondarySelectionRectangle.Width > 5 && this.secondarySelectionRectangle.Height > 5)
+                {
+                    ApplySecondarySelection();
+                }
+
+                this.secondarySelectionRectangle = Rectangle.Empty;
+                this.picSecondaryPreview.Invalidate();
+            }
+            else if (e.Button == MouseButtons.Right)
+            {
+                this.isPanningSecondaryPreview = false;
+                this.picSecondaryPreview.Cursor = Cursors.Default;
+                UpdateStagedContentRegionFromInteraction();
+                this.picSecondaryPreview.Invalidate();
+            }
+            else if (e.Button == MouseButtons.Left)
             {
                 this.isHighlighting = false;
-                this.isPanningSecondaryPreview = false;
-                if (this.picSecondaryPreview.Image != null) // Only change if there's an image
-                {
-                    this.picSecondaryPreview.Cursor = Cursors.Hand; // Change back to open hand if mouse is still over
-                }
-                else
-                {
-                    this.picSecondaryPreview.Cursor = Cursors.Default;
-                }
-                UpdateStagedContentRegionFromInteraction(); // Update staged region after pan
-                this.picSecondaryPreview.Invalidate(); // Refresh to apply final state
+            }
+        }
+
+        private void ApplySecondarySelection()
+        {
+            if (this.picSecondaryPreview.Image == null) return;
+
+            Point topLeft = new Point(this.secondarySelectionRectangle.Left, this.secondarySelectionRectangle.Top);
+            Point bottomRight = new Point(this.secondarySelectionRectangle.Right, this.secondarySelectionRectangle.Bottom);
+
+            PointF normTopLeft = MapControlToDocNormalized(topLeft);
+            PointF normBottomRight = MapControlToDocNormalized(bottomRight);
+
+            float x = Math.Min(normTopLeft.X, normBottomRight.X);
+            float y = Math.Min(normTopLeft.Y, normBottomRight.Y);
+            float w = Math.Abs(normTopLeft.X - normBottomRight.X);
+            float h = Math.Abs(normTopLeft.Y - normBottomRight.Y);
+
+            // Update staged content
+            this.stagedContentRegion = new RectangleF(x, y, w, h);
+            this.stagedContentIsNormalized = true;
+
+            // Re-render
+            RenderContentToPictureBox(
+                this.picSecondaryPreview,
+                this.stagedContentPath,
+                this.stagedContentPageNum,
+                this.stagedContentRegion,
+                this.stagedContentIsNormalized
+            );
+
+            // Reset pan/zoom for the new view
+            this.secondaryPreviewPan = PointF.Empty;
+            this.secondaryPreviewZoom = 1.0f;
+
+            // Sync back to main preview
+            SyncStagedSelectionToMain();
+
+            UpdateButtonEnableStates();
+            UpdateSecondaryPreviewBorderColor();
+
+            if (this.chkLinkLocalPreviewToPresenter.Checked)
+            {
+                UpdateMainPresentation(this.stagedContentPath, this.stagedContentPageNum, this.stagedContentRegion, this.stagedContentIsNormalized, this.stagedStitchedImage);
             }
         }
 
@@ -2744,6 +2907,15 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                     RectangleF destRect = new RectangleF(0, 0, this.picSecondaryPreview.ClientSize.Width, this.picSecondaryPreview.ClientSize.Height);
                     e.Graphics.DrawImage(baseImage, destRect, srcRectPixels, GraphicsUnit.Pixel);
+                }
+
+                // Draw selection rectangle if drawing
+                if (this.secondarySelectionRectangle.Width > 0 && this.secondarySelectionRectangle.Height > 0)
+                {
+                    using (Pen selectionPen = new Pen(Color.Red, 2))
+                    {
+                        e.Graphics.DrawRectangle(selectionPen, this.secondarySelectionRectangle);
+                    }
                 }
             }
 
