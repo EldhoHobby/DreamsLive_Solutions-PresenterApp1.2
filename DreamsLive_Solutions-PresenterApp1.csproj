@@ -105,6 +105,7 @@
       <DependentUpon>CopyableMessageBox.cs</DependentUpon>
     </Compile>
     <Compile Include="HttpWebServer.cs" />
+    <Compile Include="ImageUtils.cs" />
     <Compile Include="ImageSelectionData.cs" />
     <Compile Include="MachineIdentifier.cs" />
     <Compile Include="UsageManager.cs" />

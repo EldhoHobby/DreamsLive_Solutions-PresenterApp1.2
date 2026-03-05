@@ -30,6 +30,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private RectangleF? liveContentRegion = null;
         private bool liveContentIsNormalized = false;
         private bool liveContentIsStitched = false;
+        private int liveContentRotationAngle = 0;
         private bool isPresenterShowingLiveContent = false; // True if presenter is showing content matching liveContent fields
 
         private string selectedImagePath = null;
@@ -41,12 +42,14 @@ namespace DreamsLive_Solutions_PresenterApp1
         private PdfDocument currentPdfDocument = null;
         private int currentPageNumber = 0; // Internally 0-indexed for PdfiumPage.Render
         private int totalPdfPages = 0;
+        private int currentManualRotationAngle = 0; // 0, 90, 180, 270
 
         // Fields for Secondary Preview
         private string stagedContentPath = null;            // Path to the original image/PDF for what's in secondary preview
         private int stagedContentPageNum = -1;             // Page number if PDF, -1 if image, for secondary preview content
         private RectangleF? stagedContentRegion = null;     // Region in original image/PDF page coordinates (can be pixel or normalized)
         private bool stagedContentIsNormalized = false;     // Flag if stagedContentRegion is normalized
+        private int stagedContentRotationAngle = 0;
         private Bitmap stagedStitchedImage = null;          // High-res stitched bitmap if stitching is active
         private Bitmap stagedMasterImage = null;            // High-res master bitmap for non-stitched content
         private bool isSecondaryPreviewPopulated = false;   // True if secondary preview has content
@@ -1015,7 +1018,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                 if (chkLinkLocalPreviewToPresenter.Checked)
                 {
-                    UpdateMainPresentation(this.stagedStitchedImage);
+                    UpdateMainPresentation(null, -1, null, false, this.stagedStitchedImage, 0);
                 }
                 UpdateSecondaryPreviewBorderColor();
                 UpdateButtonEnableStates();
@@ -1125,6 +1128,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.selectionRectangle = Rectangle.Empty;
                 UpdateSelectionSizeLabel();
             this.isSelecting = false;
+            this.currentManualRotationAngle = 0;
             if (this.picPreview.Image != null)
             {
                 this.picPreview.Image.Dispose();
@@ -1177,23 +1181,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void CorrectRotation(Image img)
         {
-            if (img.PropertyIdList.Contains(0x0112))
-            {
-                var prop = img.GetPropertyItem(0x0112);
-                int rotationValue = prop.Type == 3 ? BitConverter.ToUInt16(prop.Value, 0) : prop.Value[0];
-                switch (rotationValue)
-                {
-                    case 1: break; // Normal
-                    case 2: img.RotateFlip(RotateFlipType.RotateNoneFlipX); break;
-                    case 3: img.RotateFlip(RotateFlipType.Rotate180FlipNone); break;
-                    case 4: img.RotateFlip(RotateFlipType.Rotate180FlipX); break;
-                    case 5: img.RotateFlip(RotateFlipType.Rotate90FlipX); break;
-                    case 6: img.RotateFlip(RotateFlipType.Rotate90FlipNone); break;
-                    case 7: img.RotateFlip(RotateFlipType.Rotate270FlipX); break;
-                    case 8: img.RotateFlip(RotateFlipType.Rotate270FlipNone); break;
-                }
-                img.RemovePropertyItem(0x0112);
-            }
+            ImageUtils.CorrectRotation(img);
         }
 
         public void RotateContent(int direction)
@@ -1202,6 +1190,9 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             float oldW = this.picPreview.Image.Width;
             float oldH = this.picPreview.Image.Height;
+
+            int angleChange = (direction > 0) ? 90 : 270;
+            this.currentManualRotationAngle = (this.currentManualRotationAngle + angleChange) % 360;
 
             RotateFlipType rotateType = direction > 0 ? RotateFlipType.Rotate90FlipNone : RotateFlipType.Rotate270FlipNone;
             this.picPreview.Image.RotateFlip(rotateType);
@@ -1431,7 +1422,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.stagedContentPath,
                 this.stagedContentPageNum,
                 this.stagedContentRegion,
-                this.stagedContentIsNormalized
+                this.stagedContentIsNormalized,
+                this.currentManualRotationAngle
             );
 
             this.isSecondaryPreviewPopulated = (this.picSecondaryPreview.Image != null);
@@ -1456,7 +1448,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                         this.stagedContentPageNum,
                         this.stagedContentRegion,
                         this.stagedContentIsNormalized,
-                        this.stagedStitchedImage
+                        this.stagedStitchedImage,
+                        this.currentManualRotationAngle
                     );
                 }
             }
@@ -1689,13 +1682,16 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.stagedContentIsNormalized = false;
             }
 
+            this.stagedContentRotationAngle = this.currentManualRotationAngle;
+
             // Render this staged content to the secondary preview
             RenderContentToPictureBox(
                 this.picSecondaryPreview,
                 this.stagedContentPath,
                 this.stagedContentPageNum,
                 this.stagedContentRegion,
-                this.stagedContentIsNormalized
+                this.stagedContentIsNormalized,
+                this.stagedContentRotationAngle
             );
 
             this.isSecondaryPreviewPopulated = (this.picSecondaryPreview.Image != null);
@@ -1720,12 +1716,13 @@ namespace DreamsLive_Solutions_PresenterApp1
                         this.stagedContentPageNum,
                         this.stagedContentRegion,
                         this.stagedContentIsNormalized,
-                        this.stagedStitchedImage
+                        this.stagedStitchedImage,
+                        this.stagedContentRotationAngle
                     );
                 }
                 else
                 {
-                    UpdateMainPresentation(null, -1, null, false); // Clear the main presentation
+                    UpdateMainPresentation(null, -1, null, false, null, 0); // Clear the main presentation
                     // isPresenterShowingLiveContent will be set to false within UpdateMainPresentation if path is null
                 }
             }
@@ -1829,7 +1826,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.stagedContentPageNum,
                 this.stagedContentRegion,
                 this.stagedContentIsNormalized,
-                this.stagedStitchedImage
+                this.stagedStitchedImage,
+                this.stagedContentRotationAngle
             );
         }
 
@@ -1841,7 +1839,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             string contentPath,
             int pageNumIfPdf, // 0-indexed for PDF, -1 for image
             RectangleF? region, // Can be null (full content), pixel-based, or normalized
-            bool isRegionNormalized)
+            bool isRegionNormalized,
+            int manualRotationAngle = 0)
         {
             if (targetBox == null || string.IsNullOrEmpty(contentPath))
             {
@@ -1872,6 +1871,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     sourceBitmap = new Bitmap(contentPath);
                     CorrectRotation(sourceBitmap);
+                    if (manualRotationAngle != 0)
+                    {
+                        ImageUtils.ApplyRotation(sourceBitmap, manualRotationAngle);
+                    }
                 }
                 else
                 {
@@ -2052,7 +2055,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        private void UpdateMainPresentation(string path, int pageNum, RectangleF? region, bool isNormalized, Bitmap stitchedImage = null)
+        private void UpdateMainPresentation(string path, int pageNum, RectangleF? region, bool isNormalized, Bitmap stitchedImage = null, int rotationAngle = 0)
         {
             // 1. Handle Clearing
             if (string.IsNullOrEmpty(path) && stitchedImage == null)
@@ -2089,7 +2092,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // The display mode from cmbDisplays is already applied by EnsurePresenterIsOpenAndReady
             // if the form was newly created, or re-applied if it was already open.
             ImageDisplayMode currentSelectedMode = GetCurrentSelectedDisplayMode(); // Get the most current mode
-            presenter.UpdateImage(path, pageNum, region, isNormalized, currentSelectedMode, stitchedImage);
+            presenter.UpdateImage(path, pageNum, region, isNormalized, currentSelectedMode, stitchedImage, rotationAngle);
 
             this.isPresenterBlackedOut = false; // Showing content means it's not blacked out.
 
@@ -2099,6 +2102,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.liveContentRegion = region;
             this.liveContentIsNormalized = isNormalized;
             this.liveContentIsStitched = (stitchedImage != null);
+            this.liveContentRotationAngle = rotationAngle;
             this.isPresenterShowingLiveContent = true;
 
 
@@ -2113,7 +2117,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void UpdateMainPresentation(Bitmap stitchedImage)
         {
-            UpdateMainPresentation(null, -1, null, false, stitchedImage);
+            UpdateMainPresentation(null, -1, null, false, stitchedImage, 0);
         }
         private RectangleF? GetSelectedRegionInImageCoordinates(Rectangle rect)
         {
@@ -2278,7 +2282,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (this.activePresentationForm == null) // Only check for null now
             {
                 // Path, pageNum, region, isNormalized will be set by the caller via UpdateImage
-                this.activePresentationForm = new PresentationForm(null, -1, targetScreen, null, false);
+                this.activePresentationForm = new PresentationForm(null, -1, targetScreen, null, false, 0);
                 this.activePresentationForm.FormClosed += (s, args) =>
                 {
                     if (s == this.activePresentationForm)
@@ -2334,6 +2338,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     this.isPresenterShowingLiveContent &&
                     this.liveContentPath == this.stagedContentPath &&
                     this.liveContentPageNum == this.stagedContentPageNum &&
+                    this.liveContentRotationAngle == this.stagedContentRotationAngle &&
                     AreRegionsEqual(this.liveContentRegion, this.stagedContentRegion) &&
                     this.liveContentIsNormalized == this.stagedContentIsNormalized;
 
@@ -2364,7 +2369,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                     this.stagedContentPageNum,
                     this.stagedContentRegion,
                     this.stagedContentIsNormalized,
-                    this.stagedStitchedImage
+                    this.stagedStitchedImage,
+                    this.stagedContentRotationAngle
                 );
             }
             // If unchecked, no immediate action is taken on the main presentation.
@@ -2423,6 +2429,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     this.liveContentPageNum == this.stagedContentPageNum &&
                     this.liveContentIsNormalized == this.stagedContentIsNormalized &&
                     this.liveContentIsStitched == (this.stagedStitchedImage != null) &&
+                    this.liveContentRotationAngle == this.stagedContentRotationAngle &&
                     AreRegionsEqual(this.liveContentRegion, this.stagedContentRegion);
 
                 if (liveContentMatchesStaged)
@@ -2766,7 +2773,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.stagedContentPath,
                 this.stagedContentPageNum,
                 this.stagedContentRegion,
-                this.stagedContentIsNormalized
+                this.stagedContentIsNormalized,
+                this.stagedContentRotationAngle
             );
 
             // Reset pan/zoom for the new view
@@ -2781,7 +2789,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             if (this.chkLinkLocalPreviewToPresenter.Checked)
             {
-                UpdateMainPresentation(this.stagedContentPath, this.stagedContentPageNum, this.stagedContentRegion, this.stagedContentIsNormalized, this.stagedStitchedImage);
+                UpdateMainPresentation(this.stagedContentPath, this.stagedContentPageNum, this.stagedContentRegion, this.stagedContentIsNormalized, this.stagedStitchedImage, this.stagedContentRotationAngle);
             }
         }
 
@@ -3040,7 +3048,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                         if (this.chkLinkLocalPreviewToPresenter.Checked)
                         {
-                            UpdateMainPresentation(this.stagedContentPath, this.stagedContentPageNum, null, false);
+                        UpdateMainPresentation(this.stagedContentPath, this.stagedContentPageNum, null, false, null, 0);
                         }
                         UpdateButtonEnableStates();
                         UpdateSecondaryPreviewBorderColor();
@@ -3276,7 +3284,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.stagedContentPath,
                 this.stagedContentPageNum,
                 this.stagedContentRegion,
-                this.stagedContentIsNormalized
+                this.stagedContentIsNormalized,
+                this.stagedContentRotationAngle
             );
 
             this.secondaryPreviewPan = PointF.Empty;
@@ -3293,7 +3302,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                     this.stagedContentPath,
                     this.stagedContentPageNum,
                     this.stagedContentRegion,
-                    this.stagedContentIsNormalized
+                    this.stagedContentIsNormalized,
+                    null,
+                    this.stagedContentRotationAngle
                 );
             }
         }

@@ -45,19 +45,20 @@ public class PresentationForm : Form
        int pageNumIfApplicable,
        Screen targetScreen,
        RectangleF? initialRegion = null,
-       bool isRegionNormalized = false)
+       bool isRegionNormalized = false,
+       int manualRotationAngle = 0)
     {
         this.pdfPathForPresentation = filePathOrPdfPath;
         this.pdfPageNumForPresentation = pageNumIfApplicable;
         this.initialSourceRegion = initialRegion;
         this.receivedRegionIsNormalized = isRegionNormalized;
 
-        InitializeComponent(filePathOrPdfPath, targetScreen);
+        InitializeComponent(filePathOrPdfPath, targetScreen, manualRotationAngle);
 
         this.KeyDown += PresentationForm_KeyDown;
     }
 
-    private void InitializeComponent(string imagePath, Screen targetScreen)
+    private void InitializeComponent(string imagePath, Screen targetScreen, int manualRotationAngle = 0)
     {
         this.displayPanel = new DoubleBufferedPanel();
         // this.zoomSlider = new TrackBar(); // Removed
@@ -110,7 +111,11 @@ public class PresentationForm : Form
                 {
                     if (this.currentPresPdfDocument != null) { this.currentPresPdfDocument.Dispose(); this.currentPresPdfDocument = null; }
                     if (this.currentImage != null) { this.currentImage.Dispose(); }
-                    this.currentImage = Image.FromFile(this.pdfPathForPresentation);
+                    this.currentImage = ImageUtils.LoadImage(this.pdfPathForPresentation);
+                    if (this.currentImage != null && manualRotationAngle != 0)
+                    {
+                        ImageUtils.ApplyRotation(this.currentImage, manualRotationAngle);
+                    }
                 }
                 else
                 {
@@ -418,7 +423,8 @@ public class PresentationForm : Form
        RectangleF? initialRegion = null,
        bool isRegionNormalized = false,
        ImageDisplayMode? modeToApply = null,
-       Bitmap stitchedImage = null)
+       Bitmap stitchedImage = null,
+       int manualRotationAngle = 0)
     {
         if (this.currentImage != null)
         {
@@ -465,7 +471,11 @@ public class PresentationForm : Form
             else if (File.Exists(this.pdfPathForPresentation))
             {
                 if (this.currentPresPdfDocument != null) { this.currentPresPdfDocument.Dispose(); this.currentPresPdfDocument = null; }
-                this.currentImage = Image.FromFile(this.pdfPathForPresentation);
+                this.currentImage = ImageUtils.LoadImage(this.pdfPathForPresentation);
+                if (this.currentImage != null && manualRotationAngle != 0)
+                {
+                    ImageUtils.ApplyRotation(this.currentImage, manualRotationAngle);
+                }
             }
             else
             {
