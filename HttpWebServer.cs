@@ -625,22 +625,47 @@ namespace DreamsLive_Solutions_PresenterApp1
                 return;
             }
 
-            using (var ms = new MemoryStream())
+            // Clone image on UI thread to avoid threading issues
+            Bitmap bmpClone = null;
+            _mainForm.Invoke((Action)(() =>
             {
-                // Use JPEG for better performance over network, especially for camera photos
-                ImageCodecInfo jpegEncoder = GetEncoder(ImageFormat.Jpeg);
-                Encoder myEncoder = Encoder.Quality;
-                EncoderParameters myEncoderParameters = new EncoderParameters(1);
-                myEncoderParameters.Param[0] = new EncoderParameter(myEncoder, 80L); // 80% quality
+                try { bmpClone = new Bitmap(image); } catch { }
+            }));
 
-                using (var bmp = new Bitmap(image))
+            if (bmpClone == null) return;
+
+            try
+            {
+                using (var ms = new MemoryStream())
                 {
-                    bmp.Save(ms, jpegEncoder, myEncoderParameters);
+                    ImageCodecInfo jpegEncoder = GetEncoder(ImageFormat.Jpeg);
+                    if (jpegEncoder != null)
+                    {
+                        // Use fully qualified names for Imaging to avoid ambiguity with System.Text
+                        System.Drawing.Imaging.EncoderParameters encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
+                        System.Drawing.Imaging.EncoderParameter qualityParam = new System.Drawing.Imaging.EncoderParameter(System.Drawing.Imaging.Encoder.Quality, (long)80);
+                        encoderParams.Param[0] = qualityParam;
+                        bmpClone.Save(ms, jpegEncoder, encoderParams);
+                        response.ContentType = "image/jpeg";
+                    }
+                    else
+                    {
+                        bmpClone.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                        response.ContentType = "image/png";
+                    }
+
+                    byte[] buffer = ms.ToArray();
+                    response.ContentLength64 = buffer.Length;
+                    await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
                 }
-                byte[] buffer = ms.ToArray();
-                response.ContentType = "image/jpeg";
-                response.ContentLength64 = buffer.Length;
-                await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error writing image response: {ex.Message}");
+            }
+            finally
+            {
+                bmpClone.Dispose();
             }
         }
 
