@@ -558,8 +558,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                 if (mainImg != null && mainImg.Height > 0)
                     mainPreviewAspectRatio = (double)mainImg.Width / mainImg.Height;
 
-                if (secondaryImg != null && secondaryImg.Height > 0)
-                    secondaryPreviewAspectRatio = (double)secondaryImg.Width / secondaryImg.Height;
+                var picSecondaryPreview = _mainForm.Controls.Find("picSecondaryPreview", true).FirstOrDefault() as PictureBox;
+                if (picSecondaryPreview != null && picSecondaryPreview.Height > 0)
+                    secondaryPreviewAspectRatio = (double)picSecondaryPreview.Width / picSecondaryPreview.Height;
 
                 var panelSecondaryPreviewBorder = _mainForm.Controls.Find("panelSecondaryPreviewBorder", true).FirstOrDefault() as Panel;
                 if (panelSecondaryPreviewBorder != null) secondaryPreviewBorderColor = ColorTranslator.ToHtml(panelSecondaryPreviewBorder.BackColor);

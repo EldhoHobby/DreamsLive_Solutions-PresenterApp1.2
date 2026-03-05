@@ -380,6 +380,9 @@
             <img id="editor-image" src="">
         </div>
         <div class="modal-footer">
+            <label style="color: white; margin-right: 15px;">
+                <input type="checkbox" id="chkLiveSyncEditor" checked> Live Sync
+            </label>
             <button onclick="rotateInEditor(-1)">Rot L</button>
             <button onclick="rotateInEditor(1)">Rot R</button>
             <button onclick="closeEditor()" style="background-color: #4CAF50; color: white;">Done</button>
@@ -572,34 +575,51 @@
             const modal = document.getElementById('editor-modal');
             const img = document.getElementById('editor-image');
 
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+
             img.src = `/database/current?t=${new Date().getTime()}`;
             modal.style.display = 'flex';
             isEditing = true;
 
             img.onload = () => {
-                if (cropper) cropper.destroy();
-                cropper = new Cropper(img, {
-                    aspectRatio: currentPresenterAspectRatio,
-                    viewMode: 1,
-                    autoCropArea: 1,
-                    responsive: true,
-                    restore: false,
-                    zoomable: true,
-                    data: lastCropData, // Restore previous crop data if available
-                    crop: (event) => {
-                        lastCropData = event.detail; // Keep track of latest crop data
-                        const now = Date.now();
-                        if (now - lastSyncTime > 100) { // Throttle to 10fps
-                            syncCrop(event.detail);
-                            lastSyncTime = now;
+                // Ensure dimensions are calculated correctly by waiting for the next frame
+                requestAnimationFrame(() => {
+                    if (cropper) cropper.destroy();
+                    cropper = new Cropper(img, {
+                        aspectRatio: currentPresenterAspectRatio,
+                        viewMode: 1,
+                        autoCropArea: 1,
+                        responsive: true,
+                        restore: false,
+                        zoomable: true,
+                        data: lastCropData, // Restore previous crop data if available
+                        ready: () => {
+                            // Sync on initial load if data was restored
+                            if (lastCropData) {
+                                syncCrop(cropper.getData(), true);
+                            }
+                        },
+                        crop: (event) => {
+                            lastCropData = event.detail; // Keep track of latest crop data
+                            const now = Date.now();
+                            if (now - lastSyncTime > 100) { // Throttle to 10fps
+                                syncCrop(event.detail);
+                                lastSyncTime = now;
+                            }
                         }
-                    }
+                    });
                 });
             };
         }
 
-        async function syncCrop(detail) {
+        async function syncCrop(detail, force = false) {
             if (!isEditing || !cropper) return;
+
+            const liveSync = document.getElementById('chkLiveSyncEditor').checked;
+            if (!liveSync && !force) return;
 
             const imageData = cropper.getImageData();
             // naturalWidth/Height are the actual pixels of the image
@@ -619,7 +639,7 @@
             // Final sync on close to ensure picSecondaryPreview is updated
             if (cropper) {
                 const detail = cropper.getData();
-                await syncCrop(detail);
+                await syncCrop(detail, true); // Force sync on close
 
                 cropper.destroy();
                 cropper = null;
