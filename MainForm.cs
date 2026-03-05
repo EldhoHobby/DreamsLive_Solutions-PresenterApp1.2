@@ -1129,6 +1129,15 @@ namespace DreamsLive_Solutions_PresenterApp1
                 UpdateSelectionSizeLabel();
             this.isSelecting = false;
             this.currentManualRotationAngle = 0;
+
+            // Reset secondary preview to prevent auto-syncing old selection to new image
+            this.isSecondaryPreviewPopulated = false;
+            if (this.picSecondaryPreview.Image != null)
+            {
+                this.picSecondaryPreview.Image.Dispose();
+                this.picSecondaryPreview.Image = null;
+            }
+
             if (this.picPreview.Image != null)
             {
                 this.picPreview.Image.Dispose();
@@ -1409,6 +1418,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
 
             if (string.IsNullOrEmpty(selectedImagePath)) return;
+
+            // Prevent crop update if dimensions are zero (initialization artifacts)
+            if (w <= 0 || h <= 0) return;
 
             // Update staged content region
             this.stagedContentPath = selectedImagePath;
