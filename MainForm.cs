@@ -1179,7 +1179,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             if (img.PropertyIdList.Contains(0x0112))
             {
-                int rotationValue = img.GetPropertyItem(0x0112).Value[0];
+                var prop = img.GetPropertyItem(0x0112);
+                int rotationValue = prop.Type == 3 ? BitConverter.ToUInt16(prop.Value, 0) : prop.Value[0];
                 switch (rotationValue)
                 {
                     case 1: break; // Normal
@@ -1191,7 +1192,54 @@ namespace DreamsLive_Solutions_PresenterApp1
                     case 7: img.RotateFlip(RotateFlipType.Rotate270FlipX); break;
                     case 8: img.RotateFlip(RotateFlipType.Rotate270FlipNone); break;
                 }
+                img.RemovePropertyItem(0x0112);
             }
+        }
+
+        public void RotateContent(int direction)
+        {
+            if (this.picPreview.Image == null) return;
+
+            float oldW = this.picPreview.Image.Width;
+            float oldH = this.picPreview.Image.Height;
+
+            RotateFlipType rotateType = direction > 0 ? RotateFlipType.Rotate90FlipNone : RotateFlipType.Rotate270FlipNone;
+            this.picPreview.Image.RotateFlip(rotateType);
+
+            if (!selectionRectangle.IsEmpty)
+            {
+                RectangleF? oldRegion = GetSelectedRegionInImageCoordinates();
+                if (oldRegion.HasValue)
+                {
+                    RectangleF newRegion;
+                    if (direction > 0) // 90 Deg CW
+                    {
+                        newRegion = new RectangleF(
+                            oldH - (oldRegion.Value.Y + oldRegion.Value.Height),
+                            oldRegion.Value.X,
+                            oldRegion.Value.Height,
+                            oldRegion.Value.Width
+                        );
+                    }
+                    else // 90 Deg CCW
+                    {
+                        newRegion = new RectangleF(
+                            oldRegion.Value.Y,
+                            oldW - (oldRegion.Value.X + oldRegion.Value.Width),
+                            oldRegion.Value.Height,
+                            oldRegion.Value.Width
+                        );
+                    }
+                    this.selectionRectangle = ConvertOriginalImageRectToPreviewRect(newRegion);
+                }
+            }
+
+            if (isSecondaryPreviewPopulated)
+            {
+                btnStageContent_Click(this, EventArgs.Empty);
+            }
+
+            this.picPreview.Invalidate();
         }
 
         private void HandleImageLoading(string imagePath)
@@ -3618,6 +3666,12 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 ShowWarningMessage(string.Format("Please enter a page number between 1 and {0}.", this.totalPdfPages));
             }
+        }
+
+        public RectangleF? GetCurrentSelectionNormalized()
+        {
+            if (selectionRectangle.IsEmpty) return null;
+            return GetSelectedRegionNormalized(selectionRectangle);
         }
 
         private string GetActivationStatus()

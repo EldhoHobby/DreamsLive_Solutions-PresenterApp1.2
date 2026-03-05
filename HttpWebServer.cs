@@ -438,6 +438,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                 float.TryParse(query.Get("h"), out float h);
                 _mainForm.RemoteCrop(x, y, w, h);
             }
+            else if (action.StartsWith("rotate"))
+            {
+                var query = request.QueryString;
+                int.TryParse(query.Get("dir"), out int dir);
+                _mainForm.Invoke((Action)(() => _mainForm.RotateContent(dir)));
+            }
             else
             {
                 _mainForm.Invoke((Action)(() =>
@@ -526,6 +532,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             bool pdfNextButtonEnabled = false;
             string currentFilePath = "";
             int currentPage = -1;
+            RectangleF? currentSelectionNormalized = null;
 
             _mainForm.Invoke((Action)(() =>
             {
@@ -568,6 +575,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 pdfNextButtonEnabled = _mainForm.IsPdfNextButtonEnabled;
                 currentFilePath = _mainForm.SelectedImagePath;
                 currentPage = _mainForm.CurrentPageNumber;
+                currentSelectionNormalized = _mainForm.GetCurrentSelectionNormalized();
             }));
 
             var statusObject = new
@@ -575,6 +583,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 mainPreview = mainPreviewAvailable ? $"/preview/main?t={DateTime.UtcNow.Ticks}" : "",
                 currentFilePath,
                 currentPage,
+                currentSelectionNormalized,
                 secondaryPreview = secondaryPreviewAvailable ? $"/preview/secondary?t={DateTime.UtcNow.Ticks}" : "",
                 pdfCurrentPage,
                 pdfTotalPages,
