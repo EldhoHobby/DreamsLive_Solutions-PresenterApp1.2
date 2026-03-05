@@ -267,12 +267,25 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                     if (fileData == null) throw new Exception("No file data found");
 
-                    string finalFilename = !string.IsNullOrEmpty(customName) ? customName + Path.GetExtension(originalFilename) : originalFilename;
+                    // Sanitize custom filename to prevent path traversal via filename
+                    string sanitizedCustomName = !string.IsNullOrEmpty(customName) ? Path.GetFileName(customName) : "";
+                    string finalFilename = !string.IsNullOrEmpty(sanitizedCustomName) ? sanitizedCustomName + Path.GetExtension(originalFilename) : Path.GetFileName(originalFilename);
                     string targetDir = "";
 
                     if (isDatabase && !string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
                     {
-                        targetDir = string.IsNullOrEmpty(targetSubfolder) ? _mainForm.DatabaseFolderPath : Path.Combine(_mainForm.DatabaseFolderPath, targetSubfolder);
+                        string dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
+                        string combinedPath = Path.GetFullPath(Path.Combine(dbPath, targetSubfolder));
+
+                        // Ensure the target subfolder is within the database root
+                        if (combinedPath.StartsWith(dbPath, StringComparison.OrdinalIgnoreCase))
+                        {
+                            targetDir = combinedPath;
+                        }
+                        else
+                        {
+                            throw new Exception("Invalid target subfolder path");
+                        }
                     }
 
                     if (string.IsNullOrEmpty(targetDir))
@@ -475,9 +488,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             string ext = Path.GetExtension(path).ToLowerInvariant();
             if (ext == ".pdf")
             {
-                // For PDF, we render the current page
+                // For PDF, we render the current page at high resolution for editing
                 using (var doc = PdfiumViewer.PdfDocument.Load(path))
                 {
+                    // Use a higher DPI for the editor view to allow sharp zooming
                     using (var img = doc.Render(_mainForm.CurrentPageNumber, 300, 300, true))
                     {
                         await WriteImageResponse(response, img);
@@ -486,12 +500,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
             else
             {
-                // For standard images, we serve the file
-                string contentType = "image/jpeg";
-                if (ext == ".png") contentType = "image/png";
-                else if (ext == ".gif") contentType = "image/gif";
-                else if (ext == ".bmp") contentType = "image/bmp";
-                await WriteFileResponseFull(response, path, contentType);
+                // For standard images, serve the processed image from the PC (which has EXIF/Manual rotation applied)
+                // This ensures the remote editor and PC are always in the same coordinate system.
+                await WriteImageResponse(response, _mainForm.GetPreviewImage());
             }
         }
 
@@ -616,15 +627,34 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             using (var ms = new MemoryStream())
             {
+                // Use JPEG for better performance over network, especially for camera photos
+                ImageCodecInfo jpegEncoder = GetEncoder(ImageFormat.Jpeg);
+                Encoder myEncoder = Encoder.Quality;
+                EncoderParameters myEncoderParameters = new EncoderParameters(1);
+                myEncoderParameters.Param[0] = new EncoderParameter(myEncoder, 80L); // 80% quality
+
                 using (var bmp = new Bitmap(image))
                 {
-                    bmp.Save(ms, ImageFormat.Png);
+                    bmp.Save(ms, jpegEncoder, myEncoderParameters);
                 }
                 byte[] buffer = ms.ToArray();
-                response.ContentType = "image/png";
+                response.ContentType = "image/jpeg";
                 response.ContentLength64 = buffer.Length;
                 await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
             }
+        }
+
+        private ImageCodecInfo GetEncoder(ImageFormat format)
+        {
+            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
+            foreach (ImageCodecInfo codec in codecs)
+            {
+                if (codec.FormatID == format.Guid)
+                {
+                    return codec;
+                }
+            }
+            return null;
         }
 
         private async Task WriteFileResponse(HttpListenerResponse response, string fileName, string contentType)
