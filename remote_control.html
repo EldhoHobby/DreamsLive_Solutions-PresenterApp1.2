@@ -80,7 +80,8 @@
             width: 50%;
             min-height: 100px;
             background-color: #000;
-            border: 5px solid #ccc;
+            outline: 2px solid #ccc; /* Use outline instead of border to keep coordinate math clean */
+            outline-offset: -2px;
             box-sizing: border-box;
             overflow: hidden;
             display: flex;
@@ -89,7 +90,7 @@
         }
 
         body.dark-mode .preview-box {
-            border-color: #555;
+            outline-color: #555;
         }
 
         .preview-box img {
@@ -668,7 +669,7 @@
                 if (status.secondaryPreviewAspectRatio) {
                     document.getElementById('picSecondaryContainer').style.aspectRatio = `${status.secondaryPreviewAspectRatio}`;
                 }
-                document.getElementById('picSecondaryContainer').style.borderColor = status.secondaryPreviewBorderColor;
+                document.getElementById('picSecondaryContainer').style.outlineColor = status.secondaryPreviewBorderColor;
 
                 // The "main" preview is now physically the second element
                 const secondPreview = document.getElementById('picPreview');

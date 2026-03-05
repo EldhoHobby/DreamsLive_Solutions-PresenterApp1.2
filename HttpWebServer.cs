@@ -547,16 +547,19 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             _mainForm.Invoke((Action)(() =>
             {
-                mainPreviewAvailable = _mainForm.GetPreviewImage() != null;
-                secondaryPreviewAvailable = _mainForm.GetSecondaryPreviewImage() != null;
+                Image mainImg = _mainForm.GetPreviewImage();
+                Image secondaryImg = _mainForm.GetSecondaryPreviewImage();
+
+                mainPreviewAvailable = mainImg != null;
+                secondaryPreviewAvailable = secondaryImg != null;
                 pdfCurrentPage = _mainForm.GetCurrentPdfPage();
                 pdfTotalPages = _mainForm.GetTotalPdfPages();
 
-                var picPreview = _mainForm.Controls.Find("picPreview", true).FirstOrDefault() as PictureBox;
-                if (picPreview != null && picPreview.Height > 0) mainPreviewAspectRatio = (double)picPreview.Width / picPreview.Height;
+                if (mainImg != null && mainImg.Height > 0)
+                    mainPreviewAspectRatio = (double)mainImg.Width / mainImg.Height;
 
-                var picSecondaryPreview = _mainForm.Controls.Find("picSecondaryPreview", true).FirstOrDefault() as PictureBox;
-                if (picSecondaryPreview != null && picSecondaryPreview.Height > 0) secondaryPreviewAspectRatio = (double)picSecondaryPreview.Width / picSecondaryPreview.Height;
+                if (secondaryImg != null && secondaryImg.Height > 0)
+                    secondaryPreviewAspectRatio = (double)secondaryImg.Width / secondaryImg.Height;
 
                 var panelSecondaryPreviewBorder = _mainForm.Controls.Find("panelSecondaryPreviewBorder", true).FirstOrDefault() as Panel;
                 if (panelSecondaryPreviewBorder != null) secondaryPreviewBorderColor = ColorTranslator.ToHtml(panelSecondaryPreviewBorder.BackColor);
