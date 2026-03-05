@@ -318,8 +318,6 @@
         <div class="controls">
             <button id="btnStageContent" onclick="performAction('stage')">Stage Preview</button>
             <button id="btnPushToPresenter" onclick="performAction('push')">Go Live</button>
-            <button id="btnRotateL" onclick="performAction('rotate?dir=-1')">Rot L</button>
-            <button id="btnRotateR" onclick="performAction('rotate?dir=1')">Rot R</button>
             <button id="btnEditCrop" onclick="openEditor()" style="display: none;">Edit / Crop</button>
             <button id="btnClearPresenterDisplay" onclick="performAction('blackout')">Blackout</button>
             <button id="btnCloseLivePresenter" onclick="performAction('close')">Close Live</button>
@@ -381,7 +379,9 @@
             <img id="editor-image" src="">
         </div>
         <div class="modal-footer">
-            <button onclick="closeEditor()">Done</button>
+            <button onclick="rotateInEditor(-1)">Rot L</button>
+            <button onclick="rotateInEditor(1)">Rot R</button>
+            <button onclick="closeEditor()" style="background-color: #4CAF50; color: white;">Done</button>
         </div>
     </div>
 
@@ -394,6 +394,8 @@
         let cropper = null;
         let isEditing = false;
         let lastSyncTime = 0;
+        let lastCropData = null;
+        let lastStatusFilePath = null;
 
         // Interactive Preview State
         let isDrawing = false;
@@ -483,8 +485,6 @@
                     item.className = 'gallery-item';
                     item.onclick = async () => {
                         await performAction(`open?path=${encodeURIComponent(f.RelativePath)}`);
-                        // Automatically open editor after selecting from gallery
-                        setTimeout(openEditor, 500);
                     };
                     const img = document.createElement('img');
                     if (f.Extension === '.pdf') {
@@ -535,9 +535,6 @@
                     showMessage(responseText, 'info');
                     fileInput.value = ''; // Clear the input
                     if (document.getElementById('chkUploadToDatabase').checked) refreshGallery();
-
-                    // Automatically open editor after upload
-                    setTimeout(openEditor, 500);
                 } else {
                     uploadErrorLock = true; // Lock message on screen
                     showMessage(responseText, 'error');
@@ -560,9 +557,20 @@
             }
         }
 
+        async function rotateInEditor(dir) {
+            await performAction(`rotate?dir=${dir}`);
+            // Wait a bit for the host to process rotation, then reload the image in editor
+            setTimeout(() => {
+                const img = document.getElementById('editor-image');
+                img.src = `/database/current?t=${new Date().getTime()}`;
+                // Cropper will be re-initialized by img.onload in openEditor if it was already open
+            }, 200);
+        }
+
         function openEditor() {
             const modal = document.getElementById('editor-modal');
             const img = document.getElementById('editor-image');
+
             img.src = `/database/current?t=${new Date().getTime()}`;
             modal.style.display = 'flex';
             isEditing = true;
@@ -576,7 +584,9 @@
                     responsive: true,
                     restore: false,
                     zoomable: true,
+                    data: lastCropData, // Restore previous crop data if available
                     crop: (event) => {
+                        lastCropData = event.detail; // Keep track of latest crop data
                         const now = Date.now();
                         if (now - lastSyncTime > 100) { // Throttle to 10fps
                             syncCrop(event.detail);
@@ -588,11 +598,10 @@
         }
 
         async function syncCrop(detail) {
-            if (!isEditing) return;
+            if (!isEditing || !cropper) return;
 
-            // detail contains x, y, width, height in pixels of the natural image
-            // We need to normalize these relative to the natural image size
             const imageData = cropper.getImageData();
+            // naturalWidth/Height are the actual pixels of the image
             const x = detail.x / imageData.naturalWidth;
             const y = detail.y / imageData.naturalHeight;
             const w = detail.width / imageData.naturalWidth;
@@ -601,11 +610,16 @@
             await fetch(`/action/remote-crop?x=${x}&y=${y}&w=${w}&h=${h}`);
         }
 
-        function closeEditor() {
+        async function closeEditor() {
             const modal = document.getElementById('editor-modal');
             modal.style.display = 'none';
             isEditing = false;
+
+            // Final sync on close to ensure picSecondaryPreview is updated
             if (cropper) {
+                const detail = cropper.getData();
+                await syncCrop(detail);
+
                 cropper.destroy();
                 cropper = null;
             }
@@ -622,8 +636,20 @@
                 const btnEdit = document.getElementById('btnEditCrop');
                 if (status.currentFilePath) {
                     btnEdit.style.display = 'inline-block';
+
+                    // Auto-open editor if a new file is detected
+                    if (status.currentFilePath !== lastStatusFilePath) {
+                        lastStatusFilePath = status.currentFilePath;
+                        lastCropData = null; // Clear crop data for new file
+
+                        if (!isEditing) {
+                            openEditor();
+                        }
+                    }
                 } else {
                     btnEdit.style.display = 'none';
+                    lastStatusFilePath = null;
+                    lastCropData = null;
                 }
 
                 if (uploadErrorLock) {
