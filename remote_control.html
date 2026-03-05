@@ -100,14 +100,6 @@
             pointer-events: none;
         }
 
-        .selection-overlay {
-            position: absolute;
-            border: 2px solid red;
-            box-sizing: border-box;
-            pointer-events: none;
-            display: none;
-            z-index: 10;
-        }
 
         .controls, .pdf-controls, .upload {
             display: grid;
@@ -313,7 +305,6 @@
             </div>
             <div id="picPreviewContainer" class="preview-box">
                 <img id="picPreview" src="">
-                <div id="selection-overlay" class="selection-overlay"></div>
             </div>
         </div>
         <div class="controls">
@@ -381,7 +372,7 @@
         </div>
         <div class="modal-footer">
             <label style="color: white; margin-right: 15px;">
-                <input type="checkbox" id="chkLiveSyncEditor"> Live Sync
+                <input type="checkbox" id="chkLiveSyncEditor" onchange="toggleLiveSync()"> Live Sync
             </label>
             <button onclick="rotateInEditor(-1)">Rot L</button>
             <button onclick="rotateInEditor(1)">Rot R</button>
@@ -401,6 +392,7 @@
         let lastCropData = null;
         let lastStatusFilePath = null;
         let isCropperReady = false;
+        let isInitialStatusLoad = true;
 
         // Interactive Preview State
         let isDrawing = false;
@@ -622,6 +614,14 @@
             };
         }
 
+        async function toggleLiveSync() {
+            const liveSync = document.getElementById('chkLiveSyncEditor').checked;
+            if (liveSync && isEditing && cropper && isCropperReady) {
+                const imageData = cropper.getImageData();
+                await syncCrop(cropper.getData(), imageData.naturalWidth, imageData.naturalHeight, true);
+            }
+        }
+
         async function syncCrop(detail, naturalWidth, naturalHeight, force = false) {
             const liveSync = document.getElementById('chkLiveSyncEditor').checked;
             if (!liveSync && !force) return;
@@ -664,13 +664,18 @@
                 if (status.currentFilePath) {
                     btnEdit.style.display = 'inline-block';
 
-                    // Auto-open editor if a new file is detected
+                    // Auto-open editor if a new file is detected during an active session
                     if (status.currentFilePath !== lastStatusFilePath) {
+                        const isNewFile = lastStatusFilePath !== null;
                         lastStatusFilePath = status.currentFilePath;
                         lastCropData = null; // Clear crop data for new file
 
-                        if (!isEditing) {
-                            openEditor();
+                        // Only auto-open if this isn't the first status load of the page
+                        if (!isEditing && (isNewFile || !isInitialStatusLoad)) {
+                            // If it's a completely new file (not just the initial one on refresh)
+                            if (isNewFile) {
+                                openEditor();
+                            }
                         }
                     }
                 } else {
@@ -704,18 +709,6 @@
                     document.getElementById('picPreviewContainer').style.aspectRatio = `${status.mainPreviewAspectRatio}`;
                 }
 
-                // Update selection overlay
-                const overlay = document.getElementById('selection-overlay');
-                if (status.currentSelectionNormalized && !isDrawing) {
-                    const sel = status.currentSelectionNormalized;
-                    overlay.style.display = 'block';
-                    overlay.style.left = (sel.X * 100) + '%';
-                    overlay.style.top = (sel.Y * 100) + '%';
-                    overlay.style.width = (sel.Width * 100) + '%';
-                    overlay.style.height = (sel.Height * 100) + '%';
-                } else if (!isDrawing) {
-                    overlay.style.display = 'none';
-                }
 
                 const pdfControls = document.querySelector('.pdf-controls');
                 if (status.pdfTotalPages > 0) {
@@ -761,6 +754,8 @@
                 if (pdfNextButton) {
                     pdfNextButton.classList.toggle('button-disabled', status.pdfNextButtonEnabled !== true);
                 }
+
+                isInitialStatusLoad = false;
             } catch (error) {
                 console.error('Error fetching status:', error);
             }
@@ -788,74 +783,6 @@
         updateStatus();
         populateFolderDropdowns().then(() => refreshGallery());
 
-        // --- Drawing interaction on Source Preview ---
-        const previewContainer = document.getElementById('picPreviewContainer');
-        const overlay = document.getElementById('selection-overlay');
-
-        function getNormalizedCoords(e, rect) {
-            // Source images are object-fit: contain.
-            // This means we need to account for pillarboxing/letterboxing
-            // but for a simple normalized selection, 0..1 relative to CONTAINER
-            // is often what's expected if the container has the same AR as the image.
-            return {
-                x: (e.clientX - rect.left) / rect.width,
-                y: (e.clientY - rect.top) / rect.height
-            };
-        }
-
-        previewContainer.onpointerdown = (e) => {
-            isDrawing = true;
-            const rect = previewContainer.getBoundingClientRect();
-            drawStart = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
-            overlay.style.display = 'block';
-            overlay.style.left = (drawStart.x * 100) + '%';
-            overlay.style.top = (drawStart.y * 100) + '%';
-            overlay.style.width = '0%';
-            overlay.style.height = '0%';
-            previewContainer.setPointerCapture(e.pointerId);
-        };
-
-        previewContainer.onpointermove = (e) => {
-            if (!isDrawing) return;
-            const rect = previewContainer.getBoundingClientRect();
-            const current = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
-
-            let x = Math.min(drawStart.x, current.x);
-            let y = Math.min(drawStart.y, current.y);
-            let w = Math.abs(current.x - drawStart.x);
-            let h = Math.abs(current.y - drawStart.y);
-
-            // Constraint logic
-            if (currentPresenterAspectRatio) {
-                if (w / currentPresenterAspectRatio > h) {
-                    w = h * currentPresenterAspectRatio;
-                    if (current.x < drawStart.x) x = drawStart.x - w;
-                } else {
-                    h = w / currentPresenterAspectRatio;
-                    if (current.y < drawStart.y) y = drawStart.y - h;
-                }
-            }
-
-            currentSelection = { x, y, w, h };
-            overlay.style.left = (x * 100) + '%';
-            overlay.style.top = (y * 100) + '%';
-            overlay.style.width = (w * 100) + '%';
-            overlay.style.height = (h * 100) + '%';
-        };
-
-        previewContainer.onpointerup = async (e) => {
-            if (!isDrawing) return;
-            isDrawing = false;
-            previewContainer.releasePointerCapture(e.pointerId);
-            if (currentSelection && currentSelection.w > 0.01) {
-                await fetch(`/action/remote-crop?x=${currentSelection.x}&y=${currentSelection.y}&w=${currentSelection.w}&h=${currentSelection.h}`);
-            } else {
-                // Click to clear
-                overlay.style.display = 'none';
-                await fetch(`/action/remote-crop?x=0&y=0&w=0&h=0`);
-            }
-        };
-
         // --- Pinch-to-zoom on Staging Preview ---
         const secondaryContainer = document.getElementById('picSecondaryContainer');
         const secondaryImg = document.getElementById('picSecondaryPreview');
@@ -865,7 +792,6 @@
             const delta = e.deltaY > 0 ? 0.9 : 1.1;
             secondaryZoom *= delta;
             applySecondaryTransform();
-            syncSecondaryDebounced();
         };
 
         secondaryContainer.onpointerdown = (e) => {
@@ -884,7 +810,6 @@
 
             lastTouchCenter = { x: e.clientX, y: e.clientY };
             applySecondaryTransform();
-            syncSecondaryDebounced();
         };
 
         secondaryContainer.onpointerup = (e) => {
@@ -893,19 +818,6 @@
 
         function applySecondaryTransform() {
             secondaryImg.style.transform = `scale(${secondaryZoom}) translate(${secondaryPan.x}px, ${secondaryPan.y}px)`;
-        }
-
-        let syncTimeout = null;
-        function syncSecondaryDebounced() {
-            clearTimeout(syncTimeout);
-            syncTimeout = setTimeout(async () => {
-                // This is a simplified approach for the web remote sync.
-                // In a real scenario, we'd calculate the visible rectangle.
-                // For now, let's stick to the cropper modal for precise staging if needed,
-                // or implement the complex viewport calculation here.
-                // Given the instruction "pinch to zoom should work on PicSeconderyPreview",
-                // we'll at least support the UI feedback.
-            }, 100);
         }
 
         const themeToggle = document.getElementById('theme-toggle');
