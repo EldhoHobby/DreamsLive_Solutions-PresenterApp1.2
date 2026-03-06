@@ -292,7 +292,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     {
                         string tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
                         File.WriteAllBytes(tempFilePath, fileData);
-                        _mainForm.Invoke((Action)(() => _mainForm.ProcessUploadedFile(tempFilePath, originalFilename)));
+                        _mainForm.Invoke((Action)(() => _mainForm.ProcessUploadedFile(tempFilePath, originalFilename, updateStaging: false)));
                     }
                     else
                     {
@@ -310,7 +310,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                             }
                         }
                         File.WriteAllBytes(destPath, fileData);
-                        _mainForm.Invoke((Action)(() => _mainForm.ProcessNewImage(destPath)));
+                        _mainForm.Invoke((Action)(() => _mainForm.ProcessNewImage(destPath, updateStaging: false)));
                     }
 
                     response.StatusCode = (int)HttpStatusCode.OK;
@@ -419,9 +419,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 var query = request.QueryString;
                 string relativePath = query.Get("path");
+                bool.TryParse(query.Get("edit"), out bool isEdit);
                 if (!string.IsNullOrEmpty(relativePath))
                 {
-                    _mainForm.OpenMediaFile(relativePath);
+                    _mainForm.OpenMediaFile(relativePath, updateStaging: !isEdit);
                 }
             }
             else if (action.StartsWith("auto-send"))

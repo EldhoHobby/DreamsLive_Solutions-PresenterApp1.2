@@ -607,13 +607,13 @@ namespace DreamsLive_Solutions_PresenterApp1
             return files;
         }
 
-        public void OpenMediaFile(string relativePath)
+        public void OpenMediaFile(string relativePath, bool updateStaging = true)
         {
             if (string.IsNullOrEmpty(DatabaseFolderPath)) return;
             string fullPath = Path.Combine(DatabaseFolderPath, relativePath);
             if (File.Exists(fullPath))
             {
-                this.Invoke((Action)(() => ProcessNewImage(fullPath)));
+                this.Invoke((Action)(() => ProcessNewImage(fullPath, updateStaging)));
             }
         }
 
@@ -1092,7 +1092,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         }
 
         // In MainForm.cs
-        public void ProcessUploadedFile(string tempPath, string originalFileName)
+        public void ProcessUploadedFile(string tempPath, string originalFileName, bool updateStaging = true)
         {
             string fileExtension = Path.GetExtension(originalFileName).ToLowerInvariant();
             string newTempPath = Path.ChangeExtension(tempPath, fileExtension);
@@ -1105,7 +1105,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
                 File.Move(tempPath, newTempPath);
 
-                ProcessNewImage(newTempPath);
+                ProcessNewImage(newTempPath, updateStaging);
             }
             catch (Exception ex)
             {
@@ -1121,7 +1121,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        public void ProcessNewImage(string imagePath)
+        public void ProcessNewImage(string imagePath, bool updateStaging = true)
         {
             ClearHighlights();
             // Reset the main preview area before loading new content.
@@ -1130,12 +1130,15 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.isSelecting = false;
             this.currentManualRotationAngle = 0;
 
-            // Reset secondary preview to prevent auto-syncing old selection to new image
-            this.isSecondaryPreviewPopulated = false;
-            if (this.picSecondaryPreview.Image != null)
+            if (updateStaging)
             {
-                this.picSecondaryPreview.Image.Dispose();
-                this.picSecondaryPreview.Image = null;
+                // Reset secondary preview to prevent auto-syncing old selection to new image
+                this.isSecondaryPreviewPopulated = false;
+                if (this.picSecondaryPreview.Image != null)
+                {
+                    this.picSecondaryPreview.Image.Dispose();
+                    this.picSecondaryPreview.Image = null;
+                }
             }
 
             if (this.picPreview.Image != null)
@@ -2654,12 +2657,13 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.secondaryPreviewLastMousePosition = e.Location;
                 this.picSecondaryPreview.Cursor = Cursors.SizeAll;
             }
-            else if (e.Button == MouseButtons.Left)
-            {
-                this.secondarySelectionStartPoint = e.Location;
-                this.isSelectingSecondary = true;
-                this.secondarySelectionRectangle = new Rectangle(e.Location, Size.Empty);
-            }
+            // Selection drawing disabled as per requirement
+            // else if (e.Button == MouseButtons.Left)
+            // {
+            //     this.secondarySelectionStartPoint = e.Location;
+            //     this.isSelectingSecondary = true;
+            //     this.secondarySelectionRectangle = new Rectangle(e.Location, Size.Empty);
+            // }
         }
 
         private void picSecondaryPreview_MouseMove(object sender, MouseEventArgs e)
@@ -2671,40 +2675,11 @@ namespace DreamsLive_Solutions_PresenterApp1
                 NotifyPresenterOfHighlights();
             }
 
-            if (this.isSelectingSecondary)
-            {
-                float targetAspectRatio = GetTargetAspectRatio();
-                int dx = e.X - this.secondarySelectionStartPoint.X;
-                int dy = e.Y - this.secondarySelectionStartPoint.Y;
-                int newWidthAbs = Math.Abs(dx);
-                int newHeightAbs = Math.Abs(dy);
-                int constrainedWidth, constrainedHeight;
-
-                if (targetAspectRatio > 0.0f)
-                {
-                    if ((float)newWidthAbs / targetAspectRatio >= (float)newHeightAbs)
-                    {
-                        constrainedWidth = newWidthAbs;
-                        constrainedHeight = (int)Math.Round((float)constrainedWidth / targetAspectRatio);
-                    }
-                    else
-                    {
-                        constrainedHeight = newHeightAbs;
-                        constrainedWidth = (int)Math.Round((float)constrainedHeight * targetAspectRatio);
-                    }
-                }
-                else
-                {
-                    constrainedWidth = newWidthAbs;
-                    constrainedHeight = newHeightAbs;
-                }
-
-                int finalX = (dx > 0) ? this.secondarySelectionStartPoint.X : this.secondarySelectionStartPoint.X - constrainedWidth;
-                int finalY = (dy > 0) ? this.secondarySelectionStartPoint.Y : this.secondarySelectionStartPoint.Y - constrainedHeight;
-
-                this.secondarySelectionRectangle = new Rectangle(finalX, finalY, constrainedWidth, constrainedHeight);
-                this.picSecondaryPreview.Invalidate();
-            }
+            // Selection drawing disabled as per requirement
+            // if (this.isSelectingSecondary)
+            // {
+            //     ...
+            // }
 
             if (this.isPanningSecondaryPreview && this.picSecondaryPreview.Image != null)
             {
@@ -2738,12 +2713,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 this.isSelectingSecondary = false;
                 this.isHighlighting = false;
-
-                if (this.secondarySelectionRectangle.Width > 5 && this.secondarySelectionRectangle.Height > 5)
-                {
-                    ApplySecondarySelection();
-                }
-
+                // Selection logic disabled
                 this.secondarySelectionRectangle = Rectangle.Empty;
                 this.picSecondaryPreview.Invalidate();
             }

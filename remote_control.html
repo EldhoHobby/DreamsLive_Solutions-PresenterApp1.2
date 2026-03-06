@@ -481,7 +481,7 @@
                     const item = document.createElement('div');
                     item.className = 'gallery-item';
                     item.onclick = async () => {
-                        await performAction(`open?path=${encodeURIComponent(f.RelativePath)}`);
+                        await performAction(`open?path=${encodeURIComponent(f.RelativePath)}&edit=true`);
                     };
                     const img = document.createElement('img');
                     if (f.Extension === '.pdf') {
