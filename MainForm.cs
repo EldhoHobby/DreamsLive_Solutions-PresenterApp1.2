@@ -1123,7 +1123,10 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         public void ProcessNewImage(string imagePath, bool updateStaging = true)
         {
-            ClearHighlights();
+            if (updateStaging)
+            {
+                ClearHighlights();
+            }
             // Reset the main preview area before loading new content.
             this.selectionRectangle = Rectangle.Empty;
                 UpdateSelectionSizeLabel();

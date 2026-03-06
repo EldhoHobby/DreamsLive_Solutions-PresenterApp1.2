@@ -664,19 +664,10 @@
                 if (status.currentFilePath) {
                     btnEdit.style.display = 'inline-block';
 
-                    // Auto-open editor if a new file is detected during an active session
+                    // Track new file to clear last crop data, but DON'T auto-open the editor
                     if (status.currentFilePath !== lastStatusFilePath) {
-                        const isNewFile = lastStatusFilePath !== null;
                         lastStatusFilePath = status.currentFilePath;
                         lastCropData = null; // Clear crop data for new file
-
-                        // Only auto-open if this isn't the first status load of the page
-                        if (!isEditing && (isNewFile || !isInitialStatusLoad)) {
-                            // If it's a completely new file (not just the initial one on refresh)
-                            if (isNewFile) {
-                                openEditor();
-                            }
-                        }
                     }
                 } else {
                     btnEdit.style.display = 'none';
