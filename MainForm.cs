@@ -802,8 +802,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
                 UpdateSelectionSizeLabel();
 
-                btnStageContent_Click(this, EventArgs.Empty);
-
                 // Save selection logic
                 if (!this.selectionRectangle.IsEmpty && this.selectedImagePath != null)
                 {
@@ -1079,7 +1077,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 UpdateSelectionSizeLabel();
                 picPreview.Invalidate();
 
-                if (!pageChanged)
+                if (chkAutoStagePreview.Checked && !pageChanged)
                 {
                     btnStageContent_Click(this, EventArgs.Empty);
                 }
@@ -1934,10 +1932,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                     actualSrcRect = new RectangleF(0, 0, sourceBitmap.Width, sourceBitmap.Height);
                 }
 
-                actualSrcRect.X = Math.Max(0F, actualSrcRect.X);
-                actualSrcRect.Y = Math.Max(0F, actualSrcRect.Y);
-                actualSrcRect.Width = Math.Max(0F, Math.Min(actualSrcRect.Width, sourceBitmap.Width - actualSrcRect.X));
-                actualSrcRect.Height = Math.Max(0F, Math.Min(actualSrcRect.Height, sourceBitmap.Height - actualSrcRect.Y));
+                // Removed clamping to allow regions outside the image (black bars) as per requirement
+                actualSrcRect.Width = Math.Max(0.001F, actualSrcRect.Width);
+                actualSrcRect.Height = Math.Max(0.001F, actualSrcRect.Height);
 
                 Bitmap finalBitmapForTarget = CreateFittedBitmap(sourceBitmap, targetBox.ClientSize, targetBox.BackColor, actualSrcRect);
 
@@ -3594,13 +3591,9 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             RectangleF actualSrcRect = sourceRegion ?? new RectangleF(0, 0, sourceImage.Width, sourceImage.Height);
 
-            // Clamp actualSrcRect to be within sourceImage bounds
-            actualSrcRect.X = Math.Max(0F, actualSrcRect.X);
-            actualSrcRect.Y = Math.Max(0F, actualSrcRect.Y);
-            actualSrcRect.Width = Math.Max(0F, Math.Min(actualSrcRect.Width, sourceImage.Width - actualSrcRect.X));
-            actualSrcRect.Height = Math.Max(0F, Math.Min(actualSrcRect.Height, sourceImage.Height - actualSrcRect.Y));
-
-            if (actualSrcRect.Width <= 0F || actualSrcRect.Height <= 0F) return null;
+            // Ensure dimensions are positive. Negative X/Y is allowed for padding.
+            actualSrcRect.Width = Math.Max(0.001F, actualSrcRect.Width);
+            actualSrcRect.Height = Math.Max(0.001F, actualSrcRect.Height);
 
             Bitmap fittedBitmap = new Bitmap(targetSize.Width, targetSize.Height);
             using (Graphics g = Graphics.FromImage(fittedBitmap))

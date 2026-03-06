@@ -259,11 +259,7 @@ public class PresentationForm : Form
             {
                 actualSourceRegion = this.initialSourceRegion.Value;
             }
-            // Clamp actualSourceRegion to be within image bounds
-            actualSourceRegion.X = Math.Max(0, actualSourceRegion.X);
-            actualSourceRegion.Y = Math.Max(0, actualSourceRegion.Y);
-            actualSourceRegion.Width = Math.Min(actualSourceRegion.Width, imageToDraw.Width - actualSourceRegion.X);
-            actualSourceRegion.Height = Math.Min(actualSourceRegion.Height, imageToDraw.Height - actualSourceRegion.Y);
+            // Removed clamping to allow regions outside the image (black bars) as per requirement
         }
         else
         {

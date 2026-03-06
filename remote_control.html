@@ -588,8 +588,9 @@
 
                     cropper = new Cropper(img, {
                         aspectRatio: currentPresenterAspectRatio,
-                        viewMode: 1,
-                        autoCropArea: 1,
+                        viewMode: 0,
+                        dragMode: 'move',
+                        autoCropArea: 0.8,
                         responsive: true,
                         restore: false,
                         zoomable: true,
