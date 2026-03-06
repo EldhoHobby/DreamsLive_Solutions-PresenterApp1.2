@@ -712,24 +712,7 @@
                     overlay.style.height = (sel.Height * 100) + '%';
                     overlay.style.display = 'block';
 
-                    // Update editor selection if open
-                    if (isEditing && cropper && isCropperReady) {
-                        const imageData = cropper.getImageData();
-                        const newCropData = {
-                            x: sel.X * imageData.naturalWidth,
-                            y: sel.Y * imageData.naturalHeight,
-                            width: sel.Width * imageData.naturalWidth,
-                            height: sel.Height * imageData.naturalHeight
-                        };
-
-                        // Only update if difference is significant to avoid loops
-                        const currentData = cropper.getData();
-                        const dx = Math.abs(currentData.x - newCropData.x);
-                        const dy = Math.abs(currentData.y - newCropData.y);
-                        if (dx > 2 || dy > 2) {
-                            cropper.setData(newCropData);
-                        }
-                    }
+                    // Removed real-time editor sync to prevent host-side changes from disrupting mobile edits
                 } else {
                     overlay.style.display = 'none';
                 }
