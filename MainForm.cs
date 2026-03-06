@@ -1239,6 +1239,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             if (isSecondaryPreviewPopulated && this.stagedContentPath == this.selectedImagePath)
             {
+                this.stagedContentRotationAngle = this.currentManualRotationAngle;
                 btnStageContent_Click(this, EventArgs.Empty);
             }
 
@@ -1262,12 +1263,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.selectedImagePath = imagePath;
                 this.lblImagePath.Text = "Selected Image: " + Path.GetFileName(this.selectedImagePath);
 
-                // Load the image into the preview PictureBox.
-                using (var bmpTemp = new Bitmap(this.selectedImagePath))
-                {
-                    CorrectRotation(bmpTemp);
-                    this.picPreview.Image = new Bitmap(bmpTemp);
-                }
+                // Load the image into the preview PictureBox using unified utility.
+                this.picPreview.Image = ImageUtils.LoadImage(this.selectedImagePath);
 
                 // Restore any saved selection for this image.
                 this.selectionRectangle = Rectangle.Empty;
@@ -1430,6 +1427,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.stagedContentPageNum = (this.currentPdfDocument != null) ? this.currentPageNumber : -1;
             this.stagedContentRegion = new RectangleF(x, y, w, h);
             this.stagedContentIsNormalized = true;
+            this.stagedContentRotationAngle = this.currentManualRotationAngle;
 
             // Render to secondary preview
             RenderContentToPictureBox(
@@ -1438,7 +1436,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.stagedContentPageNum,
                 this.stagedContentRegion,
                 this.stagedContentIsNormalized,
-                this.currentManualRotationAngle
+                this.stagedContentRotationAngle
             );
 
             this.isSecondaryPreviewPopulated = (this.picSecondaryPreview.Image != null);
@@ -1884,9 +1882,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
                 else if (File.Exists(contentPath)) // Standard image
                 {
-                    sourceBitmap = new Bitmap(contentPath);
-                    CorrectRotation(sourceBitmap);
-                    if (manualRotationAngle != 0)
+                    sourceBitmap = (Bitmap)ImageUtils.LoadImage(contentPath);
+                    if (sourceBitmap != null && manualRotationAngle != 0)
                     {
                         ImageUtils.ApplyRotation(sourceBitmap, manualRotationAngle);
                     }
