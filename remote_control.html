@@ -356,7 +356,7 @@
         </div>
         <div class="settings">
             <label>
-                <input type="checkbox" id="chkLinkLocalPreviewToPresenter" onchange="updateAutoSend()">
+                <input type="checkbox" id="chkLinkLocalPreviewToPresenter" onchange="updateAutoSend(this)">
                 Auto Send to Presenter
             </label>
         </div>
@@ -371,9 +371,12 @@
         <div class="modal-content">
             <img id="editor-image" src="">
         </div>
-        <div class="modal-footer">
-            <label style="color: white; margin-right: 15px;">
+        <div class="modal-footer" style="flex-wrap: wrap; gap: 10px;">
+            <label style="color: white;">
                 <input type="checkbox" id="chkLiveSyncEditor" onchange="toggleLiveSync()"> Live Sync
+            </label>
+            <label style="color: white;">
+                <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Send
             </label>
             <button onclick="rotateInEditor(-1)">Rot L</button>
             <button onclick="rotateInEditor(1)">Rot R</button>
@@ -409,9 +412,12 @@
             await fetch(`/action/${action}`);
         }
 
-        async function updateAutoSend() {
-            const checkbox = document.getElementById('chkLinkLocalPreviewToPresenter');
-            await fetch(`/action/auto-send?enable=${checkbox.checked}`);
+        async function updateAutoSend(el) {
+            const val = el.checked;
+            // Sync all auto-send checkboxes
+            document.getElementById('chkLinkLocalPreviewToPresenter').checked = val;
+            document.getElementById('chkAutoSendEditor').checked = val;
+            await fetch(`/action/auto-send?enable=${val}`);
         }
 
         async function clearMessage() {
@@ -730,10 +736,10 @@
                     pdfControls.style.display = 'none';
                 }
 
-                const autoSendCheckbox = document.getElementById('chkLinkLocalPreviewToPresenter');
-                if (autoSendCheckbox) {
-                    autoSendCheckbox.checked = status.autoSend;
-                }
+                const autoSendDashboard = document.getElementById('chkLinkLocalPreviewToPresenter');
+                if (autoSendDashboard) autoSendDashboard.checked = status.autoSend;
+                const autoSendEditor = document.getElementById('chkAutoSendEditor');
+                if (autoSendEditor) autoSendEditor.checked = status.autoSend;
 
                 const goLiveButton = document.getElementById('btnPushToPresenter');
                 if (goLiveButton) {
