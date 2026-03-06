@@ -1877,7 +1877,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     tempPdfDoc = PdfDocument.Load(contentPath);
                     if (pageNumIfPdf >= 0 && pageNumIfPdf < tempPdfDoc.PageCount)
                     {
-                        float previewRenderDpi = 600f;
+                        float previewRenderDpi = 150f; // Performance: Lower DPI for previews
                         sourceBitmap = (Bitmap)tempPdfDoc.Render(pageNumIfPdf, previewRenderDpi, previewRenderDpi, PdfRenderFlags.Annotations | PdfRenderFlags.LcdText | PdfRenderFlags.CorrectFromDpi);
                     }
                     else
@@ -2899,8 +2899,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
 
                 e.Graphics.Clear(this.picSecondaryPreview.BackColor);
-                e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear; // Performance: Faster interpolation
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
                 e.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
 
                 // Priority: Stitched Image > Master Image > Fitted Image
@@ -3599,7 +3599,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             using (Graphics g = Graphics.FromImage(fittedBitmap))
             {
                 g.Clear(backColor);
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear; // Performance: Faster interpolation
 
                 float targetWidth = targetSize.Width;
                 float targetHeight = targetSize.Height;

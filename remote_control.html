@@ -393,6 +393,7 @@
         let cropper = null;
         let isEditing = false;
         let lastSyncTime = 0;
+        let cropDebounceTimer = null;
         let lastCropData = null;
         let lastStatusFilePath = null;
         let isCropperReady = false;
@@ -609,12 +610,12 @@
                             lastCropData = event.detail;
                             if (!isCropperReady) return;
 
-                            const now = Date.now();
-                            if (now - lastSyncTime > 100) {
+                            // Performance: Debounce crop updates to 1 second
+                            clearTimeout(cropDebounceTimer);
+                            cropDebounceTimer = setTimeout(() => {
                                 const imageData = cropper.getImageData();
                                 syncCrop(event.detail, imageData.naturalWidth, imageData.naturalHeight);
-                                lastSyncTime = now;
-                            }
+                            }, 1000);
                         }
                     });
                 }, 300);

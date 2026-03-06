@@ -630,14 +630,37 @@ namespace DreamsLive_Solutions_PresenterApp1
                 return;
             }
 
-            // Clone image on UI thread to avoid threading issues
-            Bitmap bmpClone = null;
+            // Performance: Limit remote image size and quality
+            const int maxRemoteDim = 1024;
+            const long jpegQuality = 50;
+
+            // Clone and scale image on UI thread
+            Bitmap bmpToProcess = null;
             _mainForm.Invoke((Action)(() =>
             {
-                try { bmpClone = new Bitmap(image); } catch { }
+                try
+                {
+                    if (image.Width > maxRemoteDim || image.Height > maxRemoteDim)
+                    {
+                        float scale = (float)maxRemoteDim / Math.Max(image.Width, image.Height);
+                        int newW = (int)(image.Width * scale);
+                        int newH = (int)(image.Height * scale);
+                        bmpToProcess = new Bitmap(newW, newH);
+                        using (Graphics g = Graphics.FromImage(bmpToProcess))
+                        {
+                            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
+                            g.DrawImage(image, 0, 0, newW, newH);
+                        }
+                    }
+                    else
+                    {
+                        bmpToProcess = new Bitmap(image);
+                    }
+                }
+                catch { }
             }));
 
-            if (bmpClone == null) return;
+            if (bmpToProcess == null) return;
 
             try
             {
@@ -646,16 +669,15 @@ namespace DreamsLive_Solutions_PresenterApp1
                     ImageCodecInfo jpegEncoder = GetEncoder(ImageFormat.Jpeg);
                     if (jpegEncoder != null)
                     {
-                        // Use fully qualified names for Imaging to avoid ambiguity with System.Text
                         System.Drawing.Imaging.EncoderParameters encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
-                        System.Drawing.Imaging.EncoderParameter qualityParam = new System.Drawing.Imaging.EncoderParameter(System.Drawing.Imaging.Encoder.Quality, (long)80);
+                        System.Drawing.Imaging.EncoderParameter qualityParam = new System.Drawing.Imaging.EncoderParameter(System.Drawing.Imaging.Encoder.Quality, jpegQuality);
                         encoderParams.Param[0] = qualityParam;
-                        bmpClone.Save(ms, jpegEncoder, encoderParams);
+                        bmpToProcess.Save(ms, jpegEncoder, encoderParams);
                         response.ContentType = "image/jpeg";
                     }
                     else
                     {
-                        bmpClone.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                        bmpToProcess.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
                         response.ContentType = "image/png";
                     }
 
