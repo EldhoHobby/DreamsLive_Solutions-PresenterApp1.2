@@ -802,6 +802,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
                 UpdateSelectionSizeLabel();
 
+                btnStageContent_Click(this, EventArgs.Empty);
+
                 // Save selection logic
                 if (!this.selectionRectangle.IsEmpty && this.selectedImagePath != null)
                 {
@@ -1077,7 +1079,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 UpdateSelectionSizeLabel();
                 picPreview.Invalidate();
 
-                if (chkAutoStagePreview.Checked && !pageChanged)
+                if (!pageChanged)
                 {
                     btnStageContent_Click(this, EventArgs.Empty);
                 }
@@ -2654,19 +2656,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.picSecondaryPreview.Invalidate();
                 NotifyPresenterOfHighlights();
             }
-            else if (e.Button == MouseButtons.Right)
+            else if (e.Button == MouseButtons.Right || e.Button == MouseButtons.Left)
             {
                 this.isPanningSecondaryPreview = true;
                 this.secondaryPreviewLastMousePosition = e.Location;
                 this.picSecondaryPreview.Cursor = Cursors.SizeAll;
             }
-            // Selection drawing disabled as per requirement
-            // else if (e.Button == MouseButtons.Left)
-            // {
-            //     this.secondarySelectionStartPoint = e.Location;
-            //     this.isSelectingSecondary = true;
-            //     this.secondarySelectionRectangle = new Rectangle(e.Location, Size.Empty);
-            // }
         }
 
         private void picSecondaryPreview_MouseMove(object sender, MouseEventArgs e)
@@ -2712,24 +2707,21 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void picSecondaryPreview_MouseUp(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left && this.isSelectingSecondary)
-            {
-                this.isSelectingSecondary = false;
-                this.isHighlighting = false;
-                // Selection logic disabled
-                this.secondarySelectionRectangle = Rectangle.Empty;
-                this.picSecondaryPreview.Invalidate();
-            }
-            else if (e.Button == MouseButtons.Right)
+            if (this.isPanningSecondaryPreview && (e.Button == MouseButtons.Right || e.Button == MouseButtons.Left))
             {
                 this.isPanningSecondaryPreview = false;
                 this.picSecondaryPreview.Cursor = Cursors.Default;
                 UpdateStagedContentRegionFromInteraction();
                 this.picSecondaryPreview.Invalidate();
+                return;
             }
-            else if (e.Button == MouseButtons.Left)
+
+            if (e.Button == MouseButtons.Left)
             {
                 this.isHighlighting = false;
+                this.isSelectingSecondary = false;
+                this.secondarySelectionRectangle = Rectangle.Empty;
+                this.picSecondaryPreview.Invalidate();
             }
         }
 

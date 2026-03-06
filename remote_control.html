@@ -305,6 +305,7 @@
             </div>
             <div id="picPreviewContainer" class="preview-box">
                 <img id="picPreview" src="">
+                <div id="selection-overlay" style="position: absolute; border: 2px solid red; pointer-events: none; display: none; box-sizing: border-box;"></div>
             </div>
         </div>
         <div class="controls">
@@ -695,8 +696,41 @@
                 // The "main" preview is now physically the second element
                 const secondPreview = document.getElementById('picPreview');
                 secondPreview.src = status.mainPreview;
+                const previewContainer = document.getElementById('picPreviewContainer');
                 if (status.mainPreviewAspectRatio) {
-                    document.getElementById('picPreviewContainer').style.aspectRatio = `${status.mainPreviewAspectRatio}`;
+                    previewContainer.style.aspectRatio = `${status.mainPreviewAspectRatio}`;
+                }
+
+                // Selection overlay update
+                const overlay = document.getElementById('selection-overlay');
+                if (status.currentSelectionNormalized) {
+                    const sel = status.currentSelectionNormalized;
+                    overlay.style.left = (sel.X * 100) + '%';
+                    overlay.style.top = (sel.Y * 100) + '%';
+                    overlay.style.width = (sel.Width * 100) + '%';
+                    overlay.style.height = (sel.Height * 100) + '%';
+                    overlay.style.display = 'block';
+
+                    // Update editor selection if open
+                    if (isEditing && cropper && isCropperReady) {
+                        const imageData = cropper.getImageData();
+                        const newCropData = {
+                            x: sel.X * imageData.naturalWidth,
+                            y: sel.Y * imageData.naturalHeight,
+                            width: sel.Width * imageData.naturalWidth,
+                            height: sel.Height * imageData.naturalHeight
+                        };
+
+                        // Only update if difference is significant to avoid loops
+                        const currentData = cropper.getData();
+                        const dx = Math.abs(currentData.x - newCropData.x);
+                        const dy = Math.abs(currentData.y - newCropData.y);
+                        if (dx > 2 || dy > 2) {
+                            cropper.setData(newCropData);
+                        }
+                    }
+                } else {
+                    overlay.style.display = 'none';
                 }
 
 
