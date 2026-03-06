@@ -495,6 +495,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                     // Use a higher DPI for the editor view to allow sharp zooming
                     using (var img = doc.Render(_mainForm.CurrentPageNumber, 300, 300, true))
                     {
+                        // Apply host's current manual rotation so the remote user sees what the host sees
+                        _mainForm.Invoke((Action)(() => ImageUtils.ApplyRotation(img, _mainForm.GetCurrentManualRotationAngle())));
                         await WriteImageResponse(response, img);
                     }
                 }

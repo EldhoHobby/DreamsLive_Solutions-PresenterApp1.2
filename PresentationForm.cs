@@ -101,6 +101,11 @@ public class PresentationForm : Form
                             this.initialSourceRegion,
                             this.receivedRegionIsNormalized
                         );
+
+                        if (this.currentImage != null && manualRotationAngle != 0)
+                        {
+                            ImageUtils.ApplyRotation(this.currentImage, manualRotationAngle);
+                        }
                     }
                     else
                     {
@@ -458,6 +463,11 @@ public class PresentationForm : Form
                         initialRegion,
                         isRegionNormalized
                     );
+
+                    if (this.currentImage != null && manualRotationAngle != 0)
+                    {
+                        ImageUtils.ApplyRotation(this.currentImage, manualRotationAngle);
+                    }
                 }
                 else
                 {

@@ -70,6 +70,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         public string DatabaseFolderPath { get; private set; }
         public string SelectedImagePath => selectedImagePath;
         public int CurrentPageNumber => currentPageNumber;
+        public int GetCurrentManualRotationAngle() => currentManualRotationAngle;
 
 
         public MainForm()
@@ -1883,10 +1884,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                 else if (File.Exists(contentPath)) // Standard image
                 {
                     sourceBitmap = (Bitmap)ImageUtils.LoadImage(contentPath);
-                    if (sourceBitmap != null && manualRotationAngle != 0)
-                    {
-                        ImageUtils.ApplyRotation(sourceBitmap, manualRotationAngle);
-                    }
                 }
                 else
                 {
@@ -1894,6 +1891,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
 
                 if (sourceBitmap == null) return;
+
+                // Apply manual rotation to the source content (Image or PDF render)
+                if (manualRotationAngle != 0)
+                {
+                    ImageUtils.ApplyRotation(sourceBitmap, manualRotationAngle);
+                }
 
                 // --- 2. Determine actualSrcRect (in pixels on sourceBitmap) ---
                 RectangleF actualSrcRect;
