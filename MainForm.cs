@@ -1167,14 +1167,17 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             try
             {
-                // Dispose of any existing PDF document before loading a new one.
-                if (this.currentPdfDocument != null)
+                // Reuse existing PDF document if path is the same
+                if (this.currentPdfDocument == null || this.selectedImagePath != pdfPath)
                 {
-                    this.currentPdfDocument.Dispose();
-                    this.currentPdfDocument = null;
+                    if (this.currentPdfDocument != null)
+                    {
+                        this.currentPdfDocument.Dispose();
+                        this.currentPdfDocument = null;
+                    }
+                    this.currentPdfDocument = PdfDocument.Load(pdfPath);
                 }
 
-                this.currentPdfDocument = PdfDocument.Load(pdfPath);
                 this.selectedImagePath = pdfPath;
                 this.lblImagePath.Text = "Selected PDF: " + Path.GetFileName(this.selectedImagePath);
 
@@ -1408,6 +1411,16 @@ namespace DreamsLive_Solutions_PresenterApp1
         public int GetTotalPdfPages()
         {
             return totalPdfPages;
+        }
+
+        public Image RenderCurrentPdfPage(int dpi)
+        {
+            if (this.currentPdfDocument == null) return null;
+            try
+            {
+                return this.currentPdfDocument.Render(this.currentPageNumber, dpi, dpi, PdfRenderFlags.Annotations | PdfRenderFlags.LcdText | PdfRenderFlags.CorrectFromDpi);
+            }
+            catch { return null; }
         }
 
         public void RemoteCrop(float x, float y, float w, float h)
@@ -1870,11 +1883,21 @@ namespace DreamsLive_Solutions_PresenterApp1
                 // --- 1. Load Source Bitmap ---
                 if (Path.GetExtension(contentPath).ToLowerInvariant() == ".pdf" && pageNumIfPdf >= 0)
                 {
-                    tempPdfDoc = PdfDocument.Load(contentPath);
-                    if (pageNumIfPdf >= 0 && pageNumIfPdf < tempPdfDoc.PageCount)
+                    PdfDocument docToUse;
+                    if (this.currentPdfDocument != null && this.selectedImagePath == contentPath)
+                    {
+                        docToUse = this.currentPdfDocument;
+                    }
+                    else
+                    {
+                        tempPdfDoc = PdfDocument.Load(contentPath);
+                        docToUse = tempPdfDoc;
+                    }
+
+                    if (pageNumIfPdf >= 0 && pageNumIfPdf < docToUse.PageCount)
                     {
                         float previewRenderDpi = 150f; // Performance: Lower DPI for previews
-                        sourceBitmap = (Bitmap)tempPdfDoc.Render(pageNumIfPdf, previewRenderDpi, previewRenderDpi, PdfRenderFlags.Annotations | PdfRenderFlags.LcdText | PdfRenderFlags.CorrectFromDpi);
+                        sourceBitmap = (Bitmap)docToUse.Render(pageNumIfPdf, previewRenderDpi, previewRenderDpi, PdfRenderFlags.Annotations | PdfRenderFlags.LcdText | PdfRenderFlags.CorrectFromDpi);
                     }
                     else
                     {
@@ -2668,12 +2691,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                 NotifyPresenterOfHighlights();
             }
 
-            // Selection drawing disabled as per requirement
-            // if (this.isSelectingSecondary)
-            // {
-            //     ...
-            // }
-
             if (this.isPanningSecondaryPreview && this.picSecondaryPreview.Image != null)
             {
                 float dx = e.Location.X - this.secondaryPreviewLastMousePosition.X;
@@ -3003,12 +3020,24 @@ namespace DreamsLive_Solutions_PresenterApp1
                     // as the basis for fitScale_full and subsequent clamping, because RenderContentToPictureBox
                     // will use a sourceBitmap of these dimensions.
                     // This ensures consistency.
-                    using (var tempDoc = PdfDocument.Load(stagedContentPath))
+                    PdfDocument docToUse = null;
+                    PdfDocument tempDoc = null;
+                    if (this.currentPdfDocument != null && this.selectedImagePath == stagedContentPath)
                     {
-                        if (stagedContentPageNum < tempDoc.PageCount)
+                        docToUse = this.currentPdfDocument;
+                    }
+                    else
+                    {
+                        tempDoc = PdfDocument.Load(stagedContentPath);
+                        docToUse = tempDoc;
+                    }
+
+                    try
+                    {
+                        if (stagedContentPageNum < docToUse.PageCount)
                         {
                             float previewRenderDpi = 150f; // Consistent with RenderContentToPictureBox
-                            using (var tempBitmap = (Bitmap)tempDoc.Render(stagedContentPageNum, previewRenderDpi, previewRenderDpi, true))
+                            using (var tempBitmap = (Bitmap)docToUse.Render(stagedContentPageNum, previewRenderDpi, previewRenderDpi, true))
                             {
                                 actualOriginalFileWidth = tempBitmap.Width;
                                 actualOriginalFileHeight = tempBitmap.Height;
@@ -3016,6 +3045,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                             Debug.WriteLine($"UCSRI (Full Page Path): PDF actual rendered dims for calculation: {actualOriginalFileWidth}x{actualOriginalFileHeight}");
                         }
                         else { Debug.WriteLine("UCSRI: Invalid page num"); return; }
+                    }
+                    finally
+                    {
+                        if (tempDoc != null) tempDoc.Dispose();
                     }
                 }
                 else if (!isPdf) // Standard image

@@ -10,24 +10,32 @@ namespace DreamsLive_Solutions_PresenterApp1
         public static void CorrectRotation(Image img)
         {
             if (img == null) return;
+            // EXIF Orientation Tag = 0x0112
             if (img.PropertyIdList.Contains(0x0112))
             {
                 var prop = img.GetPropertyItem(0x0112);
-                int rotationValue;
-                if (prop.Type == 3) rotationValue = BitConverter.ToUInt16(prop.Value, 0);
-                else rotationValue = prop.Value[0];
+                int rotationValue = 1; // Default to normal
+
+                if (prop.Type == 3) // PropertyTagTypeShort
+                    rotationValue = BitConverter.ToUInt16(prop.Value, 0);
+                else if (prop.Type == 4) // PropertyTagTypeLong
+                    rotationValue = (int)BitConverter.ToUInt32(prop.Value, 0);
+                else if (prop.Value.Length > 0)
+                    rotationValue = prop.Value[0];
 
                 switch (rotationValue)
                 {
                     case 1: break; // Normal
                     case 2: img.RotateFlip(RotateFlipType.RotateNoneFlipX); break;
                     case 3: img.RotateFlip(RotateFlipType.Rotate180FlipNone); break;
-                    case 4: img.RotateFlip(RotateFlipType.RotateNoneFlipY); break; // Vertical flip is safer than Rotate180FlipX here
+                    case 4: img.RotateFlip(RotateFlipType.Rotate180FlipX); break;
                     case 5: img.RotateFlip(RotateFlipType.Rotate90FlipX); break;
                     case 6: img.RotateFlip(RotateFlipType.Rotate90FlipNone); break;
                     case 7: img.RotateFlip(RotateFlipType.Rotate270FlipX); break;
                     case 8: img.RotateFlip(RotateFlipType.Rotate270FlipNone); break;
                 }
+
+                // Strip the tag so it isn't applied twice by other viewers or re-renders
                 try { img.RemovePropertyItem(0x0112); } catch { }
             }
         }
@@ -54,7 +62,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                         {
                             g.Clear(Color.Transparent);
                             g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                            g.DrawImage(imgTemp, 0, 0, imgTemp.Width, imgTemp.Height);
+                            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                            g.DrawImage(imgTemp, new Rectangle(0, 0, imgTemp.Width, imgTemp.Height));
                         }
                         return baked;
                     }

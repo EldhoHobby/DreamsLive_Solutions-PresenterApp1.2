@@ -490,15 +490,24 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (ext == ".pdf")
             {
                 // For PDF, we render the current page at high resolution for editing
-                using (var doc = PdfiumViewer.PdfDocument.Load(path))
-                {
-                    // Use a higher DPI for the editor view to allow sharp zooming
-                    using (var img = doc.Render(_mainForm.CurrentPageNumber, 300, 300, true))
+                // Reuse existing PDF document from MainForm if possible
+                Image img = null;
+                _mainForm.Invoke((Action)(() => {
+                    img = _mainForm.RenderCurrentPdfPage(300);
+                    if (img != null)
                     {
-                        // Apply host's current manual rotation so the remote user sees what the host sees
-                        _mainForm.Invoke((Action)(() => ImageUtils.ApplyRotation(img, _mainForm.GetCurrentManualRotationAngle())));
-                        await WriteImageResponse(response, img);
+                        ImageUtils.ApplyRotation(img, _mainForm.GetCurrentManualRotationAngle());
                     }
+                }));
+
+                if (img != null)
+                {
+                    await WriteImageResponse(response, img);
+                    _mainForm.Invoke((Action)(() => img.Dispose()));
+                }
+                else
+                {
+                    response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 }
             }
             else
