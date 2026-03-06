@@ -36,6 +36,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private string selectedImagePath = null;
         private PresentationForm activePresentationForm = null;
         private Rectangle selectionRectangle = Rectangle.Empty;
+        private Rectangle previousSelectionRectangle = Rectangle.Empty;
         private Point selectionStartPoint = Point.Empty;
         private bool isSelecting = false;
 
@@ -408,6 +409,16 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void picPreview_Paint(object sender, PaintEventArgs e)
         {
+            // Draw previous selection as a gray reference while selecting
+            if (this.isSelecting && !this.previousSelectionRectangle.IsEmpty)
+            {
+                using (Pen refPen = new Pen(Color.FromArgb(128, Color.Gray), 2))
+                {
+                    refPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dot;
+                    e.Graphics.DrawRectangle(refPen, this.previousSelectionRectangle);
+                }
+            }
+
             // Check if there is a selection rectangle to draw
             if (this.selectionRectangle.Width > 0 && this.selectionRectangle.Height > 0)
             {
@@ -900,6 +911,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.selectionStartPoint = e.Location;
                 // Set the flag to indicate that selection is in progress
                 this.isSelecting = true;
+                // Keep track of the current selection as a reference before starting a new one
+                this.previousSelectionRectangle = this.selectionRectangle;
                 // Initialize the selection rectangle
                 this.selectionRectangle = new Rectangle(e.Location, Size.Empty);
                 UpdateSelectionSizeLabel();

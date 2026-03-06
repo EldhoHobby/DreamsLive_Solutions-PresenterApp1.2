@@ -303,7 +303,7 @@
             <div id="picSecondaryContainer" class="preview-box">
                 <img id="picSecondaryPreview" src="">
             </div>
-            <div id="picPreviewContainer" class="preview-box">
+            <div id="picPreviewContainer" class="preview-box" onclick="openEditor()" style="cursor: pointer;">
                 <img id="picPreview" src="">
                 <div id="selection-overlay" style="position: absolute; border: 2px solid red; pointer-events: none; display: none; box-sizing: border-box;"></div>
             </div>
@@ -325,7 +325,7 @@
         </div>
 
         <div class="upload">
-            <input type="file" id="file-input">
+            <input type="file" id="file-input" accept="image/*,.pdf">
             <div id="db-upload-options" style="display: none; grid-column: 1 / -1; gap: 10px; grid-template-columns: 1fr 1fr;">
                 <select id="subfolder-select"></select>
                 <input type="text" id="custom-filename" placeholder="Custom filename (optional)">
@@ -366,10 +366,12 @@
     <div id="editor-modal" class="modal">
         <div class="modal-header">
             <span>Edit / Crop Content</span>
-            <button onclick="closeEditor()" style="background: none; border: none; color: white; font-size: 1.5em; cursor: pointer;">&times;</button>
+            <button onclick="closeEditor(false)" style="background: none; border: none; color: white; font-size: 1.5em; cursor: pointer;">&times;</button>
         </div>
         <div class="modal-content">
             <img id="editor-image" src="">
+            <!-- Gray Box for previous selection reference -->
+            <div id="editor-reference-overlay" style="position: absolute; border: 2px solid rgba(128, 128, 128, 0.8); background-color: rgba(128, 128, 128, 0.3); pointer-events: none; display: none; box-sizing: border-box; z-index: 10;"></div>
         </div>
         <div class="modal-footer" style="flex-wrap: wrap; gap: 10px;">
             <label style="color: white;">
@@ -378,9 +380,9 @@
             <label style="color: white;">
                 <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Send
             </label>
-            <button onclick="rotateInEditor(-1)">Rot L</button>
-            <button onclick="rotateInEditor(1)">Rot R</button>
-            <button onclick="closeEditor()" style="background-color: #4CAF50; color: white;">Done</button>
+            <button onclick="rotateInEditor(-1)" style="font-size: 1.2em;">&#8634;</button>
+            <button onclick="rotateInEditor(1)" style="font-size: 1.2em;">&#8635;</button>
+            <button onclick="closeEditor(true)" style="background-color: #4CAF50; color: white; min-width: 80px;">Done</button>
         </div>
     </div>
 
@@ -395,6 +397,8 @@
         let lastSyncTime = 0;
         let cropDebounceTimer = null;
         let lastCropData = null;
+        let lastNormalizedSelection = null;
+        let initialCropData = null;
         let lastStatusFilePath = null;
         let isCropperReady = false;
         let isInitialStatusLoad = true;
@@ -573,6 +577,7 @@
         function openEditor() {
             const modal = document.getElementById('editor-modal');
             const img = document.getElementById('editor-image');
+            const refOverlay = document.getElementById('editor-reference-overlay');
 
             if (cropper) {
                 cropper.destroy();
@@ -589,6 +594,28 @@
                 setTimeout(() => {
                     if (cropper) cropper.destroy();
 
+                    // If we have a normalized selection from host status, convert it to natural pixels for Cropper
+                    if (lastNormalizedSelection) {
+                        lastCropData = {
+                            x: lastNormalizedSelection.X * img.naturalWidth,
+                            y: lastNormalizedSelection.Y * img.naturalHeight,
+                            width: lastNormalizedSelection.Width * img.naturalWidth,
+                            height: lastNormalizedSelection.Height * img.naturalHeight,
+                            rotate: 0,
+                            scaleX: 1,
+                            scaleY: 1
+                        };
+                    }
+
+                    // Setup reference overlay (Gray Box) using the current selection as baseline
+                    if (lastCropData) {
+                        initialCropData = JSON.parse(JSON.stringify(lastCropData)); // Deep copy
+                        refOverlay.style.display = 'block';
+                    } else {
+                        initialCropData = null;
+                        refOverlay.style.display = 'none';
+                    }
+
                     cropper = new Cropper(img, {
                         aspectRatio: currentPresenterAspectRatio,
                         viewMode: 0,
@@ -599,8 +626,12 @@
                         zoomable: true,
                         data: lastCropData,
                         ready: () => {
+                            updateEditorReferenceOverlay();
                             // Delay setting ready to true to ensure initial setup events don't trigger a sync
                             setTimeout(() => { isCropperReady = true; }, 500);
+                        },
+                        zoom: () => {
+                            setTimeout(updateEditorReferenceOverlay, 0);
                         },
                         crop: (event) => {
                             lastCropData = event.detail;
@@ -616,6 +647,28 @@
                     });
                 }, 300);
             };
+        }
+
+        function updateEditorReferenceOverlay() {
+            const refOverlay = document.getElementById('editor-reference-overlay');
+            if (!cropper || !initialCropData || !isEditing) return;
+
+            const canvasData = cropper.getCanvasData();
+            const imageData = cropper.getImageData();
+
+            // Calculate scale between natural image and current displayed image in cropper
+            const scale = imageData.width / imageData.naturalWidth;
+
+            // initialCropData is in natural pixels
+            const refX = canvasData.left + (initialCropData.x * scale);
+            const refY = canvasData.top + (initialCropData.y * scale);
+            const refW = initialCropData.width * scale;
+            const refH = initialCropData.height * scale;
+
+            refOverlay.style.left = refX + 'px';
+            refOverlay.style.top = refY + 'px';
+            refOverlay.style.width = refW + 'px';
+            refOverlay.style.height = refH + 'px';
         }
 
         async function toggleLiveSync() {
@@ -640,7 +693,7 @@
             }
         }
 
-        async function closeEditor() {
+        async function closeEditor(save) {
             const modal = document.getElementById('editor-modal');
             isEditing = false;
             modal.style.display = 'none';
@@ -652,7 +705,15 @@
                 cropper.destroy();
                 cropper = null;
 
-                await syncCrop(detail, imageData.naturalWidth, imageData.naturalHeight, true);
+                if (save) {
+                    await syncCrop(detail, imageData.naturalWidth, imageData.naturalHeight, true);
+                } else {
+                    // Restore last selection on host if we cancelled but were live syncing
+                    if (document.getElementById('chkLiveSyncEditor').checked && initialCropData) {
+                        await syncCrop(initialCropData, imageData.naturalWidth, imageData.naturalHeight, true);
+                        lastCropData = JSON.parse(JSON.stringify(initialCropData));
+                    }
+                }
             }
         }
 
@@ -715,9 +776,13 @@
                     overlay.style.height = (sel.Height * 100) + '%';
                     overlay.style.display = 'block';
 
-                    // Removed real-time editor sync to prevent host-side changes from disrupting mobile edits
+                    // Store normalized selection to use when opening editor
+                    if (!isEditing) {
+                        lastNormalizedSelection = status.currentSelectionNormalized;
+                    }
                 } else {
                     overlay.style.display = 'none';
+                    if (!isEditing) lastNormalizedSelection = null;
                 }
 
 
