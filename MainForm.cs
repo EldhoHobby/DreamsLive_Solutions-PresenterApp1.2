@@ -63,7 +63,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool isPanningSecondaryPreview = false;
         private Rectangle secondarySelectionRectangle = Rectangle.Empty;
         private Point secondarySelectionStartPoint = Point.Empty;
-        private bool isSelectingSecondary = false;
         private PointF? laserPointNormalized = null; // Normalized laser position (0-1) relative to picSecondaryPreview
         private List<List<PointF>> highlightsNormalized = new List<List<PointF>>();
         private bool highlighterActive = false;
@@ -2716,7 +2715,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (e.Button == MouseButtons.Left)
             {
                 this.isHighlighting = false;
-                this.isSelectingSecondary = false;
                 this.secondarySelectionRectangle = Rectangle.Empty;
                 this.picSecondaryPreview.Invalidate();
             }

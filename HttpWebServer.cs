@@ -692,7 +692,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
             finally
             {
-                bmpClone.Dispose();
+                bmpToProcess.Dispose();
             }
         }
 
