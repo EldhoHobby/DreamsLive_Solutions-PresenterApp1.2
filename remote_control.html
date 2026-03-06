@@ -482,6 +482,7 @@
                     item.className = 'gallery-item';
                     item.onclick = async () => {
                         await performAction(`open?path=${encodeURIComponent(f.RelativePath)}&edit=true`);
+                        await updateStatus();
                     };
                     const img = document.createElement('img');
                     if (f.Extension === '.pdf') {
@@ -532,6 +533,7 @@
                     showMessage(responseText, 'info');
                     fileInput.value = ''; // Clear the input
                     if (document.getElementById('chkUploadToDatabase').checked) refreshGallery();
+                    await updateStatus();
                 } else {
                     uploadErrorLock = true; // Lock message on screen
                     showMessage(responseText, 'error');
@@ -592,11 +594,8 @@
                         zoomable: true,
                         data: lastCropData,
                         ready: () => {
-                            isCropperReady = true;
-                            if (lastCropData) {
-                                const imageData = cropper.getImageData();
-                                syncCrop(cropper.getData(), imageData.naturalWidth, imageData.naturalHeight, true);
-                            }
+                            // Delay setting ready to true to ensure initial setup events don't trigger a sync
+                            setTimeout(() => { isCropperReady = true; }, 500);
                         },
                         crop: (event) => {
                             lastCropData = event.detail;

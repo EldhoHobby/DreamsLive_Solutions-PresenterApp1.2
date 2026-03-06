@@ -1240,7 +1240,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
             }
 
-            if (isSecondaryPreviewPopulated)
+            if (isSecondaryPreviewPopulated && this.stagedContentPath == this.selectedImagePath)
             {
                 btnStageContent_Click(this, EventArgs.Empty);
             }
