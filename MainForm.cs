@@ -61,8 +61,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         private float secondaryPreviewZoom = 1.0f;
         private Point secondaryPreviewLastMousePosition = Point.Empty;
         private bool isPanningSecondaryPreview = false;
-        private Rectangle secondarySelectionRectangle = Rectangle.Empty;
-        private Point secondarySelectionStartPoint = Point.Empty;
         private PointF? laserPointNormalized = null; // Normalized laser position (0-1) relative to picSecondaryPreview
         private List<List<PointF>> highlightsNormalized = new List<List<PointF>>();
         private bool highlighterActive = false;
@@ -1990,7 +1988,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                         this.stagedContentRegion,
                         this.stagedContentIsNormalized,
                         displayMode,
-                        this.stagedStitchedImage);
+                        this.stagedStitchedImage,
+                        this.stagedContentRotationAngle);
                     this.isPresenterShowingLiveContent = true; // Restored from staged, so it's live
                     // Update live trackers to match staged, as this is what's now live
                     this.liveContentPath = this.stagedContentPath;
@@ -2715,53 +2714,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (e.Button == MouseButtons.Left)
             {
                 this.isHighlighting = false;
-                this.secondarySelectionRectangle = Rectangle.Empty;
                 this.picSecondaryPreview.Invalidate();
-            }
-        }
-
-        private void ApplySecondarySelection()
-        {
-            if (this.picSecondaryPreview.Image == null) return;
-
-            Point topLeft = new Point(this.secondarySelectionRectangle.Left, this.secondarySelectionRectangle.Top);
-            Point bottomRight = new Point(this.secondarySelectionRectangle.Right, this.secondarySelectionRectangle.Bottom);
-
-            PointF normTopLeft = MapControlToDocNormalized(topLeft);
-            PointF normBottomRight = MapControlToDocNormalized(bottomRight);
-
-            float x = Math.Min(normTopLeft.X, normBottomRight.X);
-            float y = Math.Min(normTopLeft.Y, normBottomRight.Y);
-            float w = Math.Abs(normTopLeft.X - normBottomRight.X);
-            float h = Math.Abs(normTopLeft.Y - normBottomRight.Y);
-
-            // Update staged content
-            this.stagedContentRegion = new RectangleF(x, y, w, h);
-            this.stagedContentIsNormalized = true;
-
-            // Re-render
-            RenderContentToPictureBox(
-                this.picSecondaryPreview,
-                this.stagedContentPath,
-                this.stagedContentPageNum,
-                this.stagedContentRegion,
-                this.stagedContentIsNormalized,
-                this.stagedContentRotationAngle
-            );
-
-            // Reset pan/zoom for the new view
-            this.secondaryPreviewPan = PointF.Empty;
-            this.secondaryPreviewZoom = 1.0f;
-
-            // Sync back to main preview
-            SyncStagedSelectionToMain();
-
-            UpdateButtonEnableStates();
-            UpdateSecondaryPreviewBorderColor();
-
-            if (this.chkLinkLocalPreviewToPresenter.Checked)
-            {
-                UpdateMainPresentation(this.stagedContentPath, this.stagedContentPageNum, this.stagedContentRegion, this.stagedContentIsNormalized, this.stagedStitchedImage, this.stagedContentRotationAngle);
             }
         }
 
@@ -2937,14 +2890,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                     e.Graphics.DrawImage(baseImage, destRect, srcRectPixels, GraphicsUnit.Pixel);
                 }
 
-                // Draw selection rectangle if drawing
-                if (this.secondarySelectionRectangle.Width > 0 && this.secondarySelectionRectangle.Height > 0)
-                {
-                    using (Pen selectionPen = new Pen(Color.Red, 2))
-                    {
-                        e.Graphics.DrawRectangle(selectionPen, this.secondarySelectionRectangle);
-                    }
-                }
             }
 
             if (sender == this.picSecondaryPreview && this.picSecondaryPreview.Image != null)
