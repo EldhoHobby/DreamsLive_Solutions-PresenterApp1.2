@@ -23,6 +23,7 @@ namespace DreamsLive_Solutions_PresenterApp1
     {
         private HttpWebServer _httpWebServer;
         private System.Windows.Forms.Timer _statusUpdateTimer;
+        private System.Windows.Forms.Timer _autoStageDebounceTimer;
 
         // Fields to track what's "live" on the presenter
         private string liveContentPath = null;
@@ -131,6 +132,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (this.chkAlwaysOnTop != null)
             {
                 this.chkAlwaysOnTop.CheckedChanged += new System.EventHandler(this.chkAlwaysOnTop_CheckedChanged);
+            }
+
+            if (this.chkAutoStagePreview != null)
+            {
+                this.chkAutoStagePreview.CheckedChanged += new System.EventHandler(this.chkAutoStagePreview_CheckedChanged);
             }
 
             if (this.btnMessageOkay != null)
@@ -248,6 +254,13 @@ namespace DreamsLive_Solutions_PresenterApp1
             _statusUpdateTimer.Interval = 1000; // 1 second
             _statusUpdateTimer.Tick += new EventHandler(StatusUpdateTimer_Tick);
             _statusUpdateTimer.Start();
+
+            _autoStageDebounceTimer = new System.Windows.Forms.Timer();
+            _autoStageDebounceTimer.Interval = 250;
+            _autoStageDebounceTimer.Tick += (s, e) => {
+                _autoStageDebounceTimer.Stop();
+                btnStageContent_Click(this, EventArgs.Empty);
+            };
         }
 
         private void StatusUpdateTimer_Tick(object sender, EventArgs e)
@@ -313,6 +326,14 @@ namespace DreamsLive_Solutions_PresenterApp1
                     int panelPaddingVertical = panelSecondaryPreviewBorder.Padding.Vertical;
                     panelSecondaryPreviewBorder.Size = new Size(maxPreviewPanelWidth + panelPaddingHorizontal, maxPreviewPanelHeight + panelPaddingVertical);
                 }
+            }
+        }
+
+        private void chkAutoStagePreview_CheckedChanged(object sender, EventArgs e)
+        {
+            if (this.chkAutoStagePreview.Checked)
+            {
+                btnStageContent_Click(this, EventArgs.Empty);
             }
         }
 
@@ -845,6 +866,12 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                     SaveCurrentSelection();
                     this.picPreview.Invalidate();
+
+                    if (this.chkAutoStagePreview != null && this.chkAutoStagePreview.Checked)
+                    {
+                        _autoStageDebounceTimer.Stop();
+                        btnStageContent_Click(this, EventArgs.Empty);
+                    }
                 }
             }
         }
@@ -891,6 +918,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.selectionRectangle.Location = new Point(newX, newY);
                 UpdateSelectionSizeLabel();
                 this.picPreview.Invalidate();
+
+                if (this.chkAutoStagePreview != null && this.chkAutoStagePreview.Checked)
+                {
+                    _autoStageDebounceTimer.Stop();
+                    _autoStageDebounceTimer.Start();
+                }
             }
             else if (this.isSelecting)
             {
@@ -947,6 +980,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.selectionRectangle = new Rectangle(finalX, finalY, constrainedWidth, constrainedHeight);
                 UpdateSelectionSizeLabel();
                 this.picPreview.Invalidate();
+
+                if (this.chkAutoStagePreview != null && this.chkAutoStagePreview.Checked)
+                {
+                    _autoStageDebounceTimer.Stop();
+                    _autoStageDebounceTimer.Start();
+                }
             }
             else
             {
@@ -1779,7 +1818,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        public RectangleF? GetGetCurrentSelectionNormalized()
+        public RectangleF? GetCurrentSelectionNormalized()
         {
             if (selectionRectangle.IsEmpty) return null;
             return GetSelectedRegionNormalized(selectionRectangle);
@@ -3789,12 +3828,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 ShowWarningMessage(string.Format("Please enter a page number between 1 and {0}.", this.totalPdfPages));
             }
-        }
-
-        public RectangleF? GetCurrentSelectionNormalized()
-        {
-            if (selectionRectangle.IsEmpty) return null;
-            return GetSelectedRegionNormalized(selectionRectangle);
         }
 
         public RectangleF? GetStagedSelectionNormalized()

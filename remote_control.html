@@ -674,6 +674,17 @@
                         },
                         crop: (event) => {
                             lastCropData = event.detail;
+
+                            const liveSync = document.getElementById('chkLiveSyncEditor').checked;
+                            if (liveSync) {
+                                initialCropData = {
+                                    x: event.detail.x,
+                                    y: event.detail.y,
+                                    width: event.detail.width,
+                                    height: event.detail.height
+                                };
+                            }
+
                             updateEditorReferenceOverlay();
                             if (!isCropperReady) return;
 
