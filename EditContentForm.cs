@@ -16,6 +16,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool _isAutoSend = false;
         private bool _isLiveSync = false;
         private int _currentRotation = 0;
+        private Timer _syncTimer;
+        private Timer _outboundSyncTimer;
 
         // Interaction fields
         private Rectangle _cropRect; // In control coordinates
@@ -56,6 +58,63 @@ namespace DreamsLive_Solutions_PresenterApp1
             picEdit.Image = _mainForm.GetPreviewImage();
 
             UpdateCropRectFromNormalized();
+
+            _syncTimer = new Timer();
+            _syncTimer.Interval = 1000;
+            _syncTimer.Tick += SyncTimer_Tick;
+            _syncTimer.Start();
+
+            _outboundSyncTimer = new Timer();
+            _outboundSyncTimer.Interval = 250;
+            _outboundSyncTimer.Tick += (s, e) => {
+                _outboundSyncTimer.Stop();
+                SyncOutbound();
+            };
+
+            this.FormClosing += (s, e) => {
+                _syncTimer.Stop();
+                _outboundSyncTimer.Stop();
+            };
+        }
+
+        private void SyncTimer_Tick(object sender, EventArgs e)
+        {
+            if (_isDragging || _isResizing) return;
+
+            bool changed = false;
+
+            // Sync Rotation
+            int latestRotation = _mainForm.GetCurrentManualRotationAngle();
+            if (latestRotation != _currentRotation)
+            {
+                _currentRotation = latestRotation;
+                picEdit.Image = _mainForm.GetPreviewImage();
+                changed = true;
+            }
+
+            // Sync Staged (Gray Box)
+            var latestStaged = _mainForm.GetStagedSelectionNormalized();
+            if (!AreRegionsSimilar(latestStaged, _stagedRegionNormalized))
+            {
+                _stagedRegionNormalized = latestStaged;
+                changed = true;
+            }
+
+            if (changed)
+            {
+                UpdateCropRectFromNormalized();
+                picEdit.Invalidate();
+            }
+        }
+
+        private bool AreRegionsSimilar(RectangleF? r1, RectangleF? r2)
+        {
+            if (r1.HasValue != r2.HasValue) return false;
+            if (!r1.HasValue) return true;
+            return Math.Abs(r1.Value.X - r2.Value.X) < 0.001f &&
+                   Math.Abs(r1.Value.Y - r2.Value.Y) < 0.001f &&
+                   Math.Abs(r1.Value.Width - r2.Value.Width) < 0.001f &&
+                   Math.Abs(r1.Value.Height - r2.Value.Height) < 0.001f;
         }
 
         private void PicEdit_Paint(object sender, PaintEventArgs e)
@@ -141,6 +200,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         private void UpdateNormalizedFromCropRect(bool forceSync = false)
         {
             RectangleF displayRect = GetDisplayedImageRect();
+            if (displayRect.Width == 0 || displayRect.Height == 0) return;
+
             _cropRegionNormalized = new RectangleF(
                 (_cropRect.X - displayRect.X) / displayRect.Width,
                 (_cropRect.Y - displayRect.Y) / displayRect.Height,
@@ -148,10 +209,23 @@ namespace DreamsLive_Solutions_PresenterApp1
                 (float)_cropRect.Height / displayRect.Height
             );
 
-            if (_isLiveSync || forceSync)
+            if (forceSync)
             {
-                _mainForm.RemoteCrop(_cropRegionNormalized.X, _cropRegionNormalized.Y, _cropRegionNormalized.Width, _cropRegionNormalized.Height);
+                _outboundSyncTimer.Stop();
+                SyncOutbound();
             }
+            else if (_isLiveSync)
+            {
+                _outboundSyncTimer.Stop();
+                _outboundSyncTimer.Start();
+            }
+        }
+
+        private void SyncOutbound()
+        {
+            _mainForm.RemoteCrop(_cropRegionNormalized.X, _cropRegionNormalized.Y, _cropRegionNormalized.Width, _cropRegionNormalized.Height);
+            _stagedRegionNormalized = _cropRegionNormalized;
+            picEdit.Invalidate();
         }
 
         private void PicEdit_MouseDown(object sender, MouseEventArgs e)
@@ -186,14 +260,16 @@ namespace DreamsLive_Solutions_PresenterApp1
                 int dx = e.X - _lastMousePos.X;
                 int dy = e.Y - _lastMousePos.Y;
                 _cropRect.Offset(dx, dy);
-                picEdit.Invalidate();
                 _lastMousePos = e.Location;
+                UpdateNormalizedFromCropRect(); // Updates normalized region and syncs if _isLiveSync
+                picEdit.Invalidate();
             }
             else if (_isResizing)
             {
                 ResizeCropRect(e.Location);
-                picEdit.Invalidate();
                 _lastMousePos = e.Location;
+                UpdateNormalizedFromCropRect(); // Updates normalized region and syncs if _isLiveSync
+                picEdit.Invalidate();
             }
             else
             {
