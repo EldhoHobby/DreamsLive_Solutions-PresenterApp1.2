@@ -720,6 +720,17 @@
                 await syncCrop(detail, imageData.naturalWidth, imageData.naturalHeight, true);
                 // Then trigger the Go Live action
                 await performAction('push');
+
+                // Immediately update status to refresh the gray reference box
+                await updateStatus();
+                // Update local initialCropData so the gray box moves to the new 'staged' position in the editor
+                initialCropData = {
+                    x: detail.x,
+                    y: detail.y,
+                    width: detail.width,
+                    height: detail.height
+                };
+                updateEditorReferenceOverlay();
             }
         }
 

@@ -1723,27 +1723,53 @@ namespace DreamsLive_Solutions_PresenterApp1
             float targetAR = GetTargetAspectRatio();
             RectangleF initialCrop;
 
-            // Calculate maximized crop area based on target aspect ratio
-            if (targetAR > 0)
-            {
-                float imgW = this.picPreview.Image.Width;
-                float imgH = this.picPreview.Image.Height;
-                float imgAR = imgW / imgH;
+            // Try to use staged region if it matches current path/page
+            bool useStaged = isSecondaryPreviewPopulated &&
+                             stagedContentPath == selectedImagePath &&
+                             stagedContentPageNum == (currentPdfDocument != null ? currentPageNumber : -1);
 
-                if (imgAR > targetAR) // Image is wider than target
+            if (useStaged && stagedContentRegion.HasValue)
+            {
+                if (stagedContentIsNormalized)
                 {
-                    float normW = targetAR / imgAR;
-                    initialCrop = new RectangleF((1f - normW) / 2f, 0f, normW, 1f);
+                    initialCrop = stagedContentRegion.Value;
                 }
-                else // Image is taller than target
+                else
                 {
-                    float normH = imgAR / targetAR;
-                    initialCrop = new RectangleF(0f, (1f - normH) / 2f, 1f, normH);
+                    // Convert pixel region to normalized
+                    float imgW = picPreview.Image.Width;
+                    float imgH = picPreview.Image.Height;
+                    initialCrop = new RectangleF(
+                        stagedContentRegion.Value.X / imgW,
+                        stagedContentRegion.Value.Y / imgH,
+                        stagedContentRegion.Value.Width / imgW,
+                        stagedContentRegion.Value.Height / imgH
+                    );
                 }
             }
-            else
+            else // Calculate maximized crop area based on target aspect ratio
             {
-                initialCrop = new RectangleF(0f, 0f, 1f, 1f);
+                if (targetAR > 0)
+                {
+                    float imgW = this.picPreview.Image.Width;
+                    float imgH = this.picPreview.Image.Height;
+                    float imgAR = imgW / imgH;
+
+                    if (imgAR > targetAR) // Image is wider than target
+                    {
+                        float normW = targetAR / imgAR;
+                        initialCrop = new RectangleF((1f - normW) / 2f, 0f, normW, 1f);
+                    }
+                    else // Image is taller than target
+                    {
+                        float normH = imgAR / targetAR;
+                        initialCrop = new RectangleF(0f, (1f - normH) / 2f, 1f, normH);
+                    }
+                }
+                else
+                {
+                    initialCrop = new RectangleF(0f, 0f, 1f, 1f);
+                }
             }
 
             using (var editForm = new EditContentForm(this, this.picPreview.Image, initialCrop, targetAR, this.currentManualRotationAngle))

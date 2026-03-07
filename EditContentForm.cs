@@ -261,13 +261,46 @@ namespace DreamsLive_Solutions_PresenterApp1
         private void ReloadImage()
         {
             picEdit.Image = _mainForm.GetPreviewImage(); // Use rotated image from host
+            MaximizeCropArea();
+        }
+
+        private void MaximizeCropArea()
+        {
+            if (picEdit.Image == null) return;
+
+            float imgW = picEdit.Image.Width;
+            float imgH = picEdit.Image.Height;
+            float imgAR = imgW / imgH;
+
+            if (_targetAspectRatio > 0)
+            {
+                if (imgAR > _targetAspectRatio) // Image is wider than target
+                {
+                    float normW = _targetAspectRatio / imgAR;
+                    _cropRegionNormalized = new RectangleF((1f - normW) / 2f, 0f, normW, 1f);
+                }
+                else // Image is taller than target
+                {
+                    float normH = imgAR / _targetAspectRatio;
+                    _cropRegionNormalized = new RectangleF(0f, (1f - normH) / 2f, 1f, normH);
+                }
+            }
+            else
+            {
+                _cropRegionNormalized = new RectangleF(0f, 0f, 1f, 1f);
+            }
+
             UpdateCropRectFromNormalized();
+            UpdateNormalizedFromCropRect(); // Sync if needed
         }
 
         private void btnPresentNow_Click(object sender, EventArgs e)
         {
             UpdateNormalizedFromCropRect(forceSync: true);
             _mainForm.btnPushToPresenter_Click(null, EventArgs.Empty);
+            // After 'Present Now', the current selection becomes the new 'staged' reference.
+            // We force a refresh of the host's main preview to update the gray box location.
+            _mainForm.Invalidate();
         }
 
         private void btnDone_Click(object sender, EventArgs e)
