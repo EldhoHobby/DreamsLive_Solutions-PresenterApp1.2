@@ -556,6 +556,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             string currentFilePath = "";
             int currentPage = -1;
             RectangleF? currentSelectionNormalized = null;
+            RectangleF? stagedSelectionNormalized = null;
 
             _mainForm.Invoke((Action)(() =>
             {
@@ -603,6 +604,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 currentFilePath = _mainForm.SelectedImagePath;
                 currentPage = _mainForm.CurrentPageNumber;
                 currentSelectionNormalized = _mainForm.GetCurrentSelectionNormalized();
+                stagedSelectionNormalized = _mainForm.GetStagedSelectionNormalized();
             }));
 
             var statusObject = new
@@ -611,6 +613,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 currentFilePath,
                 currentPage,
                 currentSelectionNormalized,
+                stagedSelectionNormalized,
                 secondaryPreview = secondaryPreviewAvailable ? $"/preview/secondary?t={DateTime.UtcNow.Ticks}" : "",
                 pdfCurrentPage,
                 pdfTotalPages,

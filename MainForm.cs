@@ -36,6 +36,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private string selectedImagePath = null;
         private PresentationForm activePresentationForm = null;
         private Rectangle selectionRectangle = Rectangle.Empty;
+        private Rectangle stagedSelectionRectangle = Rectangle.Empty;
         private Rectangle previousSelectionRectangle = Rectangle.Empty;
         private Point selectionStartPoint = Point.Empty;
         private bool isSelecting = false;
@@ -409,6 +410,16 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void picPreview_Paint(object sender, PaintEventArgs e)
         {
+            // Draw staged selection as a persistent gray reference
+            if (!this.stagedSelectionRectangle.IsEmpty)
+            {
+                using (Pen stagedPen = new Pen(Color.FromArgb(180, Color.DimGray), 6))
+                {
+                    stagedPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+                    e.Graphics.DrawRectangle(stagedPen, this.stagedSelectionRectangle);
+                }
+            }
+
             // Draw previous selection as a gray reference while selecting
             if (this.isSelecting && !this.previousSelectionRectangle.IsEmpty)
             {
@@ -1140,12 +1151,14 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
             // Reset the main preview area before loading new content.
             this.selectionRectangle = Rectangle.Empty;
-                UpdateSelectionSizeLabel();
+            this.previousSelectionRectangle = Rectangle.Empty;
+            UpdateSelectionSizeLabel();
             this.isSelecting = false;
             this.currentManualRotationAngle = 0;
 
             if (updateStaging)
             {
+                this.stagedSelectionRectangle = Rectangle.Empty;
                 // Reset secondary preview to prevent auto-syncing old selection to new image
                 this.isSecondaryPreviewPopulated = false;
                 if (this.picSecondaryPreview.Image != null)
@@ -1473,6 +1486,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             // Sync back to main preview
             SyncStagedSelectionToMain();
+            this.stagedSelectionRectangle = this.selectionRectangle;
 
             UpdateButtonAppearanceAndState();
             UpdateButtonEnableStates();
@@ -1723,6 +1737,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
 
             this.stagedContentRotationAngle = this.currentManualRotationAngle;
+            this.stagedSelectionRectangle = this.selectionRectangle;
 
             // Render this staged content to the secondary preview
             RenderContentToPictureBox(
@@ -3642,6 +3657,12 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             if (selectionRectangle.IsEmpty) return null;
             return GetSelectedRegionNormalized(selectionRectangle);
+        }
+
+        public RectangleF? GetStagedSelectionNormalized()
+        {
+            if (stagedSelectionRectangle.IsEmpty) return null;
+            return GetSelectedRegionNormalized(stagedSelectionRectangle);
         }
 
         private string GetActivationStatus()

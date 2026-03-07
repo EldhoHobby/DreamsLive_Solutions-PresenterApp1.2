@@ -305,6 +305,9 @@
             </div>
             <div id="picPreviewContainer" class="preview-box" onclick="openEditor()" style="cursor: pointer;">
                 <img id="picPreview" src="">
+                <!-- Persistent Staged Reference Box -->
+                <div id="staged-selection-overlay" style="position: absolute; border: 6px dotted rgba(128, 128, 128, 0.8); pointer-events: none; display: none; box-sizing: border-box;"></div>
+                <!-- Current Active Selection Box -->
                 <div id="selection-overlay" style="position: absolute; border: 2px solid red; pointer-events: none; display: none; box-sizing: border-box;"></div>
             </div>
         </div>
@@ -370,8 +373,8 @@
         </div>
         <div class="modal-content">
             <img id="editor-image" src="">
-            <!-- Gray Box for previous selection reference -->
-            <div id="editor-reference-overlay" style="position: absolute; border: 6px dotted rgba(80, 80, 80, 1.0); background-color: transparent; pointer-events: none; display: none; box-sizing: border-box; z-index: 10;"></div>
+            <!-- Gray Box for previous selection reference (Matches host's staged area) -->
+            <div id="editor-reference-overlay" style="position: absolute; border: 10px dotted rgba(128, 128, 128, 0.9); background-color: transparent; pointer-events: none; display: none; box-sizing: border-box; z-index: 10;"></div>
         </div>
         <div class="modal-footer" style="flex-wrap: wrap; gap: 10px;">
             <label style="color: white;">
@@ -398,6 +401,7 @@
         let cropDebounceTimer = null;
         let lastCropData = null;
         let lastNormalizedSelection = null;
+        let stagedNormalizedSelection = null;
         let initialCropData = null;
         let lastStatusFilePath = null;
         let isCropperReady = false;
@@ -607,9 +611,14 @@
                         };
                     }
 
-                    // Setup reference overlay (Gray Box) using the current selection as baseline
-                    if (lastCropData) {
-                        initialCropData = JSON.parse(JSON.stringify(lastCropData)); // Deep copy
+            // Setup reference overlay (Gray Box) using the host's actual STAGED region
+            if (stagedNormalizedSelection) {
+                initialCropData = {
+                    x: stagedNormalizedSelection.X * img.naturalWidth,
+                    y: stagedNormalizedSelection.Y * img.naturalHeight,
+                    width: stagedNormalizedSelection.Width * img.naturalWidth,
+                    height: stagedNormalizedSelection.Height * img.naturalHeight
+                };
                         refOverlay.style.display = 'block';
                     } else {
                         initialCropData = null;
@@ -767,7 +776,7 @@
                     previewContainer.style.aspectRatio = `${status.mainPreviewAspectRatio}`;
                 }
 
-                // Selection overlay update
+                // Active selection overlay update
                 const overlay = document.getElementById('selection-overlay');
                 if (status.currentSelectionNormalized) {
                     const sel = status.currentSelectionNormalized;
@@ -777,13 +786,26 @@
                     overlay.style.height = (sel.Height * 100) + '%';
                     overlay.style.display = 'block';
 
-                    // Store normalized selection to use when opening editor
-                    if (!isEditing) {
-                        lastNormalizedSelection = status.currentSelectionNormalized;
-                    }
+                    if (!isEditing) lastNormalizedSelection = status.currentSelectionNormalized;
                 } else {
                     overlay.style.display = 'none';
                     if (!isEditing) lastNormalizedSelection = null;
+                }
+
+                // Staged reference overlay update
+                const stagedOverlay = document.getElementById('staged-selection-overlay');
+                if (status.stagedSelectionNormalized) {
+                    const sel = status.stagedSelectionNormalized;
+                    stagedOverlay.style.left = (sel.X * 100) + '%';
+                    stagedOverlay.style.top = (sel.Y * 100) + '%';
+                    stagedOverlay.style.width = (sel.Width * 100) + '%';
+                    stagedOverlay.style.height = (sel.Height * 100) + '%';
+                    stagedOverlay.style.display = 'block';
+
+                    stagedNormalizedSelection = status.stagedSelectionNormalized;
+                } else {
+                    stagedOverlay.style.display = 'none';
+                    stagedNormalizedSelection = null;
                 }
 
 
