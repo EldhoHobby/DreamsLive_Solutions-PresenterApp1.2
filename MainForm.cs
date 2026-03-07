@@ -1840,6 +1840,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // If it *was* auto-linked, UpdateMainPresentation would have set isPresenterShowingLiveContent and liveContent fields.
             // So, just ensure border color is updated based on the outcome.
             UpdateSecondaryPreviewBorderColor();
+            this.picPreview.Invalidate();
         }
         // --- Create a new class file for PresentationForm (e.g., PresentationForm.cs) ---
         // Or add this class within the same file as MainForm, outside the MainForm class.
