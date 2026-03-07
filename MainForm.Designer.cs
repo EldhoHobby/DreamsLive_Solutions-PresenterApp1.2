@@ -45,6 +45,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.cmbDisplayMode = new System.Windows.Forms.ComboBox();
             this.lblWebServerUrl = new System.Windows.Forms.Label();
             this.panelSecondaryPreviewBorder = new System.Windows.Forms.Panel();
+            this.picSecondaryPreview = new System.Windows.Forms.PictureBox();
             this.chkAlwaysOnTop = new System.Windows.Forms.CheckBox();
             this.lblMessage = new System.Windows.Forms.Label();
             this.btnUp = new System.Windows.Forms.Button();
@@ -62,20 +63,21 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnEditContent = new System.Windows.Forms.Button();
             this.btnMessageOkay = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.picSecondaryPreview = new System.Windows.Forms.PictureBox();
             this.picPreview = new System.Windows.Forms.PictureBox();
             this.label1 = new System.Windows.Forms.Label();
             this.btnSetDatabaseFolder = new System.Windows.Forms.Button();
             this.lblDatabaseFolderPath = new System.Windows.Forms.Label();
+            this.Preview = new System.Windows.Forms.Label();
+            this.StagePreview = new System.Windows.Forms.Label();
             this.panelSecondaryPreviewBorder.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picPreview)).BeginInit();
             this.SuspendLayout();
             // 
             // tnBrowse
             // 
-            this.tnBrowse.Location = new System.Drawing.Point(754, 81);
+            this.tnBrowse.Location = new System.Drawing.Point(754, 59);
             this.tnBrowse.Name = "tnBrowse";
             this.tnBrowse.Size = new System.Drawing.Size(75, 23);
             this.tnBrowse.TabIndex = 0;
@@ -86,7 +88,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // lblImagePath
             // 
             this.lblImagePath.AutoSize = true;
-            this.lblImagePath.Location = new System.Drawing.Point(835, 86);
+            this.lblImagePath.Location = new System.Drawing.Point(835, 64);
             this.lblImagePath.Name = "lblImagePath";
             this.lblImagePath.Size = new System.Drawing.Size(113, 13);
             this.lblImagePath.TabIndex = 1;
@@ -238,6 +240,17 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.panelSecondaryPreviewBorder.Size = new System.Drawing.Size(600, 425);
             this.panelSecondaryPreviewBorder.TabIndex = 9;
             // 
+            // picSecondaryPreview
+            // 
+            this.picSecondaryPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.picSecondaryPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.picSecondaryPreview.Location = new System.Drawing.Point(2, 2);
+            this.picSecondaryPreview.Name = "picSecondaryPreview";
+            this.picSecondaryPreview.Size = new System.Drawing.Size(596, 421);
+            this.picSecondaryPreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.picSecondaryPreview.TabIndex = 0;
+            this.picSecondaryPreview.TabStop = false;
+            // 
             // chkAlwaysOnTop
             // 
             this.chkAlwaysOnTop.AutoSize = true;
@@ -371,14 +384,14 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnHighlighter.Click += new System.EventHandler(this.btnHighlighter_Click);
             // 
             // btnEditContent
-            //
+            // 
             this.btnEditContent.Location = new System.Drawing.Point(612, 290);
             this.btnEditContent.Name = "btnEditContent";
             this.btnEditContent.Size = new System.Drawing.Size(136, 36);
             this.btnEditContent.TabIndex = 38;
             this.btnEditContent.Text = "Edit / Crop";
             this.btnEditContent.UseVisualStyleBackColor = true;
-            //
+            // 
             // btnMessageOkay
             // 
             this.btnMessageOkay.Location = new System.Drawing.Point(1277, 568);
@@ -399,17 +412,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.pictureBox1.TabIndex = 34;
             this.pictureBox1.TabStop = false;
             // 
-            // picSecondaryPreview
-            //
-            this.picSecondaryPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.picSecondaryPreview.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.picSecondaryPreview.Location = new System.Drawing.Point(2, 2);
-            this.picSecondaryPreview.Name = "picSecondaryPreview";
-            this.picSecondaryPreview.Size = new System.Drawing.Size(596, 421);
-            this.picSecondaryPreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.picSecondaryPreview.TabIndex = 0;
-            this.picSecondaryPreview.TabStop = false;
-            //
             // picPreview
             // 
             this.picPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -431,7 +433,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.label1.Text = "Where Ideas Go Live.";
             // 
             // btnSetDatabaseFolder
-            //
+            // 
             this.btnSetDatabaseFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnSetDatabaseFolder.Location = new System.Drawing.Point(250, 544);
             this.btnSetDatabaseFolder.Name = "btnSetDatabaseFolder";
@@ -440,22 +442,42 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnSetDatabaseFolder.Text = "Set Database Folder";
             this.btnSetDatabaseFolder.UseVisualStyleBackColor = true;
             this.btnSetDatabaseFolder.Click += new System.EventHandler(this.btnSetDatabaseFolder_Click);
-            //
+            // 
             // lblDatabaseFolderPath
-            //
+            // 
             this.lblDatabaseFolderPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lblDatabaseFolderPath.AutoSize = true;
             this.lblDatabaseFolderPath.Location = new System.Drawing.Point(376, 549);
             this.lblDatabaseFolderPath.Name = "lblDatabaseFolderPath";
-            this.lblDatabaseFolderPath.Size = new System.Drawing.Size(121, 13);
+            this.lblDatabaseFolderPath.Size = new System.Drawing.Size(127, 13);
             this.lblDatabaseFolderPath.TabIndex = 37;
             this.lblDatabaseFolderPath.Text = "Database Folder: Not Set";
-            //
+            // 
+            // Preview
+            // 
+            this.Preview.AutoSize = true;
+            this.Preview.Location = new System.Drawing.Point(758, 90);
+            this.Preview.Name = "Preview";
+            this.Preview.Size = new System.Drawing.Size(45, 13);
+            this.Preview.TabIndex = 39;
+            this.Preview.Text = "Preview";
+            // 
+            // StagePreview
+            // 
+            this.StagePreview.AutoSize = true;
+            this.StagePreview.Location = new System.Drawing.Point(7, 92);
+            this.StagePreview.Name = "StagePreview";
+            this.StagePreview.Size = new System.Drawing.Size(76, 13);
+            this.StagePreview.TabIndex = 40;
+            this.StagePreview.Text = "Stage Preview";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1359, 600);
+            this.Controls.Add(this.StagePreview);
+            this.Controls.Add(this.Preview);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.btnMessageOkay);
@@ -498,8 +520,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.panelSecondaryPreviewBorder.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picPreview)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -547,5 +569,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnSetDatabaseFolder;
         private System.Windows.Forms.Label lblDatabaseFolderPath;
+        private System.Windows.Forms.Label Preview;
+        private System.Windows.Forms.Label StagePreview;
     }
 }
