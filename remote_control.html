@@ -332,7 +332,9 @@
             <div id="db-upload-options" style="display: none; grid-column: 1 / -1; gap: 10px; grid-template-columns: 1fr 1fr;">
                 <div style="display: flex; flex-direction: column; gap: 5px;">
                     <select id="subfolder-select"></select>
-                    <input type="text" id="new-folder-input" placeholder="New folder name" style="display: none;">
+                    <div id="new-folder-container" style="display: none; flex-direction: column; gap: 5px;">
+                        <input type="text" id="new-folder-input" placeholder="New folder name">
+                    </div>
                     <button id="btnToggleNewFolder" onclick="toggleNewFolderInput()" style="font-size: 0.8em; padding: 2px; min-height: 20px;">+ New Folder</button>
                 </div>
                 <input type="text" id="custom-filename" placeholder="Custom filename (optional)">
@@ -520,18 +522,16 @@
         }
 
         function toggleNewFolderInput() {
-            const select = document.getElementById('subfolder-select');
+            const container = document.getElementById('new-folder-container');
             const input = document.getElementById('new-folder-input');
             const btn = document.getElementById('btnToggleNewFolder');
 
-            if (input.style.display === 'none') {
-                input.style.display = 'block';
-                select.style.display = 'none';
+            if (container.style.display === 'none') {
+                container.style.display = 'flex';
                 btn.textContent = 'x Cancel New';
                 input.focus();
             } else {
-                input.style.display = 'none';
-                select.style.display = 'block';
+                container.style.display = 'none';
                 btn.textContent = '+ New Folder';
                 input.value = '';
             }
@@ -554,9 +554,15 @@
                 const chkDb = document.getElementById('chkUploadToDatabase');
                 formData.append('isDatabase', chkDb.checked);
                 if (chkDb.checked) {
-                    const newFolder = document.getElementById('new-folder-input').value;
+                    const newFolderName = document.getElementById('new-folder-input').value.trim();
                     const selectedFolder = document.getElementById('subfolder-select').value;
-                    formData.append('subfolder', newFolder || selectedFolder);
+
+                    let finalSubfolder = selectedFolder;
+                    if (newFolderName) {
+                        finalSubfolder = selectedFolder ? (selectedFolder + '/' + newFolderName) : newFolderName;
+                    }
+
+                    formData.append('subfolder', finalSubfolder);
                     formData.append('customName', document.getElementById('custom-filename').value);
                 }
                 const response = await fetch('/upload', {

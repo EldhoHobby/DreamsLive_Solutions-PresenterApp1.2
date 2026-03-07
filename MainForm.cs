@@ -1720,8 +1720,31 @@ namespace DreamsLive_Solutions_PresenterApp1
                 return;
             }
 
-            RectangleF initialCrop = GetGetCurrentSelectionNormalized() ?? new RectangleF(0.1f, 0.1f, 0.8f, 0.8f);
             float targetAR = GetTargetAspectRatio();
+            RectangleF initialCrop;
+
+            // Calculate maximized crop area based on target aspect ratio
+            if (targetAR > 0)
+            {
+                float imgW = this.picPreview.Image.Width;
+                float imgH = this.picPreview.Image.Height;
+                float imgAR = imgW / imgH;
+
+                if (imgAR > targetAR) // Image is wider than target
+                {
+                    float normW = targetAR / imgAR;
+                    initialCrop = new RectangleF((1f - normW) / 2f, 0f, normW, 1f);
+                }
+                else // Image is taller than target
+                {
+                    float normH = imgAR / targetAR;
+                    initialCrop = new RectangleF(0f, (1f - normH) / 2f, 1f, normH);
+                }
+            }
+            else
+            {
+                initialCrop = new RectangleF(0f, 0f, 1f, 1f);
+            }
 
             using (var editForm = new EditContentForm(this, this.picPreview.Image, initialCrop, targetAR, this.currentManualRotationAngle))
             {
