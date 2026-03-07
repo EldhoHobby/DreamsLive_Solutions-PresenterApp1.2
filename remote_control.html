@@ -371,7 +371,7 @@
         <div class="modal-content">
             <img id="editor-image" src="">
             <!-- Gray Box for previous selection reference -->
-            <div id="editor-reference-overlay" style="position: absolute; border: 2px solid rgba(128, 128, 128, 0.8); background-color: rgba(128, 128, 128, 0.3); pointer-events: none; display: none; box-sizing: border-box; z-index: 10;"></div>
+            <div id="editor-reference-overlay" style="position: absolute; border: 6px dotted rgba(80, 80, 80, 1.0); background-color: transparent; pointer-events: none; display: none; box-sizing: border-box; z-index: 10;"></div>
         </div>
         <div class="modal-footer" style="flex-wrap: wrap; gap: 10px;">
             <label style="color: white;">
@@ -635,6 +635,7 @@
                         },
                         crop: (event) => {
                             lastCropData = event.detail;
+                            updateEditorReferenceOverlay();
                             if (!isCropperReady) return;
 
                             // Performance: Debounce crop updates to 1 second

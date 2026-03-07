@@ -412,7 +412,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // Draw previous selection as a gray reference while selecting
             if (this.isSelecting && !this.previousSelectionRectangle.IsEmpty)
             {
-                using (Pen refPen = new Pen(Color.FromArgb(128, Color.Gray), 2))
+                using (Pen refPen = new Pen(Color.FromArgb(200, Color.DimGray), 6))
                 {
                     refPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dot;
                     e.Graphics.DrawRectangle(refPen, this.previousSelectionRectangle);
