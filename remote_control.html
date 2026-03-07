@@ -330,7 +330,11 @@
         <div class="upload">
             <input type="file" id="file-input" accept="image/*,.pdf">
             <div id="db-upload-options" style="display: none; grid-column: 1 / -1; gap: 10px; grid-template-columns: 1fr 1fr;">
-                <select id="subfolder-select"></select>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <select id="subfolder-select"></select>
+                    <input type="text" id="new-folder-input" placeholder="New folder name" style="display: none;">
+                    <button id="btnToggleNewFolder" onclick="toggleNewFolderInput()" style="font-size: 0.8em; padding: 2px; min-height: 20px;">+ New Folder</button>
+                </div>
                 <input type="text" id="custom-filename" placeholder="Custom filename (optional)">
             </div>
             <button onclick="uploadFile()">Upload</button>
@@ -385,6 +389,7 @@
             </label>
             <button onclick="rotateInEditor(-1)" style="font-size: 1.2em;">&#8634;</button>
             <button onclick="rotateInEditor(1)" style="font-size: 1.2em;">&#8635;</button>
+            <button id="btnPresentNow" onclick="presentNow()" style="background-color: #2196F3; color: white; min-width: 100px;">Present Now</button>
             <button onclick="closeEditor(true)" style="background-color: #4CAF50; color: white; min-width: 80px;">Done</button>
         </div>
     </div>
@@ -514,6 +519,24 @@
             }
         }
 
+        function toggleNewFolderInput() {
+            const select = document.getElementById('subfolder-select');
+            const input = document.getElementById('new-folder-input');
+            const btn = document.getElementById('btnToggleNewFolder');
+
+            if (input.style.display === 'none') {
+                input.style.display = 'block';
+                select.style.display = 'none';
+                btn.textContent = 'x Cancel New';
+                input.focus();
+            } else {
+                input.style.display = 'none';
+                select.style.display = 'block';
+                btn.textContent = '+ New Folder';
+                input.value = '';
+            }
+        }
+
         async function uploadFile() {
 
             const fileInput = document.getElementById('file-input');
@@ -531,7 +554,9 @@
                 const chkDb = document.getElementById('chkUploadToDatabase');
                 formData.append('isDatabase', chkDb.checked);
                 if (chkDb.checked) {
-                    formData.append('subfolder', document.getElementById('subfolder-select').value);
+                    const newFolder = document.getElementById('new-folder-input').value;
+                    const selectedFolder = document.getElementById('subfolder-select').value;
+                    formData.append('subfolder', newFolder || selectedFolder);
                     formData.append('customName', document.getElementById('custom-filename').value);
                 }
                 const response = await fetch('/upload', {
@@ -679,6 +704,17 @@
             refOverlay.style.top = refY + 'px';
             refOverlay.style.width = refW + 'px';
             refOverlay.style.height = refH + 'px';
+        }
+
+        async function presentNow() {
+            if (cropper) {
+                const detail = cropper.getData();
+                const imageData = cropper.getImageData();
+                // Send the crop data first
+                await syncCrop(detail, imageData.naturalWidth, imageData.naturalHeight, true);
+                // Then trigger the Go Live action
+                await performAction('push');
+            }
         }
 
         async function toggleLiveSync() {

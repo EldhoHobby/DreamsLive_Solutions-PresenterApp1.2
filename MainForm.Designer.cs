@@ -59,6 +59,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.lblSelectionSize = new System.Windows.Forms.Label();
             this.chkLaserPointer = new System.Windows.Forms.CheckBox();
             this.btnHighlighter = new System.Windows.Forms.Button();
+            this.btnEditContent = new System.Windows.Forms.Button();
             this.btnMessageOkay = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.picSecondaryPreview = new System.Windows.Forms.PictureBox();
@@ -369,6 +370,15 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnHighlighter.UseVisualStyleBackColor = true;
             this.btnHighlighter.Click += new System.EventHandler(this.btnHighlighter_Click);
             // 
+            // btnEditContent
+            //
+            this.btnEditContent.Location = new System.Drawing.Point(612, 290);
+            this.btnEditContent.Name = "btnEditContent";
+            this.btnEditContent.Size = new System.Drawing.Size(136, 36);
+            this.btnEditContent.TabIndex = 38;
+            this.btnEditContent.Text = "Edit / Crop";
+            this.btnEditContent.UseVisualStyleBackColor = true;
+            //
             // btnMessageOkay
             // 
             this.btnMessageOkay.Location = new System.Drawing.Point(1277, 568);
@@ -480,6 +490,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.lblSelectionSize);
             this.Controls.Add(this.chkLaserPointer);
             this.Controls.Add(this.btnHighlighter);
+            this.Controls.Add(this.btnEditContent);
             this.Controls.Add(this.picPreview);
             this.Controls.Add(this.btnSetDatabaseFolder);
             this.Controls.Add(this.lblDatabaseFolderPath);
@@ -530,6 +541,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Label lblSelectionSize;
         private System.Windows.Forms.CheckBox chkLaserPointer;
         private System.Windows.Forms.Button btnHighlighter;
+        private System.Windows.Forms.Button btnEditContent;
         private System.Windows.Forms.Button btnMessageOkay;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Label label1;

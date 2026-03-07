@@ -76,6 +76,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         public int CurrentPageNumber => currentPageNumber;
         public int GetCurrentManualRotationAngle() => currentManualRotationAngle;
 
+        public bool IsAutoSendEnabled() => chkLinkLocalPreviewToPresenter.Checked;
+        public void SetAutoSendEnabled(bool enabled) => chkLinkLocalPreviewToPresenter.Checked = enabled;
 
         public MainForm()
         {
@@ -197,6 +199,13 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (this.btnDown != null) this.btnDown.Click += new System.EventHandler(this.btnDown_Click);
             if (this.btnLeft != null) this.btnLeft.Click += new System.EventHandler(this.btnLeft_Click);
             if (this.btnRight != null) this.btnRight.Click += new System.EventHandler(this.btnRight_Click);
+
+            // Assuming btnEditContent is already defined in Designer or I'll add it
+            Control foundBtnEditContent = this.Controls.Find("btnEditContent", true).FirstOrDefault();
+            if (foundBtnEditContent is Button btnEditContent)
+            {
+                btnEditContent.Click += btnEditContent_Click;
+            }
 
             // Note: Subscription for btnStageContent (formerly btnStartPresentation) is assumed
             // to be handled by the designer if the control was renamed and the method name
@@ -1702,6 +1711,29 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         // Ensure this method exists and is subscribed to the correct button's Click event.
         // (Formerly btnStartPresentation, now assumed to be btnStageContent)
+        private void btnEditContent_Click(object sender, EventArgs e)
+        {
+            if (this.picPreview.Image == null)
+            {
+                ShowInfoMessage("Please load an image or PDF first.");
+                return;
+            }
+
+            RectangleF initialCrop = GetGetCurrentSelectionNormalized() ?? new RectangleF(0.1f, 0.1f, 0.8f, 0.8f);
+            float targetAR = GetTargetAspectRatio();
+
+            using (var editForm = new EditContentForm(this, this.picPreview.Image, initialCrop, targetAR, this.currentManualRotationAngle))
+            {
+                editForm.ShowDialog(this);
+            }
+        }
+
+        public RectangleF? GetGetCurrentSelectionNormalized()
+        {
+            if (selectionRectangle.IsEmpty) return null;
+            return GetSelectedRegionNormalized(selectionRectangle);
+        }
+
         public void btnStageContent_Click(object sender, EventArgs e)
         {
             ClearHighlights();
