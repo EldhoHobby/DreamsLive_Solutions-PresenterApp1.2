@@ -1551,6 +1551,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             UpdateButtonAppearanceAndState();
             UpdateButtonEnableStates();
             UpdateSecondaryPreviewBorderColor();
+            this.picPreview.Invalidate();
 
             // Auto-Update Main Presentation (if linked)
             if (this.chkLinkLocalPreviewToPresenter != null && this.chkLinkLocalPreviewToPresenter.Checked)

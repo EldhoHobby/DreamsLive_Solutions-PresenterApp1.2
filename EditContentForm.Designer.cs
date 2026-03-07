@@ -27,6 +27,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnRotateL = new System.Windows.Forms.Button();
             this.btnRotateR = new System.Windows.Forms.Button();
             this.chkAutoSend = new System.Windows.Forms.CheckBox();
+            this.chkLiveSync = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.picEdit)).BeginInit();
             this.panelFooter.SuspendLayout();
             this.SuspendLayout();
@@ -42,6 +43,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             // panelFooter
             this.panelFooter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(34)))), ((int)(((byte)(34)))));
+            this.panelFooter.Controls.Add(this.chkLiveSync);
             this.panelFooter.Controls.Add(this.chkAutoSend);
             this.panelFooter.Controls.Add(this.btnRotateL);
             this.panelFooter.Controls.Add(this.btnRotateR);
@@ -65,6 +67,17 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.chkAutoSend.Text = "Auto Send";
             this.chkAutoSend.UseVisualStyleBackColor = true;
             this.chkAutoSend.CheckedChanged += new System.EventHandler(this.chkAutoSend_CheckedChanged);
+
+            // chkLiveSync
+            this.chkLiveSync.AutoSize = true;
+            this.chkLiveSync.ForeColor = System.Drawing.Color.White;
+            this.chkLiveSync.Location = new System.Drawing.Point(20, 20);
+            this.chkLiveSync.Name = "chkLiveSync";
+            this.chkLiveSync.Size = new System.Drawing.Size(100, 20);
+            this.chkLiveSync.TabIndex = 6;
+            this.chkLiveSync.Text = "Live Sync";
+            this.chkLiveSync.UseVisualStyleBackColor = true;
+            this.chkLiveSync.CheckedChanged += new System.EventHandler(this.chkLiveSync_CheckedChanged);
 
             // btnRotateL
             this.btnRotateL.Location = new System.Drawing.Point(150, 30);
@@ -140,5 +153,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnRotateL;
         private System.Windows.Forms.Button btnRotateR;
         private System.Windows.Forms.CheckBox chkAutoSend;
+        private System.Windows.Forms.CheckBox chkLiveSync;
     }
 }

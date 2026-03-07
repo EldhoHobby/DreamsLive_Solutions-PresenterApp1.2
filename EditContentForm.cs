@@ -13,6 +13,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private RectangleF _cropRegionNormalized;
         private float _targetAspectRatio;
         private bool _isAutoSend = false;
+        private bool _isLiveSync = false;
         private int _currentRotation = 0;
 
         // Interaction fields
@@ -45,8 +46,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             picEdit.Paint += PicEdit_Paint;
             picEdit.Resize += (s, e) => UpdateCropRectFromNormalized();
 
-            chkAutoSend.Checked = _mainForm.IsAutoSendEnabled(); // Assuming I'll add this helper to MainForm
+            chkAutoSend.Checked = _mainForm.IsAutoSendEnabled();
             _isAutoSend = chkAutoSend.Checked;
+            chkLiveSync.Checked = false; // Default off to match remote usually
+            _isLiveSync = chkLiveSync.Checked;
+
             picEdit.Image = _mainForm.GetPreviewImage();
 
             UpdateCropRectFromNormalized();
@@ -114,7 +118,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             return new RectangleF((boxW - w) / 2, (boxH - h) / 2, w, h);
         }
 
-        private void UpdateNormalizedFromCropRect()
+        private void UpdateNormalizedFromCropRect(bool forceSync = false)
         {
             RectangleF displayRect = GetDisplayedImageRect();
             _cropRegionNormalized = new RectangleF(
@@ -124,7 +128,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 (float)_cropRect.Height / displayRect.Height
             );
 
-            if (_isAutoSend)
+            if (_isLiveSync || forceSync)
             {
                 _mainForm.RemoteCrop(_cropRegionNormalized.X, _cropRegionNormalized.Y, _cropRegionNormalized.Width, _cropRegionNormalized.Height);
             }
@@ -262,13 +266,13 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void btnPresentNow_Click(object sender, EventArgs e)
         {
-            UpdateNormalizedFromCropRect();
+            UpdateNormalizedFromCropRect(forceSync: true);
             _mainForm.btnPushToPresenter_Click(null, EventArgs.Empty);
         }
 
         private void btnDone_Click(object sender, EventArgs e)
         {
-            UpdateNormalizedFromCropRect();
+            UpdateNormalizedFromCropRect(forceSync: true);
             _mainForm.btnStageContent_Click(null, EventArgs.Empty);
             this.DialogResult = DialogResult.OK;
             this.Close();
@@ -283,6 +287,12 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             _isAutoSend = chkAutoSend.Checked;
             _mainForm.SetAutoSendEnabled(_isAutoSend);
+        }
+
+        private void chkLiveSync_CheckedChanged(object sender, EventArgs e)
+        {
+            _isLiveSync = chkLiveSync.Checked;
+            if (_isLiveSync) UpdateNormalizedFromCropRect(forceSync: true);
         }
     }
 }
