@@ -39,7 +39,9 @@ namespace DreamsLive_Solutions_PresenterApp1
         private Rectangle stagedSelectionRectangle = Rectangle.Empty;
         private Rectangle previousSelectionRectangle = Rectangle.Empty;
         private Point selectionStartPoint = Point.Empty;
+        private Point moveStartOffset = Point.Empty;
         private bool isSelecting = false;
+        private bool isMoving = false;
 
         private PdfDocument currentPdfDocument = null;
         private int currentPageNumber = 0; // Internally 0-indexed for PdfiumPage.Render
@@ -410,8 +412,8 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void picPreview_Paint(object sender, PaintEventArgs e)
         {
-            // Draw staged selection as a persistent gray reference
-            if (!this.stagedSelectionRectangle.IsEmpty)
+            // Draw staged selection as a persistent gray reference, but only if it's different from current selection
+            if (!this.stagedSelectionRectangle.IsEmpty && this.stagedSelectionRectangle != this.selectionRectangle)
             {
                 using (Pen stagedPen = new Pen(Color.FromArgb(180, Color.DimGray), 6))
                 {
@@ -760,100 +762,128 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void picPreview_MouseUp(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left && this.isSelecting)
+            if (e.Button == MouseButtons.Left)
             {
-                this.isSelecting = false;
-
-                float targetAspectRatio = GetTargetAspectRatio();
-                int currentX = e.X;
-                int currentY = e.Y;
-
-                int dx = currentX - this.selectionStartPoint.X;
-                int dy = currentY - this.selectionStartPoint.Y;
-
-                if (dx == 0 && dy == 0) // Click without drag
+                if (this.isMoving)
                 {
-                    this.selectionRectangle = Rectangle.Empty;
-                    UpdateSelectionSizeLabel();
+                    this.isMoving = false;
+                    this.picPreview.Cursor = Cursors.Default;
+                    SaveCurrentSelection();
                     this.picPreview.Invalidate();
-                    return;
                 }
-
-                int newWidthAbs = Math.Abs(dx);
-                int newHeightAbs = Math.Abs(dy);
-
-                int constrainedWidth;
-                int constrainedHeight;
-
-                if (targetAspectRatio > 0.0f)
+                else if (this.isSelecting)
                 {
-                    if ((float)newWidthAbs / targetAspectRatio >= (float)newHeightAbs)
+                    this.isSelecting = false;
+
+                    float targetAspectRatio = GetTargetAspectRatio();
+                    int currentX = e.X;
+                    int currentY = e.Y;
+
+                    int dx = currentX - this.selectionStartPoint.X;
+                    int dy = currentY - this.selectionStartPoint.Y;
+
+                    if (dx == 0 && dy == 0) // Click without drag
                     {
-                        constrainedWidth = newWidthAbs;
-                        constrainedHeight = (int)Math.Round((float)constrainedWidth / targetAspectRatio);
+                        this.selectionRectangle = Rectangle.Empty;
+                        UpdateSelectionSizeLabel();
+                        SaveCurrentSelection();
+                        this.picPreview.Invalidate();
+                        return;
+                    }
+
+                    int newWidthAbs = Math.Abs(dx);
+                    int newHeightAbs = Math.Abs(dy);
+
+                    int constrainedWidth;
+                    int constrainedHeight;
+
+                    if (targetAspectRatio > 0.0f)
+                    {
+                        if ((float)newWidthAbs / targetAspectRatio >= (float)newHeightAbs)
+                        {
+                            constrainedWidth = newWidthAbs;
+                            constrainedHeight = (int)Math.Round((float)constrainedWidth / targetAspectRatio);
+                        }
+                        else
+                        {
+                            constrainedHeight = newHeightAbs;
+                            constrainedWidth = (int)Math.Round((float)constrainedHeight * targetAspectRatio);
+                        }
+
+                        if (constrainedWidth == 0 && newWidthAbs > 0) constrainedWidth = 1;
+                        if (constrainedHeight == 0 && newHeightAbs > 0) constrainedHeight = 1;
+
+                        if (constrainedWidth == 1 && newWidthAbs > 0 && targetAspectRatio > 0.0f) constrainedHeight = Math.Max(1, (int)Math.Round(1.0f / targetAspectRatio));
+                        if (constrainedHeight == 1 && newHeightAbs > 0 && targetAspectRatio > 0.0f) constrainedWidth = Math.Max(1, (int)Math.Round(1.0f * targetAspectRatio));
                     }
                     else
                     {
+                        constrainedWidth = newWidthAbs;
                         constrainedHeight = newHeightAbs;
-                        constrainedWidth = (int)Math.Round((float)constrainedHeight * targetAspectRatio);
                     }
 
-                    if (constrainedWidth == 0 && newWidthAbs > 0) constrainedWidth = 1;
-                    if (constrainedHeight == 0 && newHeightAbs > 0) constrainedHeight = 1;
-
-                    if (constrainedWidth == 1 && newWidthAbs > 0 && targetAspectRatio > 0.0f) constrainedHeight = Math.Max(1, (int)Math.Round(1.0f / targetAspectRatio));
-                    if (constrainedHeight == 1 && newHeightAbs > 0 && targetAspectRatio > 0.0f) constrainedWidth = Math.Max(1, (int)Math.Round(1.0f * targetAspectRatio));
-                }
-                else
-                {
-                    constrainedWidth = newWidthAbs;
-                    constrainedHeight = newHeightAbs;
-                }
-
-                if (constrainedWidth <= 0 || constrainedHeight <= 0)
-                {
-                    this.selectionRectangle = Rectangle.Empty;
-                }
-                else
-                {
-                    int finalX = (dx > 0) ? this.selectionStartPoint.X : this.selectionStartPoint.X - constrainedWidth;
-                    int finalY = (dy > 0) ? this.selectionStartPoint.Y : this.selectionStartPoint.Y - constrainedHeight;
-                    this.selectionRectangle = new Rectangle(finalX, finalY, constrainedWidth, constrainedHeight);
-                }
-                UpdateSelectionSizeLabel();
-
-                // Save selection logic
-                if (!this.selectionRectangle.IsEmpty && this.selectedImagePath != null)
-                {
-                    RectangleF? imageCoordsSelection = GetSelectedRegionInImageCoordinates(); // This method already exists
-                    if (imageCoordsSelection.HasValue && imageCoordsSelection.Value.Width > 0 && imageCoordsSelection.Value.Height > 0)
+                    if (constrainedWidth <= 0 || constrainedHeight <= 0)
                     {
-                        List<ImageSelectionData> selections = LoadSelections();
-                        // Remove existing selection for this image path, if any
-                        selections.RemoveAll(s => s.ImagePath.Equals(this.selectedImagePath, StringComparison.OrdinalIgnoreCase));
-
-                        // Add new selection
-                        selections.Add(new ImageSelectionData(this.selectedImagePath, imageCoordsSelection.Value));
-                        SaveSelections(selections);
+                        this.selectionRectangle = Rectangle.Empty;
                     }
+                    else
+                    {
+                        int finalX = (dx > 0) ? this.selectionStartPoint.X : this.selectionStartPoint.X - constrainedWidth;
+                        int finalY = (dy > 0) ? this.selectionStartPoint.Y : this.selectionStartPoint.Y - constrainedHeight;
+                        this.selectionRectangle = new Rectangle(finalX, finalY, constrainedWidth, constrainedHeight);
+                    }
+                    UpdateSelectionSizeLabel();
+
+                    SaveCurrentSelection();
+                    this.picPreview.Invalidate();
                 }
-                else if (this.selectionRectangle.IsEmpty && this.selectedImagePath != null) // User cleared selection (e.g. by clicking)
+            }
+        }
+
+        private void SaveCurrentSelection()
+        {
+            if (!this.selectionRectangle.IsEmpty && this.selectedImagePath != null)
+            {
+                RectangleF? imageCoordsSelection = GetSelectedRegionInImageCoordinates();
+                if (imageCoordsSelection.HasValue && imageCoordsSelection.Value.Width > 0 && imageCoordsSelection.Value.Height > 0)
                 {
                     List<ImageSelectionData> selections = LoadSelections();
-                    int removedCount = selections.RemoveAll(s => s.ImagePath.Equals(this.selectedImagePath, StringComparison.OrdinalIgnoreCase));
-                    if (removedCount > 0)
-                    {
-                        SaveSelections(selections);
-                    }
+                    selections.RemoveAll(s => s.ImagePath.Equals(this.selectedImagePath, StringComparison.OrdinalIgnoreCase));
+                    selections.Add(new ImageSelectionData(this.selectedImagePath, imageCoordsSelection.Value));
+                    SaveSelections(selections);
                 }
-
-                this.picPreview.Invalidate();
+            }
+            else if (this.selectionRectangle.IsEmpty && this.selectedImagePath != null)
+            {
+                List<ImageSelectionData> selections = LoadSelections();
+                int removedCount = selections.RemoveAll(s => s.ImagePath.Equals(this.selectedImagePath, StringComparison.OrdinalIgnoreCase));
+                if (removedCount > 0)
+                {
+                    SaveSelections(selections);
+                }
             }
         }
 
         private void picPreview_MouseMove(object sender, MouseEventArgs e)
         {
-            if (this.isSelecting)
+            if (this.isMoving)
+            {
+                int newX = e.X - moveStartOffset.X;
+                int newY = e.Y - moveStartOffset.Y;
+
+                RectangleF displayedImageRect = GetDisplayedImageRect();
+
+                // Clamp position to displayed image area
+                if (newX < (int)displayedImageRect.Left) newX = (int)displayedImageRect.Left;
+                if (newY < (int)displayedImageRect.Top) newY = (int)displayedImageRect.Top;
+                if (newX + selectionRectangle.Width > (int)displayedImageRect.Right) newX = (int)displayedImageRect.Right - selectionRectangle.Width;
+                if (newY + selectionRectangle.Height > (int)displayedImageRect.Bottom) newY = (int)displayedImageRect.Bottom - selectionRectangle.Height;
+
+                this.selectionRectangle.Location = new Point(newX, newY);
+                UpdateSelectionSizeLabel();
+                this.picPreview.Invalidate();
+            }
+            else if (this.isSelecting)
             {
                 float targetAspectRatio = GetTargetAspectRatio();
 
@@ -909,6 +939,18 @@ namespace DreamsLive_Solutions_PresenterApp1
                 UpdateSelectionSizeLabel();
                 this.picPreview.Invalidate();
             }
+            else
+            {
+                // Update cursor if hovering over selection
+                if (!selectionRectangle.IsEmpty && selectionRectangle.Contains(e.Location))
+                {
+                    this.picPreview.Cursor = Cursors.SizeAll;
+                }
+                else
+                {
+                    this.picPreview.Cursor = Cursors.Default;
+                }
+            }
         }
 
         private void picPreview_MouseDown(object sender, MouseEventArgs e)
@@ -918,15 +960,23 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 // Allow picPreview to receive keyboard events
                 this.picPreview.Focus();
-                // Store the starting point of the selection
-                this.selectionStartPoint = e.Location;
-                // Set the flag to indicate that selection is in progress
-                this.isSelecting = true;
-                // Keep track of the current selection as a reference before starting a new one
-                this.previousSelectionRectangle = this.selectionRectangle;
-                // Initialize the selection rectangle
-                this.selectionRectangle = new Rectangle(e.Location, Size.Empty);
-                UpdateSelectionSizeLabel();
+
+                // If inside existing selection, move it
+                if (!selectionRectangle.IsEmpty && selectionRectangle.Contains(e.Location))
+                {
+                    this.isMoving = true;
+                    this.moveStartOffset = new Point(e.X - selectionRectangle.X, e.Y - selectionRectangle.Y);
+                }
+                else
+                {
+                    // Otherwise, start a new selection
+                    this.selectionStartPoint = e.Location;
+                    this.isSelecting = true;
+                    // Keep track of the current selection as a reference before starting a new one
+                    this.previousSelectionRectangle = this.selectionRectangle;
+                    this.selectionRectangle = new Rectangle(e.Location, Size.Empty);
+                    UpdateSelectionSizeLabel();
+                }
             }
         }
 
@@ -1486,6 +1536,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             // Sync back to main preview
             SyncStagedSelectionToMain();
+            this.previousSelectionRectangle = Rectangle.Empty;
             this.stagedSelectionRectangle = this.selectionRectangle;
 
             UpdateButtonAppearanceAndState();
@@ -1654,6 +1705,9 @@ namespace DreamsLive_Solutions_PresenterApp1
         public void btnStageContent_Click(object sender, EventArgs e)
         {
             ClearHighlights();
+            this.previousSelectionRectangle = Rectangle.Empty;
+            this.stagedSelectionRectangle = Rectangle.Empty;
+
             if (this.stagedStitchedImage != null)
             {
                 this.stagedStitchedImage.Dispose();

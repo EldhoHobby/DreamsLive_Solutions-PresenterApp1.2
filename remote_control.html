@@ -717,6 +717,8 @@
 
                 if (save) {
                     await syncCrop(detail, imageData.naturalWidth, imageData.naturalHeight, true);
+                    // Explicitly clear references on host after saving a remote crop
+                    await fetch('/action/stage'); // Trigger status update and reference clearing
                 } else {
                     // Restore last selection on host if we cancelled but were live syncing
                     if (document.getElementById('chkLiveSyncEditor').checked && initialCropData) {
