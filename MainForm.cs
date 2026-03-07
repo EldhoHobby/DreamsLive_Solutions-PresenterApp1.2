@@ -1772,7 +1772,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
             }
 
-            using (var editForm = new EditContentForm(this, this.picPreview.Image, initialCrop, targetAR, this.currentManualRotationAngle))
+            RectangleF? stagedCrop = GetStagedSelectionNormalized();
+            using (var editForm = new EditContentForm(this, this.picPreview.Image, initialCrop, stagedCrop, targetAR, this.currentManualRotationAngle))
             {
                 editForm.ShowDialog(this);
             }

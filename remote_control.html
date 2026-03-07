@@ -601,12 +601,11 @@
 
         async function rotateInEditor(dir) {
             await performAction(`rotate?dir=${dir}`);
-            // Wait a bit for the host to process rotation, then reload the image in editor
-            setTimeout(() => {
-                const img = document.getElementById('editor-image');
-                img.src = `/database/current?t=${new Date().getTime()}`;
-                // Cropper will be re-initialized by img.onload in openEditor if it was already open
-            }, 200);
+            // Immediately update status to get the new normalized coordinates of the rotated region from the host
+            await updateStatus();
+            // Then reload the image in editor
+            const img = document.getElementById('editor-image');
+            img.src = `/database/current?t=${new Date().getTime()}`;
         }
 
         function openEditor() {
@@ -858,6 +857,18 @@
                     stagedOverlay.style.display = 'block';
 
                     stagedNormalizedSelection = status.stagedSelectionNormalized;
+
+                    // Sync editor's gray reference box if it changes while editing
+                    if (isEditing && cropper && isCropperReady) {
+                        const img = document.getElementById('editor-image');
+                        initialCropData = {
+                            x: stagedNormalizedSelection.X * img.naturalWidth,
+                            y: stagedNormalizedSelection.Y * img.naturalHeight,
+                            width: stagedNormalizedSelection.Width * img.naturalWidth,
+                            height: stagedNormalizedSelection.Height * img.naturalHeight
+                        };
+                        updateEditorReferenceOverlay();
+                    }
                 } else {
                     stagedOverlay.style.display = 'none';
                     stagedNormalizedSelection = null;

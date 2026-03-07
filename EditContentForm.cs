@@ -11,6 +11,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private readonly MainForm _mainForm;
         private Image _originalImage;
         private RectangleF _cropRegionNormalized;
+        private RectangleF? _stagedRegionNormalized;
         private float _targetAspectRatio;
         private bool _isAutoSend = false;
         private bool _isLiveSync = false;
@@ -25,11 +26,12 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private const int HandleSize = 10;
 
-        public EditContentForm(MainForm mainForm, Image sourceImage, RectangleF initialCropNormalized, float targetAR, int initialRotation)
+        public EditContentForm(MainForm mainForm, Image sourceImage, RectangleF initialCropNormalized, RectangleF? stagedCropNormalized, float targetAR, int initialRotation)
         {
             _mainForm = mainForm;
             _originalImage = (Image)sourceImage.Clone();
             _cropRegionNormalized = initialCropNormalized;
+            _stagedRegionNormalized = stagedCropNormalized;
             _targetAspectRatio = targetAR;
             _currentRotation = initialRotation;
 
@@ -59,6 +61,24 @@ namespace DreamsLive_Solutions_PresenterApp1
         private void PicEdit_Paint(object sender, PaintEventArgs e)
         {
             if (picEdit.Image == null) return;
+
+            // Draw gray reference box for staged area
+            if (_stagedRegionNormalized.HasValue)
+            {
+                RectangleF displayRect = GetDisplayedImageRect();
+                Rectangle stagedRect = new Rectangle(
+                    (int)(displayRect.X + _stagedRegionNormalized.Value.X * displayRect.Width),
+                    (int)(displayRect.Y + _stagedRegionNormalized.Value.Y * displayRect.Height),
+                    (int)(_stagedRegionNormalized.Value.Width * displayRect.Width),
+                    (int)(_stagedRegionNormalized.Value.Height * displayRect.Height)
+                );
+
+                using (Pen stagedPen = new Pen(Color.FromArgb(180, Color.DimGray), 6))
+                {
+                    stagedPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+                    e.Graphics.DrawRectangle(stagedPen, stagedRect);
+                }
+            }
 
             // Draw darkening overlay outside crop area
             using (Region r = new Region(picEdit.ClientRectangle))
@@ -299,8 +319,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             UpdateNormalizedFromCropRect(forceSync: true);
             _mainForm.btnPushToPresenter_Click(null, EventArgs.Empty);
             // After 'Present Now', the current selection becomes the new 'staged' reference.
+            _stagedRegionNormalized = _cropRegionNormalized;
             // We force a refresh of the host's main preview to update the gray box location.
             _mainForm.Invalidate();
+            this.picEdit.Invalidate();
         }
 
         private void btnDone_Click(object sender, EventArgs e)
