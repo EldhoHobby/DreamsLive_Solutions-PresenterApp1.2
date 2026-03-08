@@ -86,6 +86,8 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         public bool SkipOnePage { get => skipOnePage; set => skipOnePage = value; }
         public bool TwoPagePdf { get => twoPagePdf; set => twoPagePdf = value; }
+        public bool EnableAutoScroll { get => chkEnableScroll.Checked; set => chkEnableScroll.Checked = value; }
+        public bool AutoStagePreview { get => chkAutoStagePreview.Checked; set => chkAutoStagePreview.Checked = value; }
 
         public MainForm()
         {
@@ -212,6 +214,12 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (this.btnDown != null) this.btnDown.Click += new System.EventHandler(this.btnDown_Click);
             if (this.btnLeft != null) this.btnLeft.Click += new System.EventHandler(this.btnLeft_Click);
             if (this.btnRight != null) this.btnRight.Click += new System.EventHandler(this.btnRight_Click);
+
+            // Add Page Up/Down button handlers
+            Button btnPageUp = this.Controls.Find("btnPageUp", true).FirstOrDefault() as Button;
+            if (btnPageUp != null) btnPageUp.Click += (s, e) => MoveSelection(0, -1, true);
+            Button btnPageDown = this.Controls.Find("btnPageDown", true).FirstOrDefault() as Button;
+            if (btnPageDown != null) btnPageDown.Click += (s, e) => MoveSelection(0, 1, true);
 
             // Assuming btnEditContent is already defined in Designer or I'll add it
             Control foundBtnEditContent = this.Controls.Find("btnEditContent", true).FirstOrDefault();
@@ -1067,6 +1075,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                         break;
                     case Keys.Right:
                         MoveSelection(1, 0, isShift);
+                        break;
+                    case Keys.PageUp:
+                        MoveSelection(0, -1, true);
+                        break;
+                    case Keys.PageDown:
+                        MoveSelection(0, 1, true);
                         break;
                     default:
                         return;

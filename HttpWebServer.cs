@@ -272,7 +272,22 @@ namespace DreamsLive_Solutions_PresenterApp1
                     string finalFilename = !string.IsNullOrEmpty(sanitizedCustomName) ? sanitizedCustomName + Path.GetExtension(originalFilename) : Path.GetFileName(originalFilename);
                     string targetDir = "";
 
-                    // Final filename might be changed if it exists, so we return info about it
+                    if (isDatabase && !string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
+                    {
+                        string dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
+                        string combinedPath = Path.GetFullPath(Path.Combine(dbPath, targetSubfolder));
+
+                        // Ensure the target subfolder is within the database root
+                        if (combinedPath.StartsWith(dbPath, StringComparison.OrdinalIgnoreCase))
+                        {
+                            targetDir = combinedPath;
+                        }
+                        else
+                        {
+                            throw new Exception("Invalid target subfolder path");
+                        }
+                    }
+
                     string savedRelativePath = "";
                     string dbPath = "";
 
@@ -474,18 +489,14 @@ namespace DreamsLive_Solutions_PresenterApp1
             else if (action.StartsWith("update-settings"))
             {
                 var query = request.QueryString;
-                if (query.Get("skipOnePage") != null) _mainForm.SkipOnePage = bool.Parse(query.Get("skipOnePage"));
-                if (query.Get("twoPagePdf") != null) _mainForm.TwoPagePdf = bool.Parse(query.Get("twoPagePdf"));
-                if (query.Get("enableScroll") != null)
+                _mainForm.Invoke((Action)(() =>
                 {
-                    bool enable = bool.Parse(query.Get("enableScroll"));
-                    _mainForm.Invoke((Action)(() =>
-                    {
-                        var chk = _mainForm.Controls.Find("chkEnableScroll", true).FirstOrDefault() as CheckBox;
-                        if (chk != null) chk.Checked = enable;
-                    }));
-                }
-                _mainForm.SaveSettings();
+                    if (query.Get("skipOnePage") != null) _mainForm.SkipOnePage = bool.Parse(query.Get("skipOnePage"));
+                    if (query.Get("twoPagePdf") != null) _mainForm.TwoPagePdf = bool.Parse(query.Get("twoPagePdf"));
+                    if (query.Get("enableScroll") != null) _mainForm.chkEnableScroll.Checked = bool.Parse(query.Get("enableScroll"));
+                    if (query.Get("autoStage") != null) _mainForm.chkAutoStagePreview.Checked = bool.Parse(query.Get("autoStage"));
+                    _mainForm.SaveSettings();
+                }));
             }
             else
             {
@@ -572,9 +583,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             double secondaryPreviewAspectRatio = 1.0;
             string secondaryPreviewBorderColor = "transparent";
             bool autoSend = false;
-            bool enableScroll = false;
-            bool skipOnePage = false;
-            bool twoPagePdf = false;
             string message = null;
             string messageType = "info";
             string goLiveButtonText = "";
@@ -585,11 +593,15 @@ namespace DreamsLive_Solutions_PresenterApp1
             bool blackoutButtonEnabled = false;
             bool pdfPrevButtonEnabled = false;
             bool pdfNextButtonEnabled = false;
-            bool editButtonEnabled = false;
             string currentFilePath = "";
             int currentPage = -1;
             RectangleF? currentSelectionNormalized = null;
             RectangleF? stagedSelectionNormalized = null;
+            bool skipOnePage = false;
+            bool twoPagePdf = false;
+            bool enableScroll = false;
+            bool autoStage = false;
+            bool editButtonEnabled = false;
 
             _mainForm.Invoke((Action)(() =>
             {
@@ -614,12 +626,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                 var chkLink = _mainForm.Controls.Find("chkLinkLocalPreviewToPresenter", true).FirstOrDefault() as CheckBox;
                 if (chkLink != null) autoSend = chkLink.Checked;
 
-                var chkScroll = _mainForm.Controls.Find("chkEnableScroll", true).FirstOrDefault() as CheckBox;
-                if (chkScroll != null) enableScroll = chkScroll.Checked;
-
-                skipOnePage = _mainForm.SkipOnePage;
-                twoPagePdf = _mainForm.TwoPagePdf;
-
                 var lblMessage = _mainForm.Controls.Find("lblMessage", true).FirstOrDefault() as Label;
                 if (lblMessage != null && lblMessage.Visible)
                 {
@@ -638,15 +644,18 @@ namespace DreamsLive_Solutions_PresenterApp1
                 var btnClearPresenterDisplay = _mainForm.Controls.Find("btnClearPresenterDisplay", true).FirstOrDefault() as Button;
                 if (btnClearPresenterDisplay != null) { blackoutButtonText = btnClearPresenterDisplay.Text; blackoutButtonEnabled = btnClearPresenterDisplay.Enabled; }
 
-                var btnEditContent = _mainForm.Controls.Find("btnEditContent", true).FirstOrDefault() as Button;
-                if (btnEditContent != null) editButtonEnabled = btnEditContent.Enabled;
-
                 pdfPrevButtonEnabled = _mainForm.IsPdfPrevButtonEnabled;
                 pdfNextButtonEnabled = _mainForm.IsPdfNextButtonEnabled;
                 currentFilePath = _mainForm.SelectedImagePath;
                 currentPage = _mainForm.CurrentPageNumber;
                 currentSelectionNormalized = _mainForm.GetCurrentSelectionNormalized();
                 stagedSelectionNormalized = _mainForm.GetStagedSelectionNormalized();
+
+                skipOnePage = _mainForm.SkipOnePage;
+                twoPagePdf = _mainForm.TwoPagePdf;
+                enableScroll = _mainForm.chkEnableScroll.Checked;
+                autoStage = _mainForm.chkAutoStagePreview.Checked;
+                editButtonEnabled = !string.IsNullOrEmpty(_mainForm.SelectedImagePath);
             }));
 
             var statusObject = new
@@ -663,9 +672,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                 secondaryPreviewAspectRatio,
                 secondaryPreviewBorderColor,
                 autoSend,
-                enableScroll,
-                skipOnePage,
-                twoPagePdf,
                 message,
                 messageType,
                 goLiveButtonText,
@@ -676,6 +682,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 blackoutButtonEnabled,
                 pdfPrevButtonEnabled,
                 pdfNextButtonEnabled,
+                skipOnePage,
+                twoPagePdf,
+                enableScroll,
+                autoStage,
                 editButtonEnabled
             };
 

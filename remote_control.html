@@ -354,12 +354,14 @@
                     Enable Auto Scroll
                 </label>
                 <div class="d-pad">
-                    <div></div>
+                    <button onclick="moveSelection(0, -1, true)">PgUp</button>
                     <button onclick="moveSelection(0, -1)">↑</button>
                     <div></div>
                     <button onclick="moveSelection(-1, 0)">←</button>
                     <button onclick="moveSelection(0, 1)">↓</button>
                     <button onclick="moveSelection(1, 0)">→</button>
+                    <button onclick="moveSelection(0, 1, true)">PgDn</button>
+                    <div></div>
                     <div></div>
                 </div>
             </div>
@@ -477,13 +479,15 @@
                 <label style="color: white;">
                     <input type="checkbox" id="chkEnableScrollEditor" onchange="updateScrollSettings({enableScroll: this.checked})"> Auto Scroll
                 </label>
-                <div class="d-pad" style="width: 120px; margin: 0;">
-                    <div></div>
+                <div class="d-pad" style="width: 150px; margin: 0;">
+                    <button onclick="moveSelection(0, -1, true)" style="font-size: 0.8em; padding: 5px;">PgUp</button>
                     <button onclick="moveSelection(0, -1)">↑</button>
                     <div></div>
                     <button onclick="moveSelection(-1, 0)">←</button>
                     <button onclick="moveSelection(0, 1)">↓</button>
                     <button onclick="moveSelection(1, 0)">→</button>
+                    <button onclick="moveSelection(0, 1, true)" style="font-size: 0.8em; padding: 5px;">PgDn</button>
+                    <div></div>
                     <div></div>
                 </div>
                 <button onclick="toggleSettings()" style="padding: 5px; font-size: 0.8em;">Settings</button>

@@ -51,6 +51,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnDown = new System.Windows.Forms.Button();
             this.btnLeft = new System.Windows.Forms.Button();
             this.btnRight = new System.Windows.Forms.Button();
+            this.btnPageUp = new System.Windows.Forms.Button();
+            this.btnPageDown = new System.Windows.Forms.Button();
             this.btnSettings = new System.Windows.Forms.Button();
             this.lblMoveStep = new System.Windows.Forms.Label();
             this.txtMoveStep = new System.Windows.Forms.TextBox();
@@ -295,6 +297,24 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnRight.Text = "→";
             this.btnRight.UseVisualStyleBackColor = true;
             // 
+            // btnPageUp
+            //
+            this.btnPageUp.Location = new System.Drawing.Point(1023, 518);
+            this.btnPageUp.Name = "btnPageUp";
+            this.btnPageUp.Size = new System.Drawing.Size(45, 23);
+            this.btnPageUp.TabIndex = 44;
+            this.btnPageUp.Text = "PgUp";
+            this.btnPageUp.UseVisualStyleBackColor = true;
+            //
+            // btnPageDown
+            //
+            this.btnPageDown.Location = new System.Drawing.Point(1068, 518);
+            this.btnPageDown.Name = "btnPageDown";
+            this.btnPageDown.Size = new System.Drawing.Size(45, 23);
+            this.btnPageDown.TabIndex = 45;
+            this.btnPageDown.Text = "PgDn";
+            this.btnPageDown.UseVisualStyleBackColor = true;
+            //
             // btnSettings
             //
             this.btnSettings.Location = new System.Drawing.Point(1044, 5);
@@ -496,6 +516,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.btnDown);
             this.Controls.Add(this.btnLeft);
             this.Controls.Add(this.btnRight);
+            this.Controls.Add(this.btnPageUp);
+            this.Controls.Add(this.btnPageDown);
             this.Controls.Add(this.btnSettings);
             this.Controls.Add(this.lblMoveStep);
             this.Controls.Add(this.txtMoveStep);
@@ -548,6 +570,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnDown;
         private System.Windows.Forms.Button btnLeft;
         private System.Windows.Forms.Button btnRight;
+        private System.Windows.Forms.Button btnPageUp;
+        private System.Windows.Forms.Button btnPageDown;
         private System.Windows.Forms.Button btnSettings;
         private System.Windows.Forms.Label lblMoveStep;
         private System.Windows.Forms.TextBox txtMoveStep;
