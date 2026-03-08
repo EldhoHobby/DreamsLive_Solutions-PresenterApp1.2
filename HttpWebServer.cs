@@ -274,10 +274,11 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                     // Final filename might be changed if it exists, so we return info about it
                     string savedRelativePath = "";
+                    string dbPath = "";
 
                     if (isDatabase && !string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
                     {
-                        string dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
+                        dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
                         string combinedPath = Path.GetFullPath(Path.Combine(dbPath, targetSubfolder));
 
                         // Ensure the target subfolder is within the database root
