@@ -413,6 +413,7 @@
         let lastStatusFilePath = null;
         let isCropperReady = false;
         let isInitialStatusLoad = true;
+        let isUserInteractingWithCropper = false;
 
 
         let secondaryPan = { x: 0, y: 0 };
@@ -672,19 +673,10 @@
                         zoom: () => {
                             setTimeout(updateEditorReferenceOverlay, 0);
                         },
+                        cropstart: () => { isUserInteractingWithCropper = true; },
+                        cropend: () => { isUserInteractingWithCropper = false; },
                         crop: (event) => {
                             lastCropData = event.detail;
-
-                            const liveSync = document.getElementById('chkLiveSyncEditor').checked;
-                            if (liveSync) {
-                                initialCropData = {
-                                    x: event.detail.x,
-                                    y: event.detail.y,
-                                    width: event.detail.width,
-                                    height: event.detail.height
-                                };
-                            }
-
                             updateEditorReferenceOverlay();
                             if (!isCropperReady) return;
 
@@ -733,14 +725,6 @@
 
                 // Immediately update status to refresh the gray reference box
                 await updateStatus();
-                // Update local initialCropData so the gray box moves to the new 'staged' position in the editor
-                initialCropData = {
-                    x: detail.x,
-                    y: detail.y,
-                    width: detail.width,
-                    height: detail.height
-                };
-                updateEditorReferenceOverlay();
             }
         }
 
@@ -763,6 +747,17 @@
 
             if (w > 0 && h > 0) {
                 await fetch(`/action/remote-crop?x=${x}&y=${y}&w=${w}&h=${h}`);
+
+                // Update local staged reference immediately after a sync completes
+                initialCropData = {
+                    x: detail.x,
+                    y: detail.y,
+                    width: detail.width,
+                    height: detail.height
+                };
+                const refOverlay = document.getElementById('editor-reference-overlay');
+                refOverlay.style.display = 'block';
+                updateEditorReferenceOverlay();
             }
         }
 
@@ -869,8 +864,8 @@
 
                     stagedNormalizedSelection = status.stagedSelectionNormalized;
 
-                    // Sync editor's gray reference box if it changes while editing
-                    if (isEditing && cropper && isCropperReady) {
+                    // Sync editor's gray reference box if it changes while editing, but NOT during user interaction
+                    if (isEditing && cropper && isCropperReady && !isUserInteractingWithCropper) {
                         const img = document.getElementById('editor-image');
                         initialCropData = {
                             x: stagedNormalizedSelection.X * img.naturalWidth,
@@ -878,11 +873,20 @@
                             width: stagedNormalizedSelection.Width * img.naturalWidth,
                             height: stagedNormalizedSelection.Height * img.naturalHeight
                         };
+                        const refOverlay = document.getElementById('editor-reference-overlay');
+                        refOverlay.style.display = 'block';
                         updateEditorReferenceOverlay();
                     }
                 } else {
                     stagedOverlay.style.display = 'none';
                     stagedNormalizedSelection = null;
+
+                    // If staged is cleared on server, clear it in editor too
+                    if (isEditing && !isUserInteractingWithCropper) {
+                        initialCropData = null;
+                        const refOverlay = document.getElementById('editor-reference-overlay');
+                        refOverlay.style.display = 'none';
+                    }
                 }
 
 
