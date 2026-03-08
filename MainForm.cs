@@ -596,7 +596,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        private void SaveSettings()
+        public void SaveSettings()
         {
             string filePath = GetSettingsFilePath();
             try
@@ -1186,7 +1186,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        private void MoveSelection(int xDirection, int yDirection, bool isPage)
+        public void MoveSelection(int xDirection, int yDirection, bool isPage)
         {
             if (chkEnableScroll.Checked && !selectionRectangle.IsEmpty)
             {
