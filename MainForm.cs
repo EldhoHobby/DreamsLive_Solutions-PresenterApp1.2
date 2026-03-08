@@ -449,8 +449,8 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void picPreview_Paint(object sender, PaintEventArgs e)
         {
-            // Draw staged selection as a persistent gray reference, but only if it's different from current selection
-            if (!this.stagedSelectionRectangle.IsEmpty && this.stagedSelectionRectangle != this.selectionRectangle)
+            // Draw staged selection as a persistent gray reference
+            if (!this.stagedSelectionRectangle.IsEmpty)
             {
                 using (Pen stagedPen = new Pen(Color.FromArgb(180, Color.DimGray), 6))
                 {
