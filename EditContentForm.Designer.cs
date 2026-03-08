@@ -32,8 +32,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnDown = new System.Windows.Forms.Button();
             this.btnLeft = new System.Windows.Forms.Button();
             this.btnRight = new System.Windows.Forms.Button();
-            this.btnPageUp = new System.Windows.Forms.Button();
-            this.btnPageDown = new System.Windows.Forms.Button();
             this.chkEnableAutoScroll = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.picEdit)).BeginInit();
             this.panelFooter.SuspendLayout();
@@ -51,8 +49,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             // panelFooter
             this.panelFooter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(34)))), ((int)(((byte)(34)))));
             this.panelFooter.Controls.Add(this.chkEnableAutoScroll);
-            this.panelFooter.Controls.Add(this.btnPageDown);
-            this.panelFooter.Controls.Add(this.btnPageUp);
             this.panelFooter.Controls.Add(this.btnRight);
             this.panelFooter.Controls.Add(this.btnLeft);
             this.panelFooter.Controls.Add(this.btnDown);
@@ -182,24 +178,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnRight.Text = "→";
             this.btnRight.UseVisualStyleBackColor = true;
 
-            // btnPageUp
-            //
-            this.btnPageUp.Location = new System.Drawing.Point(315, 5);
-            this.btnPageUp.Name = "btnPageUp";
-            this.btnPageUp.Size = new System.Drawing.Size(35, 25);
-            this.btnPageUp.TabIndex = 11;
-            this.btnPageUp.Text = "P↑";
-            this.btnPageUp.UseVisualStyleBackColor = true;
-
-            // btnPageDown
-            //
-            this.btnPageDown.Location = new System.Drawing.Point(380, 65);
-            this.btnPageDown.Name = "btnPageDown";
-            this.btnPageDown.Size = new System.Drawing.Size(35, 25);
-            this.btnPageDown.TabIndex = 12;
-            this.btnPageDown.Text = "P↓";
-            this.btnPageDown.UseVisualStyleBackColor = true;
-
             // chkEnableAutoScroll
             //
             this.chkEnableAutoScroll.AutoSize = true;
@@ -237,8 +215,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnDown;
         private System.Windows.Forms.Button btnLeft;
         private System.Windows.Forms.Button btnRight;
-        private System.Windows.Forms.Button btnPageUp;
-        private System.Windows.Forms.Button btnPageDown;
         private System.Windows.Forms.CheckBox chkEnableAutoScroll;
     }
 }

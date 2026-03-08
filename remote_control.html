@@ -349,18 +349,28 @@
 
         <div id="scroll-controls-section" class="scroll-controls">
             <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center;">
-                <label>
-                    <input type="checkbox" id="chkEnableScroll" onchange="updateScrollSettings({enableScroll: this.checked})">
-                    Enable Auto Scroll
-                </label>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px;">
+                    <label>
+                        <input type="checkbox" id="chkEnableScroll" onchange="updateScrollSettings({enableScroll: this.checked})">
+                        Enable Auto Scroll
+                    </label>
+                    <label>
+                        <input type="checkbox" id="chkAutoStagePreview" onchange="updateScrollSettings({autoStage: this.checked})">
+                        Auto Stage
+                    </label>
+                    <label>
+                        Step:
+                        <input type="number" id="txtMoveStep" style="width: 50px;" onchange="updateScrollSettings({moveStep: this.value})">
+                    </label>
+                </div>
                 <div class="d-pad">
-                    <button onclick="moveSelection(0, -1, true)">PgUp</button>
+                    <div></div>
                     <button onclick="moveSelection(0, -1)">↑</button>
                     <div></div>
                     <button onclick="moveSelection(-1, 0)">←</button>
                     <button onclick="moveSelection(0, 1)">↓</button>
                     <button onclick="moveSelection(1, 0)">→</button>
-                    <button onclick="moveSelection(0, 1, true)">PgDn</button>
+                    <div></div>
                     <div></div>
                     <div></div>
                 </div>
@@ -484,17 +494,16 @@
                     <input type="checkbox" id="chkEnableScrollEditor" onchange="updateScrollSettings({enableScroll: this.checked})"> Auto Scroll
                 </label>
                 <div class="d-pad" style="width: 150px; margin: 0;">
-                    <button onclick="moveSelection(0, -1, true)" style="font-size: 0.8em; padding: 5px;">PgUp</button>
+                    <div></div>
                     <button onclick="moveSelection(0, -1)">↑</button>
                     <div></div>
                     <button onclick="moveSelection(-1, 0)">←</button>
                     <button onclick="moveSelection(0, 1)">↓</button>
                     <button onclick="moveSelection(1, 0)">→</button>
-                    <button onclick="moveSelection(0, 1, true)" style="font-size: 0.8em; padding: 5px;">PgDn</button>
+                    <div></div>
                     <div></div>
                     <div></div>
                 </div>
-                <button onclick="toggleSettings()" style="padding: 5px; font-size: 0.8em;">Settings</button>
             </div>
             <label style="color: white;">
                 <input type="checkbox" id="chkLiveSyncEditor" onchange="toggleLiveSync()"> Live Sync
@@ -1024,6 +1033,14 @@
 
                 const chkScrollEditor = document.getElementById('chkEnableScrollEditor');
                 if (chkScrollEditor) chkScrollEditor.checked = status.enableScroll;
+
+                const chkAutoStage = document.getElementById('chkAutoStagePreview');
+                if (chkAutoStage) chkAutoStage.checked = status.autoStage;
+
+                const txtMoveStep = document.getElementById('txtMoveStep');
+                if (txtMoveStep && document.activeElement !== txtMoveStep) {
+                    txtMoveStep.value = status.moveStep;
+                }
 
                 currentPresenterAspectRatio = status.secondaryPreviewAspectRatio || (16/9);
 

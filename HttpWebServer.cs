@@ -479,6 +479,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     if (query.Get("twoPagePdf") != null) _mainForm.TwoPagePdf = bool.Parse(query.Get("twoPagePdf"));
                     if (query.Get("enableScroll") != null) _mainForm.EnableAutoScroll = bool.Parse(query.Get("enableScroll"));
                     if (query.Get("autoStage") != null) _mainForm.AutoStagePreview = bool.Parse(query.Get("autoStage"));
+                    if (query.Get("moveStep") != null) _mainForm.MoveStepText = query.Get("moveStep");
                     _mainForm.SaveSettings();
                 }));
             }
@@ -585,6 +586,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             bool twoPagePdf = false;
             bool enableScroll = false;
             bool autoStage = false;
+            string moveStep = "50";
             bool editButtonEnabled = false;
 
             _mainForm.Invoke((Action)(() =>
@@ -639,6 +641,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 twoPagePdf = _mainForm.TwoPagePdf;
                 enableScroll = _mainForm.EnableAutoScroll;
                 autoStage = _mainForm.AutoStagePreview;
+                moveStep = _mainForm.MoveStepText;
                 editButtonEnabled = !string.IsNullOrEmpty(_mainForm.SelectedImagePath);
             }));
 
@@ -670,6 +673,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 twoPagePdf,
                 enableScroll,
                 autoStage,
+                moveStep,
                 editButtonEnabled
             };
 

@@ -62,8 +62,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             btnDown.Click += (s, e) => MoveCrop(0, 1, false);
             btnLeft.Click += (s, e) => MoveCrop(-1, 0, false);
             btnRight.Click += (s, e) => MoveCrop(1, 0, false);
-            btnPageUp.Click += (s, e) => MoveCrop(0, -1, true);
-            btnPageDown.Click += (s, e) => MoveCrop(0, 1, true);
             chkEnableAutoScroll.CheckedChanged += (s, e) => _mainForm.EnableAutoScroll = chkEnableAutoScroll.Checked;
 
             picEdit.Image = _mainForm.GetPreviewImage();
