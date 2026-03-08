@@ -346,35 +346,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void EditContentForm_KeyDown(object sender, KeyEventArgs e)
         {
-            if (chkEnableScroll.Checked)
-            {
-                bool isShift = e.Shift;
-                switch (e.KeyCode)
-                {
-                    case Keys.Up: MoveCrop(0, -1, isShift); break;
-                    case Keys.Down: MoveCrop(0, 1, isShift); break;
-                    case Keys.Left: MoveCrop(-1, 0, isShift); break;
-                    case Keys.Right: MoveCrop(1, 0, isShift); break;
-                    default: return;
-                }
-                e.Handled = true;
-            }
-        }
-
-        private void btnUp_Click(object sender, EventArgs e) => MoveCrop(0, -1, false);
-        private void btnDown_Click(object sender, EventArgs e) => MoveCrop(0, 1, false);
-        private void btnLeft_Click(object sender, EventArgs e) => MoveCrop(-1, 0, false);
-        private void btnRight_Click(object sender, EventArgs e) => MoveCrop(1, 0, false);
-
-        private void btnSettings_Click(object sender, EventArgs e)
-        {
-            using (var settingsForm = new SettingsForm(_mainForm))
-            {
-                if (settingsForm.ShowDialog(this) == DialogResult.OK)
-                {
-                    _mainForm.SaveSettings();
-                }
-            }
+            // Keyboard movement in edit window removed as per user request
         }
 
         private void MoveCrop(int xDir, int yDir, bool isPageOrShift)

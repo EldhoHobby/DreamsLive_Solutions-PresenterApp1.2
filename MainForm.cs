@@ -61,7 +61,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool isDarkMode = false; // Added for theme switching
         private bool isPresenterBlackedOut = false; // Added for blackout toggle
 
-        // New PDF Navigation Settings
+        // New PDF Navigation Settings - Reset to false on startup
         private bool skipOnePage = false;
         private bool twoPagePdf = false;
 
@@ -574,14 +574,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                         {
                             DatabaseFolderPath = settings["DatabaseFolderPath"];
                             lblDatabaseFolderPath.Text = "Database Folder: " + DatabaseFolderPath;
-                        }
-                        if (settings.ContainsKey("SkipOnePage"))
-                        {
-                            bool.TryParse(settings["SkipOnePage"], out skipOnePage);
-                        }
-                        if (settings.ContainsKey("TwoPagePdf"))
-                        {
-                            bool.TryParse(settings["TwoPagePdf"], out twoPagePdf);
                         }
                     }
                 }

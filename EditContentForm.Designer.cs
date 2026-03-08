@@ -28,12 +28,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnRotateR = new System.Windows.Forms.Button();
             this.chkAutoSend = new System.Windows.Forms.CheckBox();
             this.chkLiveSync = new System.Windows.Forms.CheckBox();
-            this.chkEnableScroll = new System.Windows.Forms.CheckBox();
-            this.btnUp = new System.Windows.Forms.Button();
-            this.btnDown = new System.Windows.Forms.Button();
-            this.btnLeft = new System.Windows.Forms.Button();
-            this.btnRight = new System.Windows.Forms.Button();
-            this.btnSettings = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.picEdit)).BeginInit();
             this.panelFooter.SuspendLayout();
             this.SuspendLayout();
@@ -51,12 +45,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.panelFooter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(34)))), ((int)(((byte)(34)))));
             this.panelFooter.Controls.Add(this.chkLiveSync);
             this.panelFooter.Controls.Add(this.chkAutoSend);
-            this.panelFooter.Controls.Add(this.chkEnableScroll);
-            this.panelFooter.Controls.Add(this.btnUp);
-            this.panelFooter.Controls.Add(this.btnDown);
-            this.panelFooter.Controls.Add(this.btnLeft);
-            this.panelFooter.Controls.Add(this.btnRight);
-            this.panelFooter.Controls.Add(this.btnSettings);
             this.panelFooter.Controls.Add(this.btnRotateL);
             this.panelFooter.Controls.Add(this.btnRotateR);
             this.panelFooter.Controls.Add(this.btnPresentNow);
@@ -90,61 +78,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.chkLiveSync.Text = "Live Sync";
             this.chkLiveSync.UseVisualStyleBackColor = true;
             this.chkLiveSync.CheckedChanged += new System.EventHandler(this.chkLiveSync_CheckedChanged);
-
-            // chkEnableScroll
-            this.chkEnableScroll.AutoSize = true;
-            this.chkEnableScroll.ForeColor = System.Drawing.Color.White;
-            this.chkEnableScroll.Location = new System.Drawing.Point(20, 60);
-            this.chkEnableScroll.Name = "chkEnableScroll";
-            this.chkEnableScroll.Size = new System.Drawing.Size(120, 20);
-            this.chkEnableScroll.TabIndex = 7;
-            this.chkEnableScroll.Text = "Enable Auto Scroll";
-            this.chkEnableScroll.UseVisualStyleBackColor = true;
-
-            // btnUp
-            this.btnUp.Location = new System.Drawing.Point(320, 10);
-            this.btnUp.Name = "btnUp";
-            this.btnUp.Size = new System.Drawing.Size(30, 30);
-            this.btnUp.TabIndex = 8;
-            this.btnUp.Text = "↑";
-            this.btnUp.UseVisualStyleBackColor = true;
-            this.btnUp.Click += new System.EventHandler(this.btnUp_Click);
-
-            // btnDown
-            this.btnDown.Location = new System.Drawing.Point(320, 60);
-            this.btnDown.Name = "btnDown";
-            this.btnDown.Size = new System.Drawing.Size(30, 30);
-            this.btnDown.TabIndex = 9;
-            this.btnDown.Text = "↓";
-            this.btnDown.UseVisualStyleBackColor = true;
-            this.btnDown.Click += new System.EventHandler(this.btnDown_Click);
-
-            // btnLeft
-            this.btnLeft.Location = new System.Drawing.Point(290, 35);
-            this.btnLeft.Name = "btnLeft";
-            this.btnLeft.Size = new System.Drawing.Size(30, 30);
-            this.btnLeft.TabIndex = 10;
-            this.btnLeft.Text = "←";
-            this.btnLeft.UseVisualStyleBackColor = true;
-            this.btnLeft.Click += new System.EventHandler(this.btnLeft_Click);
-
-            // btnRight
-            this.btnRight.Location = new System.Drawing.Point(350, 35);
-            this.btnRight.Name = "btnRight";
-            this.btnRight.Size = new System.Drawing.Size(30, 30);
-            this.btnRight.TabIndex = 11;
-            this.btnRight.Text = "→";
-            this.btnRight.UseVisualStyleBackColor = true;
-            this.btnRight.Click += new System.EventHandler(this.btnRight_Click);
-
-            // btnSettings
-            this.btnSettings.Location = new System.Drawing.Point(150, 5);
-            this.btnSettings.Name = "btnSettings";
-            this.btnSettings.Size = new System.Drawing.Size(110, 23);
-            this.btnSettings.TabIndex = 16;
-            this.btnSettings.Text = "Scroll Settings";
-            this.btnSettings.UseVisualStyleBackColor = true;
-            this.btnSettings.Click += new System.EventHandler(this.btnSettings_Click);
 
             // btnRotateL
             this.btnRotateL.Location = new System.Drawing.Point(150, 30);
@@ -221,11 +154,5 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnRotateR;
         private System.Windows.Forms.CheckBox chkAutoSend;
         private System.Windows.Forms.CheckBox chkLiveSync;
-        private System.Windows.Forms.CheckBox chkEnableScroll;
-        private System.Windows.Forms.Button btnUp;
-        private System.Windows.Forms.Button btnDown;
-        private System.Windows.Forms.Button btnLeft;
-        private System.Windows.Forms.Button btnRight;
-        private System.Windows.Forms.Button btnSettings;
     }
 }

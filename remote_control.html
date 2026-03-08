@@ -455,21 +455,11 @@
         </div>
         <div class="modal-content">
             <img id="editor-image" src="">
-            <!-- Gray Box for previous selection reference (Matches host's staged area) -->
-            <div id="editor-reference-overlay" style="position: absolute; border: 10px dotted rgba(128, 128, 128, 0.9); background-color: transparent; pointer-events: none; display: none; box-sizing: border-box; z-index: 10;"></div>
         </div>
         <div class="modal-footer" style="flex-wrap: wrap; gap: 10px;">
-            <label style="color: white;">
-                <input type="checkbox" id="chkLiveSyncEditor" onchange="toggleLiveSync()"> Live Sync
-            </label>
-            <label style="color: white;">
-                <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Send
-            </label>
-            <button id="btnRotateLEditor" onclick="rotateInEditor(-1)" style="font-size: 1.2em;">&#8634;</button>
-            <button id="btnRotateREditor" onclick="rotateInEditor(1)" style="font-size: 1.2em;">&#8635;</button>
             <button id="btnPresentNow" onclick="presentNow()" style="background-color: #2196F3; color: white; min-width: 100px;">Present Now</button>
             <button id="btnDoneEditor" onclick="closeEditor(true)" style="background-color: #4CAF50; color: white; min-width: 80px;">Done</button>
-            <button id="btnUploadEditor" onclick="finishUploadEditor()" style="background-color: #FF9800; color: white; min-width: 100px; display: none;">Upload Now</button>
+            <button onclick="closeEditor(false)" style="min-width: 80px;">Close</button>
         </div>
     </div>
 
@@ -486,16 +476,12 @@
         let lastCropData = null;
         let lastNormalizedSelection = null;
         let stagedNormalizedSelection = null;
-        let initialCropData = null;
         let lastStatusFilePath = null;
         let isCropperReady = false;
         let isInitialStatusLoad = true;
         let isUserInteractingWithCropper = false;
         let cameraStream = null;
         let pendingUploadBlob = null;
-        let isUploadEditing = false;
-
-
         let secondaryPan = { x: 0, y: 0 };
         let secondaryZoom = 1.0;
         let lastTouchDist = 0;
@@ -644,24 +630,7 @@
             const fileInput = document.getElementById('file-input');
             const file = fileInput.files[0];
             if (!file) return;
-
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (e) => openEditor(true, e.target.result);
-                reader.readAsDataURL(file);
-            } else {
-                // PDF or other - just upload
-                uploadFile(file);
-            }
-        }
-
-        async function finishUploadEditor() {
-            if (cropper) {
-                cropper.getCroppedCanvas().toBlob((blob) => {
-                    uploadFile(blob, document.getElementById('file-input').files[0]?.name || 'capture.jpg');
-                    closeEditor(false);
-                }, 'image/jpeg', 0.9);
-            }
+            uploadFile(file);
         }
 
         async function uploadFile(fileOrBlob, filenameHint) {
@@ -726,38 +695,9 @@
             }
         }
 
-        async function rotateInEditor(dir) {
-            if (isUploadEditing) {
-                // Local rotation for local file
-                const angle = dir * 90;
-                const canvas = document.createElement('canvas');
-                const img = document.getElementById('editor-image');
-                canvas.width = img.naturalHeight;
-                canvas.height = img.naturalWidth;
-                const ctx = canvas.getContext('2d');
-                ctx.translate(canvas.width / 2, canvas.height / 2);
-                ctx.rotate(angle * Math.PI / 180);
-                ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
-
-                canvas.toBlob((blob) => {
-                    img.src = URL.createObjectURL(blob);
-                    // Re-init cropper on next load
-                }, 'image/jpeg', 0.95);
-                return;
-            }
-
-            await performAction(`rotate?dir=${dir}`);
-            // Immediately update status to get the new normalized coordinates of the rotated region from the host
-            await updateStatus();
-            // Then reload the image in editor
-            const img = document.getElementById('editor-image');
-            img.src = `/database/current?t=${new Date().getTime()}`;
-        }
-
-        function openEditor(isUpload = false, imageSrc = null) {
+        function openEditor(imageSrc = null) {
             const modal = document.getElementById('editor-modal');
             const img = document.getElementById('editor-image');
-            const refOverlay = document.getElementById('editor-reference-overlay');
 
             if (cropper) {
                 cropper.destroy();
@@ -765,18 +705,9 @@
             }
 
             isCropperReady = false;
-            isUploadEditing = isUpload;
             img.src = imageSrc || `/database/current?t=${new Date().getTime()}`;
             modal.style.display = 'flex';
             isEditing = true;
-
-            // Adjust buttons for upload mode
-            document.getElementById('btnUploadEditor').style.display = isUpload ? 'inline-block' : 'none';
-            document.getElementById('btnDoneEditor').style.display = isUpload ? 'none' : 'inline-block';
-            document.getElementById('btnPresentNow').style.display = isUpload ? 'none' : 'inline-block';
-            document.getElementById('chkLiveSyncEditor').parentElement.style.display = isUpload ? 'none' : 'inline-block';
-            document.getElementById('chkAutoSendEditor').parentElement.style.display = isUpload ? 'none' : 'inline-block';
-            document.getElementById('editor-title').textContent = isUpload ? 'Edit Before Upload' : 'Edit / Crop Content';
 
             img.onload = () => {
                 // Wait for layout to settle
@@ -796,20 +727,6 @@
                         };
                     }
 
-            // Setup reference overlay (Gray Box) using the host's actual STAGED region
-            if (stagedNormalizedSelection) {
-                initialCropData = {
-                    x: stagedNormalizedSelection.X * img.naturalWidth,
-                    y: stagedNormalizedSelection.Y * img.naturalHeight,
-                    width: stagedNormalizedSelection.Width * img.naturalWidth,
-                    height: stagedNormalizedSelection.Height * img.naturalHeight
-                };
-                        refOverlay.style.display = 'block';
-                    } else {
-                        initialCropData = null;
-                        refOverlay.style.display = 'none';
-                    }
-
                     cropper = new Cropper(img, {
                         aspectRatio: currentPresenterAspectRatio,
                         viewMode: 0,
@@ -820,52 +737,17 @@
                         zoomable: true,
                         data: lastCropData,
                         ready: () => {
-                            updateEditorReferenceOverlay();
                             // Delay setting ready to true to ensure initial setup events don't trigger a sync
                             setTimeout(() => { isCropperReady = true; }, 500);
-                        },
-                        zoom: () => {
-                            setTimeout(updateEditorReferenceOverlay, 0);
                         },
                         cropstart: () => { isUserInteractingWithCropper = true; },
                         cropend: () => { isUserInteractingWithCropper = false; },
                         crop: (event) => {
                             lastCropData = event.detail;
-                            updateEditorReferenceOverlay();
-                            if (!isCropperReady) return;
-
-                            // Performance: Debounce crop updates to 1 second
-                            clearTimeout(cropDebounceTimer);
-                            cropDebounceTimer = setTimeout(() => {
-                                const imageData = cropper.getImageData();
-                                syncCrop(event.detail, imageData.naturalWidth, imageData.naturalHeight);
-                            }, 1000);
                         }
                     });
                 }, 300);
             };
-        }
-
-        function updateEditorReferenceOverlay() {
-            const refOverlay = document.getElementById('editor-reference-overlay');
-            if (!cropper || !initialCropData || !isEditing) return;
-
-            const canvasData = cropper.getCanvasData();
-            const imageData = cropper.getImageData();
-
-            // Calculate scale between natural image and current displayed image in cropper
-            const scale = imageData.width / imageData.naturalWidth;
-
-            // initialCropData is in natural pixels
-            const refX = canvasData.left + (initialCropData.x * scale);
-            const refY = canvasData.top + (initialCropData.y * scale);
-            const refW = initialCropData.width * scale;
-            const refH = initialCropData.height * scale;
-
-            refOverlay.style.left = refX + 'px';
-            refOverlay.style.top = refY + 'px';
-            refOverlay.style.width = refW + 'px';
-            refOverlay.style.height = refH + 'px';
         }
 
         async function presentNow() {
@@ -882,17 +764,9 @@
             }
         }
 
-        async function toggleLiveSync() {
-            const liveSync = document.getElementById('chkLiveSyncEditor').checked;
-            if (liveSync && isEditing && cropper && isCropperReady) {
-                const imageData = cropper.getImageData();
-                await syncCrop(cropper.getData(), imageData.naturalWidth, imageData.naturalHeight, true);
-            }
-        }
 
         async function syncCrop(detail, naturalWidth, naturalHeight, force = false) {
-            const liveSync = document.getElementById('chkLiveSyncEditor').checked;
-            if (!liveSync && !force) return;
+            if (!force) return;
 
             const x = detail.x / naturalWidth;
             const y = detail.y / naturalHeight;
@@ -901,17 +775,6 @@
 
             if (w > 0 && h > 0) {
                 await fetch(`/action/remote-crop?x=${x}&y=${y}&w=${w}&h=${h}`);
-
-                // Update local staged reference immediately after a sync completes
-                initialCropData = {
-                    x: detail.x,
-                    y: detail.y,
-                    width: detail.width,
-                    height: detail.height
-                };
-                const refOverlay = document.getElementById('editor-reference-overlay');
-                refOverlay.style.display = 'block';
-                updateEditorReferenceOverlay();
             }
         }
 
@@ -931,12 +794,6 @@
                     await syncCrop(detail, imageData.naturalWidth, imageData.naturalHeight, true);
                     // Explicitly clear references on host after saving a remote crop
                     await fetch('/action/stage'); // Trigger status update and reference clearing
-                } else {
-                    // Restore last selection on host if we cancelled but were live syncing
-                    if (document.getElementById('chkLiveSyncEditor').checked && initialCropData) {
-                        await syncCrop(initialCropData, imageData.naturalWidth, imageData.naturalHeight, true);
-                        lastCropData = JSON.parse(JSON.stringify(initialCropData));
-                    }
                 }
             }
         }
@@ -1020,29 +877,9 @@
 
                     stagedNormalizedSelection = status.stagedSelectionNormalized;
 
-                    // Sync editor's gray reference box if it changes while editing, but NOT during user interaction
-                    if (isEditing && cropper && isCropperReady && !isUserInteractingWithCropper) {
-                        const img = document.getElementById('editor-image');
-                        initialCropData = {
-                            x: stagedNormalizedSelection.X * img.naturalWidth,
-                            y: stagedNormalizedSelection.Y * img.naturalHeight,
-                            width: stagedNormalizedSelection.Width * img.naturalWidth,
-                            height: stagedNormalizedSelection.Height * img.naturalHeight
-                        };
-                        const refOverlay = document.getElementById('editor-reference-overlay');
-                        refOverlay.style.display = 'block';
-                        updateEditorReferenceOverlay();
-                    }
                 } else {
                     stagedOverlay.style.display = 'none';
                     stagedNormalizedSelection = null;
-
-                    // If staged is cleared on server, clear it in editor too
-                    if (isEditing && !isUserInteractingWithCropper) {
-                        initialCropData = null;
-                        const refOverlay = document.getElementById('editor-reference-overlay');
-                        refOverlay.style.display = 'none';
-                    }
                 }
 
 
@@ -1060,8 +897,6 @@
 
                 const autoSendDashboard = document.getElementById('chkLinkLocalPreviewToPresenter');
                 if (autoSendDashboard) autoSendDashboard.checked = status.autoSend;
-                const autoSendEditor = document.getElementById('chkAutoSendEditor');
-                if (autoSendEditor) autoSendEditor.checked = status.autoSend;
 
                 const goLiveButton = document.getElementById('btnPushToPresenter');
                 if (goLiveButton) {
@@ -1170,9 +1005,11 @@
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
 
-            const dataUrl = canvas.toDataURL('image/jpeg');
+            canvas.toBlob((blob) => {
+                uploadFile(blob, 'capture.jpg');
+            }, 'image/jpeg', 0.9);
+
             toggleCamera(); // Stop camera
-            openEditor(true, dataUrl);
         }
 
         setInterval(updateStatus, 1000);
