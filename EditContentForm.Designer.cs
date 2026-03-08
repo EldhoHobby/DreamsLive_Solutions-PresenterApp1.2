@@ -33,10 +33,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnDown = new System.Windows.Forms.Button();
             this.btnLeft = new System.Windows.Forms.Button();
             this.btnRight = new System.Windows.Forms.Button();
-            this.btnPageUp = new System.Windows.Forms.Button();
-            this.btnPageDown = new System.Windows.Forms.Button();
-            this.btnPageLeft = new System.Windows.Forms.Button();
-            this.btnPageRight = new System.Windows.Forms.Button();
             this.btnSettings = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.picEdit)).BeginInit();
             this.panelFooter.SuspendLayout();
@@ -60,10 +56,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.panelFooter.Controls.Add(this.btnDown);
             this.panelFooter.Controls.Add(this.btnLeft);
             this.panelFooter.Controls.Add(this.btnRight);
-            this.panelFooter.Controls.Add(this.btnPageUp);
-            this.panelFooter.Controls.Add(this.btnPageDown);
-            this.panelFooter.Controls.Add(this.btnPageLeft);
-            this.panelFooter.Controls.Add(this.btnPageRight);
             this.panelFooter.Controls.Add(this.btnSettings);
             this.panelFooter.Controls.Add(this.btnRotateL);
             this.panelFooter.Controls.Add(this.btnRotateR);
@@ -144,42 +136,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnRight.Text = "→";
             this.btnRight.UseVisualStyleBackColor = true;
             this.btnRight.Click += new System.EventHandler(this.btnRight_Click);
-
-            // btnPageUp
-            this.btnPageUp.Location = new System.Drawing.Point(400, 10);
-            this.btnPageUp.Name = "btnPageUp";
-            this.btnPageUp.Size = new System.Drawing.Size(30, 30);
-            this.btnPageUp.TabIndex = 12;
-            this.btnPageUp.Text = "⇈";
-            this.btnPageUp.UseVisualStyleBackColor = true;
-            this.btnPageUp.Click += new System.EventHandler(this.btnPageUp_Click);
-
-            // btnPageDown
-            this.btnPageDown.Location = new System.Drawing.Point(400, 60);
-            this.btnPageDown.Name = "btnPageDown";
-            this.btnPageDown.Size = new System.Drawing.Size(30, 30);
-            this.btnPageDown.TabIndex = 13;
-            this.btnPageDown.Text = "⇊";
-            this.btnPageDown.UseVisualStyleBackColor = true;
-            this.btnPageDown.Click += new System.EventHandler(this.btnPageDown_Click);
-
-            // btnPageLeft
-            this.btnPageLeft.Location = new System.Drawing.Point(370, 35);
-            this.btnPageLeft.Name = "btnPageLeft";
-            this.btnPageLeft.Size = new System.Drawing.Size(30, 30);
-            this.btnPageLeft.TabIndex = 14;
-            this.btnPageLeft.Text = "⇇";
-            this.btnPageLeft.UseVisualStyleBackColor = true;
-            this.btnPageLeft.Click += new System.EventHandler(this.btnPageLeft_Click);
-
-            // btnPageRight
-            this.btnPageRight.Location = new System.Drawing.Point(430, 35);
-            this.btnPageRight.Name = "btnPageRight";
-            this.btnPageRight.Size = new System.Drawing.Size(30, 30);
-            this.btnPageRight.TabIndex = 15;
-            this.btnPageRight.Text = "⇉";
-            this.btnPageRight.UseVisualStyleBackColor = true;
-            this.btnPageRight.Click += new System.EventHandler(this.btnPageRight_Click);
 
             // btnSettings
             this.btnSettings.Location = new System.Drawing.Point(150, 5);
@@ -270,10 +226,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnDown;
         private System.Windows.Forms.Button btnLeft;
         private System.Windows.Forms.Button btnRight;
-        private System.Windows.Forms.Button btnPageUp;
-        private System.Windows.Forms.Button btnPageDown;
-        private System.Windows.Forms.Button btnPageLeft;
-        private System.Windows.Forms.Button btnPageRight;
         private System.Windows.Forms.Button btnSettings;
     }
 }

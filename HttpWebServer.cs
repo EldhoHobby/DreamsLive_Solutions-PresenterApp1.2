@@ -463,8 +463,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 var query = request.QueryString;
                 int.TryParse(query.Get("x"), out int x);
                 int.TryParse(query.Get("y"), out int y);
-                bool.TryParse(query.Get("isPage"), out bool isPage);
-                _mainForm.Invoke((Action)(() => _mainForm.MoveSelection(x, y, isPage)));
+                bool.TryParse(query.Get("isShift"), out bool isShift);
+                _mainForm.Invoke((Action)(() => _mainForm.MoveSelection(x, y, isShift)));
             }
             else if (action.StartsWith("update-settings"))
             {

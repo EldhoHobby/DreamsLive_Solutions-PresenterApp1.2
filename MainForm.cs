@@ -212,10 +212,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (this.btnDown != null) this.btnDown.Click += new System.EventHandler(this.btnDown_Click);
             if (this.btnLeft != null) this.btnLeft.Click += new System.EventHandler(this.btnLeft_Click);
             if (this.btnRight != null) this.btnRight.Click += new System.EventHandler(this.btnRight_Click);
-            if (this.btnPageUp != null) this.btnPageUp.Click += (s, e) => MoveSelection(0, -1, true);
-            if (this.btnPageDown != null) this.btnPageDown.Click += (s, e) => MoveSelection(0, 1, true);
-            if (this.btnPageLeft != null) this.btnPageLeft.Click += (s, e) => MoveSelection(-1, 0, true);
-            if (this.btnPageRight != null) this.btnPageRight.Click += (s, e) => MoveSelection(1, 0, true);
 
             // Assuming btnEditContent is already defined in Designer or I'll add it
             Control foundBtnEditContent = this.Controls.Find("btnEditContent", true).FirstOrDefault();
@@ -1052,7 +1048,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        private int GetMoveStep()
+        public int GetMoveStep()
         {
             if (int.TryParse(txtMoveStep.Text, out int step) && step > 0)
             {
@@ -1065,25 +1061,20 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             if (chkEnableScroll.Checked && !selectionRectangle.IsEmpty)
             {
+                bool isShift = e.Shift;
                 switch (e.KeyCode)
                 {
                     case Keys.Up:
-                        MoveSelection(0, -1, false);
+                        MoveSelection(0, -1, isShift);
                         break;
                     case Keys.Down:
-                        MoveSelection(0, 1, false);
+                        MoveSelection(0, 1, isShift);
                         break;
                     case Keys.Left:
-                        MoveSelection(-1, 0, false);
+                        MoveSelection(-1, 0, isShift);
                         break;
                     case Keys.Right:
-                        MoveSelection(1, 0, false);
-                        break;
-                    case Keys.PageUp:
-                        MoveSelection(0, -1, true);
-                        break;
-                    case Keys.PageDown:
-                        MoveSelection(0, 1, true);
+                        MoveSelection(1, 0, isShift);
                         break;
                     default:
                         return;
@@ -1186,12 +1177,12 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        public void MoveSelection(int xDirection, int yDirection, bool isPage)
+        public void MoveSelection(int xDirection, int yDirection, bool isPageOrShift)
         {
             if (chkEnableScroll.Checked && !selectionRectangle.IsEmpty)
             {
                 int moveStep;
-                if (isPage)
+                if (isPageOrShift)
                 {
                     moveStep = (xDirection != 0) ? selectionRectangle.Width : selectionRectangle.Height;
                 }

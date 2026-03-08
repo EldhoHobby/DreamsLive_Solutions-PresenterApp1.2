@@ -348,14 +348,13 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             if (chkEnableScroll.Checked)
             {
+                bool isShift = e.Shift;
                 switch (e.KeyCode)
                 {
-                    case Keys.Up: MoveCrop(0, -1, false); break;
-                    case Keys.Down: MoveCrop(0, 1, false); break;
-                    case Keys.Left: MoveCrop(-1, 0, false); break;
-                    case Keys.Right: MoveCrop(1, 0, false); break;
-                    case Keys.PageUp: MoveCrop(0, -1, true); break;
-                    case Keys.PageDown: MoveCrop(0, 1, true); break;
+                    case Keys.Up: MoveCrop(0, -1, isShift); break;
+                    case Keys.Down: MoveCrop(0, 1, isShift); break;
+                    case Keys.Left: MoveCrop(-1, 0, isShift); break;
+                    case Keys.Right: MoveCrop(1, 0, isShift); break;
                     default: return;
                 }
                 e.Handled = true;
@@ -366,10 +365,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         private void btnDown_Click(object sender, EventArgs e) => MoveCrop(0, 1, false);
         private void btnLeft_Click(object sender, EventArgs e) => MoveCrop(-1, 0, false);
         private void btnRight_Click(object sender, EventArgs e) => MoveCrop(1, 0, false);
-        private void btnPageUp_Click(object sender, EventArgs e) => MoveCrop(0, -1, true);
-        private void btnPageDown_Click(object sender, EventArgs e) => MoveCrop(0, 1, true);
-        private void btnPageLeft_Click(object sender, EventArgs e) => MoveCrop(-1, 0, true);
-        private void btnPageRight_Click(object sender, EventArgs e) => MoveCrop(1, 0, true);
 
         private void btnSettings_Click(object sender, EventArgs e)
         {
@@ -382,17 +377,17 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        private void MoveCrop(int xDir, int yDir, bool isPage)
+        private void MoveCrop(int xDir, int yDir, bool isPageOrShift)
         {
             int step;
-            if (isPage)
+            if (isPageOrShift)
             {
                 step = (xDir != 0) ? _cropRect.Width : _cropRect.Height;
             }
             else
             {
-                // Use a default small step for arrows in editor, e.g., 50px or match MainForm's step
-                step = 50;
+                // Get the move step from main form
+                step = _mainForm.InvokeRequired ? (int)_mainForm.Invoke(new Func<int>(() => GetMainFormMoveStep())) : GetMainFormMoveStep();
             }
 
             int dx = xDir * step;
@@ -409,6 +404,11 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             UpdateNormalizedFromCropRect();
             picEdit.Invalidate();
+        }
+
+        private int GetMainFormMoveStep()
+        {
+            return _mainForm.GetMoveStep();
         }
 
         private void btnRotateL_Click(object sender, EventArgs e)
