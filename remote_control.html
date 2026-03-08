@@ -472,7 +472,28 @@
         <div class="modal-content">
             <img id="editor-image" src="">
         </div>
-        <div class="modal-footer" style="flex-wrap: wrap; gap: 10px;">
+        <div class="modal-footer" style="flex-wrap: wrap; gap: 10px; justify-content: center;">
+            <div style="display: flex; gap: 10px; align-items: center; width: 100%; justify-content: center;">
+                <label style="color: white;">
+                    <input type="checkbox" id="chkEnableScrollEditor" onchange="updateScrollSettings({enableScroll: this.checked})"> Auto Scroll
+                </label>
+                <div class="d-pad" style="width: 120px; margin: 0;">
+                    <div></div>
+                    <button onclick="moveSelection(0, -1)">↑</button>
+                    <div></div>
+                    <button onclick="moveSelection(-1, 0)">←</button>
+                    <button onclick="moveSelection(0, 1)">↓</button>
+                    <button onclick="moveSelection(1, 0)">→</button>
+                    <div></div>
+                </div>
+                <button onclick="toggleSettings()" style="padding: 5px; font-size: 0.8em;">Settings</button>
+            </div>
+            <label style="color: white;">
+                <input type="checkbox" id="chkLiveSyncEditor" onchange="toggleLiveSync()"> Live Sync
+            </label>
+            <label style="color: white;">
+                <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Send
+            </label>
             <button id="btnRotateLEditor" onclick="rotateInEditor(-1)" style="font-size: 1.2em; display: none;">↺</button>
             <button id="btnRotateREditor" onclick="rotateInEditor(1)" style="font-size: 1.2em; display: none;">↻</button>
             <button id="btnPresentNow" onclick="presentNow()" style="background-color: #2196F3; color: white; min-width: 100px;">Present Now</button>
@@ -494,6 +515,7 @@
         let lastCropData = null;
         let lastNormalizedSelection = null;
         let stagedNormalizedSelection = null;
+        let initialCropData = null;
         let lastStatusFilePath = null;
         let isCropperReady = false;
         let isInitialStatusLoad = true;
@@ -527,12 +549,17 @@
         function toggleSettings() {
             const modal = document.getElementById('settings-modal');
             modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+            if (modal.style.display === 'flex') {
+                modal.style.zIndex = 3000; // Above editor modal
+            }
         }
 
         async function updateAutoSend(el) {
             const val = el.checked;
             // Sync all auto-send checkboxes
             document.getElementById('chkLinkLocalPreviewToPresenter').checked = val;
+            const editorChk = document.getElementById('chkAutoSendEditor');
+            if (editorChk) editorChk.checked = val;
             await fetch(`/action/auto-send?enable=${val}`);
         }
 
@@ -793,6 +820,7 @@
         function openEditor(imageSrc = null, isUpload = false) {
             const modal = document.getElementById('editor-modal');
             const img = document.getElementById('editor-image');
+            const refOverlay = document.getElementById('editor-reference-overlay');
 
             if (cropper) {
                 cropper.destroy();
@@ -807,10 +835,14 @@
 
             // Adjust buttons for upload mode
             document.getElementById('btnUploadEditor').style.display = isUpload ? 'inline-block' : 'none';
-            document.getElementById('btnRotateLEditor').style.display = 'inline-block'; // Rotation now always shown in editor
+            document.getElementById('btnRotateLEditor').style.display = 'inline-block';
             document.getElementById('btnRotateREditor').style.display = 'inline-block';
             document.getElementById('btnDoneEditor').style.display = isUpload ? 'none' : 'inline-block';
             document.getElementById('btnPresentNow').style.display = isUpload ? 'none' : 'inline-block';
+            const chkLive = document.getElementById('chkLiveSyncEditor');
+            if (chkLive) chkLive.parentElement.style.display = isUpload ? 'none' : 'inline-block';
+            const chkAuto = document.getElementById('chkAutoSendEditor');
+            if (chkAuto) chkAuto.parentElement.style.display = isUpload ? 'none' : 'inline-block';
             document.getElementById('editor-title').textContent = isUpload ? 'Edit Before Upload' : 'Edit / Crop Content';
 
             img.onload = () => {
@@ -833,6 +865,20 @@
                         lastCropData = null;
                     }
 
+                    // Setup reference overlay (Gray Box) using the host's actual STAGED region
+                    if (!isUpload && stagedNormalizedSelection) {
+                        initialCropData = {
+                            x: stagedNormalizedSelection.X * img.naturalWidth,
+                            y: stagedNormalizedSelection.Y * img.naturalHeight,
+                            width: stagedNormalizedSelection.Width * img.naturalWidth,
+                            height: stagedNormalizedSelection.Height * img.naturalHeight
+                        };
+                        refOverlay.style.display = 'block';
+                    } else {
+                        initialCropData = null;
+                        refOverlay.style.display = 'none';
+                    }
+
                     cropper = new Cropper(img, {
                         aspectRatio: currentPresenterAspectRatio,
                         viewMode: 0,
@@ -843,17 +889,52 @@
                         zoomable: true,
                         data: lastCropData,
                         ready: () => {
+                            updateEditorReferenceOverlay();
                             // Delay setting ready to true to ensure initial setup events don't trigger a sync
                             setTimeout(() => { isCropperReady = true; }, 500);
+                        },
+                        zoom: () => {
+                            setTimeout(updateEditorReferenceOverlay, 0);
                         },
                         cropstart: () => { isUserInteractingWithCropper = true; },
                         cropend: () => { isUserInteractingWithCropper = false; },
                         crop: (event) => {
                             lastCropData = event.detail;
+                            updateEditorReferenceOverlay();
+                            if (!isCropperReady) return;
+
+                            // Performance: Debounce crop updates to 1 second
+                            clearTimeout(cropDebounceTimer);
+                            cropDebounceTimer = setTimeout(() => {
+                                const imageData = cropper.getImageData();
+                                syncCrop(event.detail, imageData.naturalWidth, imageData.naturalHeight);
+                            }, 1000);
                         }
                     });
                 }, 300);
             };
+        }
+
+        function updateEditorReferenceOverlay() {
+            const refOverlay = document.getElementById('editor-reference-overlay');
+            if (!cropper || !initialCropData || !isEditing) return;
+
+            const canvasData = cropper.getCanvasData();
+            const imageData = cropper.getImageData();
+
+            // Calculate scale between natural image and current displayed image in cropper
+            const scale = imageData.width / imageData.naturalWidth;
+
+            // initialCropData is in natural pixels
+            const refX = canvasData.left + (initialCropData.x * scale);
+            const refY = canvasData.top + (initialCropData.y * scale);
+            const refW = initialCropData.width * scale;
+            const refH = initialCropData.height * scale;
+
+            refOverlay.style.left = refX + 'px';
+            refOverlay.style.top = refY + 'px';
+            refOverlay.style.width = refW + 'px';
+            refOverlay.style.height = refH + 'px';
         }
 
         async function presentNow() {
@@ -871,8 +952,18 @@
         }
 
 
+        async function toggleLiveSync() {
+            const liveSync = document.getElementById('chkLiveSyncEditor').checked;
+            if (liveSync && isEditing && cropper && isCropperReady) {
+                const imageData = cropper.getImageData();
+                await syncCrop(cropper.getData(), imageData.naturalWidth, imageData.naturalHeight, true);
+            }
+        }
+
         async function syncCrop(detail, naturalWidth, naturalHeight, force = false) {
-            if (!force) return;
+            const liveSyncChk = document.getElementById('chkLiveSyncEditor');
+            const liveSync = liveSyncChk ? liveSyncChk.checked : false;
+            if (!liveSync && !force) return;
 
             const x = detail.x / naturalWidth;
             const y = detail.y / naturalHeight;
@@ -881,6 +972,19 @@
 
             if (w > 0 && h > 0) {
                 await fetch(`/action/remote-crop?x=${x}&y=${y}&w=${w}&h=${h}`);
+
+                // Update local staged reference immediately after a sync completes
+                initialCropData = {
+                    x: detail.x,
+                    y: detail.y,
+                    width: detail.width,
+                    height: detail.height
+                };
+                const refOverlay = document.getElementById('editor-reference-overlay');
+                if (refOverlay) {
+                    refOverlay.style.display = 'block';
+                    updateEditorReferenceOverlay();
+                }
             }
         }
 
@@ -900,6 +1004,13 @@
                     await syncCrop(detail, imageData.naturalWidth, imageData.naturalHeight, true);
                     // Explicitly clear references on host after saving a remote crop
                     await fetch('/action/stage'); // Trigger status update and reference clearing
+                } else {
+                    // Restore last selection on host if we cancelled but were live syncing
+                    const liveSyncChk = document.getElementById('chkLiveSyncEditor');
+                    if (liveSyncChk && liveSyncChk.checked && initialCropData) {
+                        await syncCrop(initialCropData, imageData.naturalWidth, imageData.naturalHeight, true);
+                        lastCropData = JSON.parse(JSON.stringify(initialCropData));
+                    }
                 }
             }
         }
@@ -908,6 +1019,9 @@
             try {
                 const response = await fetch('/status');
                 const status = await response.json();
+
+                const chkScrollEditor = document.getElementById('chkEnableScrollEditor');
+                if (chkScrollEditor) chkScrollEditor.checked = status.enableScroll;
 
                 currentPresenterAspectRatio = status.secondaryPreviewAspectRatio || (16/9);
 
@@ -981,9 +1095,29 @@
 
                     stagedNormalizedSelection = status.stagedSelectionNormalized;
 
+                    // Sync editor's gray reference box if it changes while editing, but NOT during user interaction
+                    if (isEditing && cropper && isCropperReady && !isUserInteractingWithCropper) {
+                        const img = document.getElementById('editor-image');
+                        initialCropData = {
+                            x: stagedNormalizedSelection.X * img.naturalWidth,
+                            y: stagedNormalizedSelection.Y * img.naturalHeight,
+                            width: stagedNormalizedSelection.Width * img.naturalWidth,
+                            height: stagedNormalizedSelection.Height * img.naturalHeight
+                        };
+                        const refOverlay = document.getElementById('editor-reference-overlay');
+                        refOverlay.style.display = 'block';
+                        updateEditorReferenceOverlay();
+                    }
                 } else {
                     stagedOverlay.style.display = 'none';
                     stagedNormalizedSelection = null;
+
+                    // If staged is cleared on server, clear it in editor too
+                    if (isEditing && !isUserInteractingWithCropper) {
+                        initialCropData = null;
+                        const refOverlay = document.getElementById('editor-reference-overlay');
+                        refOverlay.style.display = 'none';
+                    }
                 }
 
 
