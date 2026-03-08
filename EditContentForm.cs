@@ -56,6 +56,15 @@ namespace DreamsLive_Solutions_PresenterApp1
             _isAutoSend = chkAutoSend.Checked;
             chkLiveSync.Checked = false; // Default off to match remote usually
             _isLiveSync = chkLiveSync.Checked;
+            chkEnableAutoScroll.Checked = _mainForm.EnableAutoScroll;
+
+            btnUp.Click += (s, e) => MoveCrop(0, -1, false);
+            btnDown.Click += (s, e) => MoveCrop(0, 1, false);
+            btnLeft.Click += (s, e) => MoveCrop(-1, 0, false);
+            btnRight.Click += (s, e) => MoveCrop(1, 0, false);
+            btnPageUp.Click += (s, e) => MoveCrop(0, -1, true);
+            btnPageDown.Click += (s, e) => MoveCrop(0, 1, true);
+            chkEnableAutoScroll.CheckedChanged += (s, e) => _mainForm.EnableAutoScroll = chkEnableAutoScroll.Checked;
 
             picEdit.Image = _mainForm.GetPreviewImage();
 
@@ -346,7 +355,22 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void EditContentForm_KeyDown(object sender, KeyEventArgs e)
         {
-            // Keyboard movement in edit window removed as per user request
+            if (_mainForm.EnableAutoScroll)
+            {
+                bool isShift = e.Shift;
+                switch (e.KeyCode)
+                {
+                    case Keys.Up: MoveCrop(0, -1, isShift); break;
+                    case Keys.Down: MoveCrop(0, 1, isShift); break;
+                    case Keys.Left: MoveCrop(-1, 0, isShift); break;
+                    case Keys.Right: MoveCrop(1, 0, isShift); break;
+                    case Keys.PageUp: MoveCrop(0, -1, true); break;
+                    case Keys.PageDown: MoveCrop(0, 1, true); break;
+                    default: return;
+                }
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
         }
 
         private void MoveCrop(int xDir, int yDir, bool isPageOrShift)
