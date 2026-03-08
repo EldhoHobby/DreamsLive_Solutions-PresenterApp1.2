@@ -272,25 +272,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     string finalFilename = !string.IsNullOrEmpty(sanitizedCustomName) ? sanitizedCustomName + Path.GetExtension(originalFilename) : Path.GetFileName(originalFilename);
                     string targetDir = "";
 
-                    if (isDatabase && !string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
-                    {
-                        string dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
-                        string combinedPath = Path.GetFullPath(Path.Combine(dbPath, targetSubfolder));
-
-                        // Ensure the target subfolder is within the database root
-                        if (combinedPath.StartsWith(dbPath, StringComparison.OrdinalIgnoreCase))
-                        {
-                            targetDir = combinedPath;
-                        }
-                        else
-                        {
-                            throw new Exception("Invalid target subfolder path");
-                        }
-                    }
-
-                    string savedRelativePath = "";
                     string dbPath = "";
-
                     if (isDatabase && !string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
                     {
                         dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
@@ -306,6 +288,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                             throw new Exception("Invalid target subfolder path");
                         }
                     }
+
+                    string savedRelativePath = "";
 
                     if (string.IsNullOrEmpty(targetDir))
                     {
@@ -493,8 +477,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     if (query.Get("skipOnePage") != null) _mainForm.SkipOnePage = bool.Parse(query.Get("skipOnePage"));
                     if (query.Get("twoPagePdf") != null) _mainForm.TwoPagePdf = bool.Parse(query.Get("twoPagePdf"));
-                    if (query.Get("enableScroll") != null) _mainForm.chkEnableScroll.Checked = bool.Parse(query.Get("enableScroll"));
-                    if (query.Get("autoStage") != null) _mainForm.chkAutoStagePreview.Checked = bool.Parse(query.Get("autoStage"));
+                    if (query.Get("enableScroll") != null) _mainForm.EnableAutoScroll = bool.Parse(query.Get("enableScroll"));
+                    if (query.Get("autoStage") != null) _mainForm.AutoStagePreview = bool.Parse(query.Get("autoStage"));
                     _mainForm.SaveSettings();
                 }));
             }
@@ -653,8 +637,8 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                 skipOnePage = _mainForm.SkipOnePage;
                 twoPagePdf = _mainForm.TwoPagePdf;
-                enableScroll = _mainForm.chkEnableScroll.Checked;
-                autoStage = _mainForm.chkAutoStagePreview.Checked;
+                enableScroll = _mainForm.EnableAutoScroll;
+                autoStage = _mainForm.AutoStagePreview;
                 editButtonEnabled = !string.IsNullOrEmpty(_mainForm.SelectedImagePath);
             }));
 
