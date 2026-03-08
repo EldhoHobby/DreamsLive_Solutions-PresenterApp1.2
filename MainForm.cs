@@ -61,6 +61,10 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool isDarkMode = false; // Added for theme switching
         private bool isPresenterBlackedOut = false; // Added for blackout toggle
 
+        // New PDF Navigation Settings
+        private bool skipOnePage = false;
+        private bool twoPagePdf = false;
+
         // Fields for picSecondaryPreview interactivity
         private PointF secondaryPreviewPan = PointF.Empty;
         private float secondaryPreviewZoom = 1.0f;
@@ -79,6 +83,9 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         public bool IsAutoSendEnabled() => chkLinkLocalPreviewToPresenter.Checked;
         public void SetAutoSendEnabled(bool enabled) => chkLinkLocalPreviewToPresenter.Checked = enabled;
+
+        public bool SkipOnePage { get => skipOnePage; set => skipOnePage = value; }
+        public bool TwoPagePdf { get => twoPagePdf; set => twoPagePdf = value; }
 
         public MainForm()
         {
@@ -205,6 +212,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (this.btnDown != null) this.btnDown.Click += new System.EventHandler(this.btnDown_Click);
             if (this.btnLeft != null) this.btnLeft.Click += new System.EventHandler(this.btnLeft_Click);
             if (this.btnRight != null) this.btnRight.Click += new System.EventHandler(this.btnRight_Click);
+            if (this.btnPageUp != null) this.btnPageUp.Click += (s, e) => MoveSelection(0, -1, true);
+            if (this.btnPageDown != null) this.btnPageDown.Click += (s, e) => MoveSelection(0, 1, true);
+            if (this.btnPageLeft != null) this.btnPageLeft.Click += (s, e) => MoveSelection(-1, 0, true);
+            if (this.btnPageRight != null) this.btnPageRight.Click += (s, e) => MoveSelection(1, 0, true);
 
             // Assuming btnEditContent is already defined in Designer or I'll add it
             Control foundBtnEditContent = this.Controls.Find("btnEditContent", true).FirstOrDefault();
@@ -561,10 +572,21 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     string json = File.ReadAllText(filePath);
                     var settings = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                    if (settings != null && settings.ContainsKey("DatabaseFolderPath"))
+                    if (settings != null)
                     {
-                        DatabaseFolderPath = settings["DatabaseFolderPath"];
-                        lblDatabaseFolderPath.Text = "Database Folder: " + DatabaseFolderPath;
+                        if (settings.ContainsKey("DatabaseFolderPath"))
+                        {
+                            DatabaseFolderPath = settings["DatabaseFolderPath"];
+                            lblDatabaseFolderPath.Text = "Database Folder: " + DatabaseFolderPath;
+                        }
+                        if (settings.ContainsKey("SkipOnePage"))
+                        {
+                            bool.TryParse(settings["SkipOnePage"], out skipOnePage);
+                        }
+                        if (settings.ContainsKey("TwoPagePdf"))
+                        {
+                            bool.TryParse(settings["TwoPagePdf"], out twoPagePdf);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -581,7 +603,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 var settings = new Dictionary<string, string>
                 {
-                    { "DatabaseFolderPath", DatabaseFolderPath }
+                    { "DatabaseFolderPath", DatabaseFolderPath },
+                    { "SkipOnePage", skipOnePage.ToString() },
+                    { "TwoPagePdf", twoPagePdf.ToString() }
                 };
                 string json = JsonConvert.SerializeObject(settings, Formatting.Indented);
                 File.WriteAllText(filePath, json);
@@ -1044,16 +1068,22 @@ namespace DreamsLive_Solutions_PresenterApp1
                 switch (e.KeyCode)
                 {
                     case Keys.Up:
-                        MoveSelection(0, -1);
+                        MoveSelection(0, -1, false);
                         break;
                     case Keys.Down:
-                        MoveSelection(0, 1);
+                        MoveSelection(0, 1, false);
                         break;
                     case Keys.Left:
-                        MoveSelection(-1, 0);
+                        MoveSelection(-1, 0, false);
                         break;
                     case Keys.Right:
-                        MoveSelection(1, 0);
+                        MoveSelection(1, 0, false);
+                        break;
+                    case Keys.PageUp:
+                        MoveSelection(0, -1, true);
+                        break;
+                    case Keys.PageDown:
+                        MoveSelection(0, 1, true);
                         break;
                     default:
                         return;
@@ -1062,10 +1092,21 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        private void btnUp_Click(object sender, EventArgs e) => MoveSelection(0, -1);
-        private void btnDown_Click(object sender, EventArgs e) => MoveSelection(0, 1);
-        private void btnLeft_Click(object sender, EventArgs e) => MoveSelection(-1, 0);
-        private void btnRight_Click(object sender, EventArgs e) => MoveSelection(1, 0);
+        private void btnUp_Click(object sender, EventArgs e) => MoveSelection(0, -1, false);
+        private void btnDown_Click(object sender, EventArgs e) => MoveSelection(0, 1, false);
+        private void btnLeft_Click(object sender, EventArgs e) => MoveSelection(-1, 0, false);
+        private void btnRight_Click(object sender, EventArgs e) => MoveSelection(1, 0, false);
+
+        private void btnSettings_Click(object sender, EventArgs e)
+        {
+            using (var settingsForm = new SettingsForm(this))
+            {
+                if (settingsForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    SaveSettings();
+                }
+            }
+        }
 
         private void HandlePageStitching(Point newLocation, bool isMovingDown)
         {
@@ -1145,11 +1186,20 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        private void MoveSelection(int xDirection, int yDirection)
+        private void MoveSelection(int xDirection, int yDirection, bool isPage)
         {
             if (chkEnableScroll.Checked && !selectionRectangle.IsEmpty)
             {
-                int moveStep = GetMoveStep();
+                int moveStep;
+                if (isPage)
+                {
+                    moveStep = (xDirection != 0) ? selectionRectangle.Width : selectionRectangle.Height;
+                }
+                else
+                {
+                    moveStep = GetMoveStep();
+                }
+
                 int xOffset = xDirection * moveStep;
                 int yOffset = yDirection * moveStep;
 
@@ -1159,48 +1209,78 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                 bool alreadyAtBottom = selectionRectangle.Y + selectionRectangle.Height >= (int)displayedImageRect.Bottom - 1;
                 bool alreadyAtTop = selectionRectangle.Y <= (int)displayedImageRect.Top + 1;
+                bool alreadyAtRight = selectionRectangle.X + selectionRectangle.Width >= (int)displayedImageRect.Right - 1;
+                bool alreadyAtLeft = selectionRectangle.X <= (int)displayedImageRect.Left + 1;
 
-                if (currentPdfDocument != null && yDirection > 0 && currentPageNumber < totalPdfPages - 1 &&
-                    newLocation.Y + selectionRectangle.Height > displayedImageRect.Bottom && alreadyAtBottom)
+                // Handle PDF page transitions
+                if (currentPdfDocument != null)
                 {
-                    if (chkAutoStagePreview.Checked)
+                    if (yDirection > 0 && (newLocation.Y + selectionRectangle.Height > displayedImageRect.Bottom) && alreadyAtBottom)
                     {
-                        HandlePageStitching(newLocation, isMovingDown: true);
+                        if (twoPagePdf && alreadyAtLeft && !alreadyAtRight)
+                        {
+                            // Move from left half to right half of same page
+                            newLocation.X = (int)displayedImageRect.Right - selectionRectangle.Width;
+                            newLocation.Y = (int)displayedImageRect.Top;
+                        }
+                        else if (currentPageNumber < totalPdfPages - 1)
+                        {
+                            int skip = skipOnePage ? 2 : 1;
+                            int nextPageIndex = Math.Min(totalPdfPages - 1, currentPageNumber + skip);
+
+                            if (chkAutoStagePreview.Checked && nextPageIndex == currentPageNumber + 1)
+                            {
+                                HandlePageStitching(newLocation, isMovingDown: true);
+                            }
+
+                            GoToPage(nextPageIndex, true);
+                            displayedImageRect = GetDisplayedImageRect();
+                            newLocation.Y = (int)displayedImageRect.Top;
+                            if (twoPagePdf) newLocation.X = (int)displayedImageRect.Left;
+                            pageChanged = true;
+                        }
                     }
-                    GoToPage(this.currentPageNumber + 1, true);
-                    displayedImageRect = GetDisplayedImageRect(); // Recalculate for new page
-                    newLocation.Y = (int)displayedImageRect.Top;
-                    pageChanged = true;
-                }
-                else if (currentPdfDocument != null && yDirection < 0 && currentPageNumber > 0 &&
-                         newLocation.Y < displayedImageRect.Top && alreadyAtTop)
-                {
-                    if (chkAutoStagePreview.Checked)
+                    else if (yDirection < 0 && (newLocation.Y < displayedImageRect.Top) && alreadyAtTop)
                     {
-                        HandlePageStitching(newLocation, isMovingDown: false);
+                        if (twoPagePdf && alreadyAtRight && !alreadyAtLeft)
+                        {
+                            // Move from right half to left half of same page
+                            newLocation.X = (int)displayedImageRect.Left;
+                            newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
+                        }
+                        else if (currentPageNumber > 0)
+                        {
+                            int skip = skipOnePage ? 2 : 1;
+                            int prevPageIndex = Math.Max(0, currentPageNumber - skip);
+
+                            if (chkAutoStagePreview.Checked && prevPageIndex == currentPageNumber - 1)
+                            {
+                                HandlePageStitching(newLocation, isMovingDown: false);
+                            }
+
+                            GoToPage(prevPageIndex, true);
+                            displayedImageRect = GetDisplayedImageRect();
+                            newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
+                            if (twoPagePdf) newLocation.X = (int)displayedImageRect.Right - selectionRectangle.Width;
+                            pageChanged = true;
+                        }
                     }
-                    GoToPage(this.currentPageNumber - 1, true);
-                    displayedImageRect = GetDisplayedImageRect(); // Recalculate for new page
-                    newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
-                    pageChanged = true;
                 }
 
                 if (!pageChanged)
                 {
-                    if (newLocation.X < displayedImageRect.Left) newLocation.X = (int)displayedImageRect.Left;
-                    if (newLocation.Y < displayedImageRect.Top) newLocation.Y = (int)displayedImageRect.Top;
-                    if (newLocation.X + selectionRectangle.Width > displayedImageRect.Right) newLocation.X = (int)displayedImageRect.Right - selectionRectangle.Width;
-                    if (newLocation.Y + selectionRectangle.Height > displayedImageRect.Bottom) newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
+                    if (newLocation.X < (int)displayedImageRect.Left) newLocation.X = (int)displayedImageRect.Left;
+                    if (newLocation.Y < (int)displayedImageRect.Top) newLocation.Y = (int)displayedImageRect.Top;
+                    if (newLocation.X + selectionRectangle.Width > (int)displayedImageRect.Right) newLocation.X = (int)displayedImageRect.Right - selectionRectangle.Width;
+                    if (newLocation.Y + selectionRectangle.Height > (int)displayedImageRect.Bottom) newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
                 }
 
                 selectionRectangle.Location = newLocation;
                 UpdateSelectionSizeLabel();
                 picPreview.Invalidate();
 
-                if (chkAutoStagePreview.Checked && !pageChanged)
-                {
-                    btnStageContent_Click(this, EventArgs.Empty);
-                }
+                // Requirement: Show pre-selection (gray box) when moving via Auto Scroll
+                btnStageContent_Click(this, EventArgs.Empty);
             }
         }
 

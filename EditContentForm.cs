@@ -49,6 +49,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             picEdit.MouseUp += PicEdit_MouseUp;
             picEdit.Paint += PicEdit_Paint;
             picEdit.Resize += (s, e) => UpdateCropRectFromNormalized();
+            this.KeyDown += EditContentForm_KeyDown;
+            this.KeyPreview = true;
 
             chkAutoSend.Checked = _mainForm.IsAutoSendEnabled();
             _isAutoSend = chkAutoSend.Checked;
@@ -340,6 +342,73 @@ namespace DreamsLive_Solutions_PresenterApp1
             _isDragging = false;
             _isResizing = false;
             UpdateNormalizedFromCropRect();
+        }
+
+        private void EditContentForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (chkEnableScroll.Checked)
+            {
+                switch (e.KeyCode)
+                {
+                    case Keys.Up: MoveCrop(0, -1, false); break;
+                    case Keys.Down: MoveCrop(0, 1, false); break;
+                    case Keys.Left: MoveCrop(-1, 0, false); break;
+                    case Keys.Right: MoveCrop(1, 0, false); break;
+                    case Keys.PageUp: MoveCrop(0, -1, true); break;
+                    case Keys.PageDown: MoveCrop(0, 1, true); break;
+                    default: return;
+                }
+                e.Handled = true;
+            }
+        }
+
+        private void btnUp_Click(object sender, EventArgs e) => MoveCrop(0, -1, false);
+        private void btnDown_Click(object sender, EventArgs e) => MoveCrop(0, 1, false);
+        private void btnLeft_Click(object sender, EventArgs e) => MoveCrop(-1, 0, false);
+        private void btnRight_Click(object sender, EventArgs e) => MoveCrop(1, 0, false);
+        private void btnPageUp_Click(object sender, EventArgs e) => MoveCrop(0, -1, true);
+        private void btnPageDown_Click(object sender, EventArgs e) => MoveCrop(0, 1, true);
+        private void btnPageLeft_Click(object sender, EventArgs e) => MoveCrop(-1, 0, true);
+        private void btnPageRight_Click(object sender, EventArgs e) => MoveCrop(1, 0, true);
+
+        private void btnSettings_Click(object sender, EventArgs e)
+        {
+            using (var settingsForm = new SettingsForm(_mainForm))
+            {
+                if (settingsForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    _mainForm.SaveSettings();
+                }
+            }
+        }
+
+        private void MoveCrop(int xDir, int yDir, bool isPage)
+        {
+            int step;
+            if (isPage)
+            {
+                step = (xDir != 0) ? _cropRect.Width : _cropRect.Height;
+            }
+            else
+            {
+                // Use a default small step for arrows in editor, e.g., 50px or match MainForm's step
+                step = 50;
+            }
+
+            int dx = xDir * step;
+            int dy = yDir * step;
+
+            _cropRect.Offset(dx, dy);
+
+            // Clamp to image bounds
+            RectangleF displayRect = GetDisplayedImageRect();
+            if (_cropRect.X < (int)displayRect.Left) _cropRect.X = (int)displayRect.Left;
+            if (_cropRect.Y < (int)displayRect.Top) _cropRect.Y = (int)displayRect.Top;
+            if (_cropRect.Right > (int)displayRect.Right) _cropRect.X = (int)displayRect.Right - _cropRect.Width;
+            if (_cropRect.Bottom > (int)displayRect.Bottom) _cropRect.Y = (int)displayRect.Bottom - _cropRect.Height;
+
+            UpdateNormalizedFromCropRect();
+            picEdit.Invalidate();
         }
 
         private void btnRotateL_Click(object sender, EventArgs e)

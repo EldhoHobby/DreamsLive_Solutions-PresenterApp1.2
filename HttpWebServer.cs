@@ -458,6 +458,30 @@ namespace DreamsLive_Solutions_PresenterApp1
                 int.TryParse(query.Get("dir"), out int dir);
                 _mainForm.Invoke((Action)(() => _mainForm.RotateContent(dir)));
             }
+            else if (action.StartsWith("move-selection"))
+            {
+                var query = request.QueryString;
+                int.TryParse(query.Get("x"), out int x);
+                int.TryParse(query.Get("y"), out int y);
+                bool.TryParse(query.Get("isPage"), out bool isPage);
+                _mainForm.Invoke((Action)(() => _mainForm.MoveSelection(x, y, isPage)));
+            }
+            else if (action.StartsWith("update-settings"))
+            {
+                var query = request.QueryString;
+                if (query.Get("skipOnePage") != null) _mainForm.SkipOnePage = bool.Parse(query.Get("skipOnePage"));
+                if (query.Get("twoPagePdf") != null) _mainForm.TwoPagePdf = bool.Parse(query.Get("twoPagePdf"));
+                if (query.Get("enableScroll") != null)
+                {
+                    bool enable = bool.Parse(query.Get("enableScroll"));
+                    _mainForm.Invoke((Action)(() =>
+                    {
+                        var chk = _mainForm.Controls.Find("chkEnableScroll", true).FirstOrDefault() as CheckBox;
+                        if (chk != null) chk.Checked = enable;
+                    }));
+                }
+                _mainForm.SaveSettings();
+            }
             else
             {
                 _mainForm.Invoke((Action)(() =>
@@ -543,6 +567,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             double secondaryPreviewAspectRatio = 1.0;
             string secondaryPreviewBorderColor = "transparent";
             bool autoSend = false;
+            bool enableScroll = false;
+            bool skipOnePage = false;
+            bool twoPagePdf = false;
             string message = null;
             string messageType = "info";
             string goLiveButtonText = "";
@@ -580,6 +607,12 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                 var chkLink = _mainForm.Controls.Find("chkLinkLocalPreviewToPresenter", true).FirstOrDefault() as CheckBox;
                 if (chkLink != null) autoSend = chkLink.Checked;
+
+                var chkScroll = _mainForm.Controls.Find("chkEnableScroll", true).FirstOrDefault() as CheckBox;
+                if (chkScroll != null) enableScroll = chkScroll.Checked;
+
+                skipOnePage = _mainForm.SkipOnePage;
+                twoPagePdf = _mainForm.TwoPagePdf;
 
                 var lblMessage = _mainForm.Controls.Find("lblMessage", true).FirstOrDefault() as Label;
                 if (lblMessage != null && lblMessage.Visible)
@@ -621,6 +654,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                 secondaryPreviewAspectRatio,
                 secondaryPreviewBorderColor,
                 autoSend,
+                enableScroll,
+                skipOnePage,
+                twoPagePdf,
                 message,
                 messageType,
                 goLiveButtonText,

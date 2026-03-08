@@ -51,6 +51,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnDown = new System.Windows.Forms.Button();
             this.btnLeft = new System.Windows.Forms.Button();
             this.btnRight = new System.Windows.Forms.Button();
+            this.btnPageUp = new System.Windows.Forms.Button();
+            this.btnPageDown = new System.Windows.Forms.Button();
+            this.btnPageLeft = new System.Windows.Forms.Button();
+            this.btnPageRight = new System.Windows.Forms.Button();
+            this.btnSettings = new System.Windows.Forms.Button();
             this.lblMoveStep = new System.Windows.Forms.Label();
             this.txtMoveStep = new System.Windows.Forms.TextBox();
             this.btnHelp = new System.Windows.Forms.Button();
@@ -294,6 +299,52 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnRight.Text = "→";
             this.btnRight.UseVisualStyleBackColor = true;
             // 
+            // btnPageUp
+            //
+            this.btnPageUp.Location = new System.Drawing.Point(1053, 504);
+            this.btnPageUp.Name = "btnPageUp";
+            this.btnPageUp.Size = new System.Drawing.Size(30, 30);
+            this.btnPageUp.TabIndex = 39;
+            this.btnPageUp.Text = "⇈";
+            this.btnPageUp.UseVisualStyleBackColor = true;
+            //
+            // btnPageDown
+            //
+            this.btnPageDown.Location = new System.Drawing.Point(1053, 594);
+            this.btnPageDown.Name = "btnPageDown";
+            this.btnPageDown.Size = new System.Drawing.Size(30, 30);
+            this.btnPageDown.TabIndex = 40;
+            this.btnPageDown.Text = "⇊";
+            this.btnPageDown.UseVisualStyleBackColor = true;
+            //
+            // btnPageLeft
+            //
+            this.btnPageLeft.Location = new System.Drawing.Point(993, 549);
+            this.btnPageLeft.Name = "btnPageLeft";
+            this.btnPageLeft.Size = new System.Drawing.Size(30, 30);
+            this.btnPageLeft.TabIndex = 41;
+            this.btnPageLeft.Text = "⇇";
+            this.btnPageLeft.UseVisualStyleBackColor = true;
+            //
+            // btnPageRight
+            //
+            this.btnPageRight.Location = new System.Drawing.Point(1113, 549);
+            this.btnPageRight.Name = "btnPageRight";
+            this.btnPageRight.Size = new System.Drawing.Size(30, 30);
+            this.btnPageRight.TabIndex = 42;
+            this.btnPageRight.Text = "⇉";
+            this.btnPageRight.UseVisualStyleBackColor = true;
+            //
+            // btnSettings
+            //
+            this.btnSettings.Location = new System.Drawing.Point(1044, 5);
+            this.btnSettings.Name = "btnSettings";
+            this.btnSettings.Size = new System.Drawing.Size(100, 23);
+            this.btnSettings.TabIndex = 43;
+            this.btnSettings.Text = "Scroll Settings";
+            this.btnSettings.UseVisualStyleBackColor = true;
+            this.btnSettings.Click += new System.EventHandler(this.btnSettings_Click);
+            //
             // lblMoveStep
             // 
             this.lblMoveStep.AutoSize = true;
@@ -326,9 +377,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.chkEnableScroll.AutoSize = true;
             this.chkEnableScroll.Location = new System.Drawing.Point(1264, 536);
             this.chkEnableScroll.Name = "chkEnableScroll";
-            this.chkEnableScroll.Size = new System.Drawing.Size(88, 17);
+            this.chkEnableScroll.Size = new System.Drawing.Size(120, 17);
             this.chkEnableScroll.TabIndex = 23;
-            this.chkEnableScroll.Text = "Enable Scroll";
+            this.chkEnableScroll.Text = "Enable Auto Scroll";
             this.chkEnableScroll.UseVisualStyleBackColor = true;
             // 
             // chkAutoStagePreview
@@ -485,6 +536,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.btnDown);
             this.Controls.Add(this.btnLeft);
             this.Controls.Add(this.btnRight);
+            this.Controls.Add(this.btnPageUp);
+            this.Controls.Add(this.btnPageDown);
+            this.Controls.Add(this.btnPageLeft);
+            this.Controls.Add(this.btnPageRight);
+            this.Controls.Add(this.btnSettings);
             this.Controls.Add(this.lblMoveStep);
             this.Controls.Add(this.txtMoveStep);
             this.Controls.Add(this.lblSelectionSize);
@@ -536,6 +592,11 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnDown;
         private System.Windows.Forms.Button btnLeft;
         private System.Windows.Forms.Button btnRight;
+        private System.Windows.Forms.Button btnPageUp;
+        private System.Windows.Forms.Button btnPageDown;
+        private System.Windows.Forms.Button btnPageLeft;
+        private System.Windows.Forms.Button btnPageRight;
+        private System.Windows.Forms.Button btnSettings;
         private System.Windows.Forms.Label lblMoveStep;
         private System.Windows.Forms.TextBox txtMoveStep;
         private System.Windows.Forms.Label lblSelectionSize;

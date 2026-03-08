@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Presenter Remote</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
@@ -101,11 +102,23 @@
         }
 
 
-        .controls, .pdf-controls, .upload {
+        .controls, .pdf-controls, .upload, .scroll-controls {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 10px;
             margin-bottom: 20px;
+        }
+
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 150px;
+            margin: auto;
+        }
+
+        .d-pad button {
+            padding: 10px;
         }
 
         button {
@@ -317,6 +330,31 @@
             <button id="btnEditCrop" onclick="openEditor()" style="display: none;">Edit / Crop</button>
             <button id="btnClearPresenterDisplay" onclick="performAction('blackout')">Blackout</button>
             <button id="btnCloseLivePresenter" onclick="performAction('close')">Close Live</button>
+            <button id="btnOpenSettings" onclick="toggleSettings()">Scroll Settings</button>
+        </div>
+
+        <div id="scroll-controls-section" class="scroll-controls">
+            <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center;">
+                <label>
+                    <input type="checkbox" id="chkEnableScroll" onchange="updateScrollSettings({enableScroll: this.checked})">
+                    Enable Auto Scroll
+                </label>
+                <div class="d-pad">
+                    <div></div>
+                    <button onclick="moveSelection(0, -1)">↑</button>
+                    <div></div>
+                    <button onclick="moveSelection(-1, 0)">←</button>
+                    <button onclick="moveSelection(0, 1)">↓</button>
+                    <button onclick="moveSelection(1, 0)">→</button>
+                    <div></div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button onclick="moveSelection(0, -1, true)">⇈ Up</button>
+                    <button onclick="moveSelection(0, 1, true)">⇊ Down</button>
+                    <button onclick="moveSelection(-1, 0, true)">⇇ Left</button>
+                    <button onclick="moveSelection(1, 0, true)">⇉ Right</button>
+                </div>
+            </div>
         </div>
         <div class="pdf-controls" style="display: none;">
             <button id="btnPdfPrev" onclick="performAction('pdf-prev')">Prev</button>
@@ -372,6 +410,27 @@
     </div>
 
     <!-- Editor Modal -->
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-header">
+            <span>Scroll Settings</span>
+            <button onclick="toggleSettings()" style="background: none; border: none; color: white; font-size: 1.5em; cursor: pointer;">&times;</button>
+        </div>
+        <div class="modal-content" style="flex-direction: column; color: white; gap: 20px;">
+            <label>
+                <input type="checkbox" id="chkSkipOnePage" onchange="updateScrollSettings({skipOnePage: this.checked})">
+                Skip 1 page (PDF)
+            </label>
+            <label>
+                <input type="checkbox" id="chkTwoPagePdf" onchange="updateScrollSettings({twoPagePdf: this.checked})">
+                2 page PDF
+            </label>
+        </div>
+        <div class="modal-footer">
+            <button onclick="toggleSettings()" style="min-width: 100px;">Close</button>
+        </div>
+    </div>
+
     <div id="editor-modal" class="modal">
         <div class="modal-header">
             <span>Edit / Crop Content</span>
@@ -423,6 +482,23 @@
 
         async function performAction(action) {
             await fetch(`/action/${action}`);
+        }
+
+        async function moveSelection(x, y, isPage = false) {
+            await fetch(`/action/move-selection?x=${x}&y=${y}&isPage=${isPage}`);
+        }
+
+        async function updateScrollSettings(settings) {
+            let query = "";
+            for (let key in settings) {
+                query += `${key}=${settings[key]}&`;
+            }
+            await fetch(`/action/update-settings?${query}`);
+        }
+
+        function toggleSettings() {
+            const modal = document.getElementById('settings-modal');
+            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
         }
 
         async function updateAutoSend(el) {
@@ -935,6 +1011,15 @@
                     pdfNextButton.classList.toggle('button-disabled', status.pdfNextButtonEnabled !== true);
                 }
 
+                const chkScroll = document.getElementById('chkEnableScroll');
+                if (chkScroll) chkScroll.checked = status.enableScroll;
+
+                const chkSkip = document.getElementById('chkSkipOnePage');
+                if (chkSkip) chkSkip.checked = status.skipOnePage;
+
+                const chkTwo = document.getElementById('chkTwoPagePdf');
+                if (chkTwo) chkTwo.checked = status.twoPagePdf;
+
                 isInitialStatusLoad = false;
             } catch (error) {
                 console.error('Error fetching status:', error);
@@ -956,6 +1041,24 @@
                     performAction(`pdf-goto?page=${pageNum}`);
                     this.blur(); // Remove focus from the input
                 }
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (isEditing || isPageInputFocused) return;
+
+            const chkScroll = document.getElementById('chkEnableScroll');
+            if (chkScroll && chkScroll.checked) {
+                switch (event.key) {
+                    case 'ArrowUp': moveSelection(0, -1); break;
+                    case 'ArrowDown': moveSelection(0, 1); break;
+                    case 'ArrowLeft': moveSelection(-1, 0); break;
+                    case 'ArrowRight': moveSelection(1, 0); break;
+                    case 'PageUp': moveSelection(0, -1, true); break;
+                    case 'PageDown': moveSelection(0, 1, true); break;
+                    default: return;
+                }
+                event.preventDefault();
             }
         });
 
