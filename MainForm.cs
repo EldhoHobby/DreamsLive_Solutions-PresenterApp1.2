@@ -1198,25 +1198,29 @@ namespace DreamsLive_Solutions_PresenterApp1
                 RectangleF displayedImageRect = GetDisplayedImageRect();
                 bool pageChanged = false;
 
-                bool alreadyAtBottom = selectionRectangle.Y + selectionRectangle.Height >= (int)displayedImageRect.Bottom - 1;
-                bool alreadyAtTop = selectionRectangle.Y <= (int)displayedImageRect.Top + 1;
-                bool alreadyAtRight = selectionRectangle.X + selectionRectangle.Width >= (int)displayedImageRect.Right - 1;
-                bool alreadyAtLeft = selectionRectangle.X <= (int)displayedImageRect.Left + 1;
+                bool alreadyAtBottom = selectionRectangle.Bottom >= (int)displayedImageRect.Bottom - 10;
+                bool alreadyAtTop = selectionRectangle.Top <= (int)displayedImageRect.Top + 10;
 
                 // Handle PDF page transitions
                 if (currentPdfDocument != null)
                 {
-                    if (yDirection > 0 && (newLocation.Y + selectionRectangle.Height > displayedImageRect.Bottom) && alreadyAtBottom)
+                    if (yDirection > 0 && (newLocation.Y + selectionRectangle.Height > displayedImageRect.Bottom + 10) && alreadyAtBottom)
                     {
-                        if (twoPagePdf && alreadyAtLeft && !alreadyAtRight)
+                        // Use a more reliable side detection based on current selection's horizontal center
+                        float hCenter = selectionRectangle.X + (selectionRectangle.Width / 2f);
+                        float pageHCenter = displayedImageRect.Left + (displayedImageRect.Width / 2f);
+                        bool isLeftSide = hCenter < pageHCenter;
+
+                        if (twoPagePdf && isLeftSide)
                         {
                             // Move from left half to right half of same page
                             newLocation.X = (int)displayedImageRect.Right - selectionRectangle.Width;
                             newLocation.Y = (int)displayedImageRect.Top;
+                            pageChanged = true;
                         }
                         else if (currentPageNumber < totalPdfPages - 1)
                         {
-                            int skip = skipOnePage ? 2 : 1;
+                            int skip = (skipOnePage && currentPageNumber < totalPdfPages - 2) ? 2 : 1;
                             int nextPageIndex = Math.Min(totalPdfPages - 1, currentPageNumber + skip);
 
                             if (chkAutoStagePreview.Checked && nextPageIndex == currentPageNumber + 1)
@@ -1231,17 +1235,22 @@ namespace DreamsLive_Solutions_PresenterApp1
                             pageChanged = true;
                         }
                     }
-                    else if (yDirection < 0 && (newLocation.Y < displayedImageRect.Top) && alreadyAtTop)
+                    else if (yDirection < 0 && (newLocation.Y < displayedImageRect.Top - 10) && alreadyAtTop)
                     {
-                        if (twoPagePdf && alreadyAtRight && !alreadyAtLeft)
+                        float hCenter = selectionRectangle.X + (selectionRectangle.Width / 2f);
+                        float pageHCenter = displayedImageRect.Left + (displayedImageRect.Width / 2f);
+                        bool isRightSide = hCenter >= pageHCenter;
+
+                        if (twoPagePdf && isRightSide)
                         {
                             // Move from right half to left half of same page
                             newLocation.X = (int)displayedImageRect.Left;
                             newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
+                            pageChanged = true;
                         }
                         else if (currentPageNumber > 0)
                         {
-                            int skip = skipOnePage ? 2 : 1;
+                            int skip = (skipOnePage && currentPageNumber > 1) ? 2 : 1;
                             int prevPageIndex = Math.Max(0, currentPageNumber - skip);
 
                             if (chkAutoStagePreview.Checked && prevPageIndex == currentPageNumber - 1)
@@ -1271,7 +1280,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 picPreview.Invalidate();
 
                 // Requirement: Show pre-selection (gray box) when moving via Auto Scroll
-                btnStageContent_Click(this, EventArgs.Empty);
+                if (chkAutoStagePreview.Checked)
+                {
+                    btnStageContent_Click(this, EventArgs.Empty);
+                }
             }
         }
 
@@ -2326,6 +2338,11 @@ namespace DreamsLive_Solutions_PresenterApp1
         // Add this private method to MainForm.cs
         private void UpdateButtonAppearanceAndState()
         {
+            if (this.btnEditContent != null)
+            {
+                this.btnEditContent.Enabled = (this.picPreview.Image != null);
+            }
+
             if (this.btnClearPresenterDisplay == null) return;
 
             bool canControlPresenter = this.activePresentationForm != null &&

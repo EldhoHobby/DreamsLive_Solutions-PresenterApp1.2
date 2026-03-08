@@ -272,6 +272,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                     string finalFilename = !string.IsNullOrEmpty(sanitizedCustomName) ? sanitizedCustomName + Path.GetExtension(originalFilename) : Path.GetFileName(originalFilename);
                     string targetDir = "";
 
+                    // Final filename might be changed if it exists, so we return info about it
+                    string savedRelativePath = "";
+
                     if (isDatabase && !string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
                     {
                         string dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
@@ -311,10 +314,11 @@ namespace DreamsLive_Solutions_PresenterApp1
                         }
                         File.WriteAllBytes(destPath, fileData);
                         _mainForm.Invoke((Action)(() => _mainForm.ProcessNewImage(destPath, updateStaging: false)));
+                        savedRelativePath = destPath.Substring(dbPath.Length).TrimStart(Path.DirectorySeparatorChar);
                     }
 
                     response.StatusCode = (int)HttpStatusCode.OK;
-                    byte[] buffer = Encoding.UTF8.GetBytes("Upload successful");
+                    byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { message = "Upload successful", path = savedRelativePath }));
                     await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
                 }
             }
@@ -580,6 +584,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             bool blackoutButtonEnabled = false;
             bool pdfPrevButtonEnabled = false;
             bool pdfNextButtonEnabled = false;
+            bool editButtonEnabled = false;
             string currentFilePath = "";
             int currentPage = -1;
             RectangleF? currentSelectionNormalized = null;
@@ -632,6 +637,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                 var btnClearPresenterDisplay = _mainForm.Controls.Find("btnClearPresenterDisplay", true).FirstOrDefault() as Button;
                 if (btnClearPresenterDisplay != null) { blackoutButtonText = btnClearPresenterDisplay.Text; blackoutButtonEnabled = btnClearPresenterDisplay.Enabled; }
 
+                var btnEditContent = _mainForm.Controls.Find("btnEditContent", true).FirstOrDefault() as Button;
+                if (btnEditContent != null) editButtonEnabled = btnEditContent.Enabled;
+
                 pdfPrevButtonEnabled = _mainForm.IsPdfPrevButtonEnabled;
                 pdfNextButtonEnabled = _mainForm.IsPdfNextButtonEnabled;
                 currentFilePath = _mainForm.SelectedImagePath;
@@ -666,7 +674,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 blackoutButtonText,
                 blackoutButtonEnabled,
                 pdfPrevButtonEnabled,
-                pdfNextButtonEnabled
+                pdfNextButtonEnabled,
+                editButtonEnabled
             };
 
             return JsonConvert.SerializeObject(statusObject);

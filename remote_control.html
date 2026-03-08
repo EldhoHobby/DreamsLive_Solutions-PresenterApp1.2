@@ -102,11 +102,25 @@
         }
 
 
-        .controls, .pdf-controls, .upload, .scroll-controls {
+        .controls, .pdf-controls, .upload, .scroll-controls, .camera-controls {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 10px;
             margin-bottom: 20px;
+        }
+
+        #camera-preview-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #camera-video {
+            width: 100%;
+            max-width: 500px;
+            background: #000;
         }
 
         .d-pad {
@@ -359,8 +373,17 @@
             <button id="btnPdfNext" onclick="performAction('pdf-next')">Next</button>
         </div>
 
+        <div class="camera-controls">
+            <button id="btnToggleCamera" onclick="toggleCamera()">Open Camera</button>
+        </div>
+
+        <div id="camera-preview-container">
+            <video id="camera-video" autoplay playsinline></video>
+            <button onclick="captureImage()" style="background-color: #4CAF50; color: white;">Capture</button>
+        </div>
+
         <div class="upload">
-            <input type="file" id="file-input" accept="image/*,.pdf">
+            <input type="file" id="file-input" accept="image/*,.pdf" onchange="handleFileSelect()">
             <div id="db-upload-options" style="display: none; grid-column: 1 / -1; gap: 10px; grid-template-columns: 1fr 1fr;">
                 <div style="display: flex; flex-direction: column; gap: 5px;">
                     <select id="subfolder-select"></select>
@@ -371,7 +394,7 @@
                 </div>
                 <input type="text" id="custom-filename" placeholder="Custom filename (optional)">
             </div>
-            <button onclick="uploadFile()">Upload</button>
+            <button id="btnUpload" onclick="prepareUpload()" disabled>Upload</button>
             <div style="grid-column: 1 / -1;">
                 <label>
                     <input type="checkbox" id="chkUploadToDatabase" onchange="toggleDatabaseUpload()">
@@ -427,7 +450,7 @@
 
     <div id="editor-modal" class="modal">
         <div class="modal-header">
-            <span>Edit / Crop Content</span>
+            <span id="editor-title">Edit / Crop Content</span>
             <button onclick="closeEditor(false)" style="background: none; border: none; color: white; font-size: 1.5em; cursor: pointer;">&times;</button>
         </div>
         <div class="modal-content">
@@ -442,10 +465,11 @@
             <label style="color: white;">
                 <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Send
             </label>
-            <button onclick="rotateInEditor(-1)" style="font-size: 1.2em;">&#8634;</button>
-            <button onclick="rotateInEditor(1)" style="font-size: 1.2em;">&#8635;</button>
+            <button id="btnRotateLEditor" onclick="rotateInEditor(-1)" style="font-size: 1.2em;">&#8634;</button>
+            <button id="btnRotateREditor" onclick="rotateInEditor(1)" style="font-size: 1.2em;">&#8635;</button>
             <button id="btnPresentNow" onclick="presentNow()" style="background-color: #2196F3; color: white; min-width: 100px;">Present Now</button>
-            <button onclick="closeEditor(true)" style="background-color: #4CAF50; color: white; min-width: 80px;">Done</button>
+            <button id="btnDoneEditor" onclick="closeEditor(true)" style="background-color: #4CAF50; color: white; min-width: 80px;">Done</button>
+            <button id="btnUploadEditor" onclick="finishUploadEditor()" style="background-color: #FF9800; color: white; min-width: 100px; display: none;">Upload Now</button>
         </div>
     </div>
 
@@ -467,6 +491,9 @@
         let isCropperReady = false;
         let isInitialStatusLoad = true;
         let isUserInteractingWithCropper = false;
+        let cameraStream = null;
+        let pendingUploadBlob = null;
+        let isUploadEditing = false;
 
 
         let secondaryPan = { x: 0, y: 0 };
@@ -608,20 +635,40 @@
             }
         }
 
-        async function uploadFile() {
+        function handleFileSelect() {
+            const fileInput = document.getElementById('file-input');
+            document.getElementById('btnUpload').disabled = !fileInput.files[0];
+        }
 
+        async function prepareUpload() {
             const fileInput = document.getElementById('file-input');
             const file = fileInput.files[0];
-            if (!file) {
-                uploadErrorLock = true;
-                showMessage('Please select a file first.', 'warning');
-                return;
+            if (!file) return;
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => openEditor(true, e.target.result);
+                reader.readAsDataURL(file);
+            } else {
+                // PDF or other - just upload
+                uploadFile(file);
             }
+        }
 
+        async function finishUploadEditor() {
+            if (cropper) {
+                cropper.getCroppedCanvas().toBlob((blob) => {
+                    uploadFile(blob, document.getElementById('file-input').files[0]?.name || 'capture.jpg');
+                    closeEditor(false);
+                }, 'image/jpeg', 0.9);
+            }
+        }
 
+        async function uploadFile(fileOrBlob, filenameHint) {
             try {
                 const formData = new FormData();
-                formData.append('file', file, file.name);
+                const filename = filenameHint || fileOrBlob.name || 'upload.jpg';
+                formData.append('file', fileOrBlob, filename);
                 const chkDb = document.getElementById('chkUploadToDatabase');
                 formData.append('isDatabase', chkDb.checked);
                 if (chkDb.checked) {
@@ -641,12 +688,21 @@
                     body: formData
                 });
 
-                const responseText = await response.text();
+                const responseData = await response.json();
                 if (response.ok) {
                     uploadErrorLock = false; // Clear lock on success
-                    showMessage(responseText, 'info');
-                    fileInput.value = ''; // Clear the input
-                    if (document.getElementById('chkUploadToDatabase').checked) refreshGallery();
+                    showMessage(responseData.message, 'info');
+                    document.getElementById('file-input').value = '';
+                    document.getElementById('btnUpload').disabled = true;
+
+                    if (document.getElementById('chkUploadToDatabase').checked) {
+                        const subfolder = formData.get('subfolder');
+                        if (subfolder) {
+                            document.getElementById('gallery-subfolder-select').value = subfolder;
+                        }
+                        await populateFolderDropdowns();
+                        await refreshGallery();
+                    }
                     await updateStatus();
                 } else {
                     uploadErrorLock = true; // Lock message on screen
@@ -671,6 +727,25 @@
         }
 
         async function rotateInEditor(dir) {
+            if (isUploadEditing) {
+                // Local rotation for local file
+                const angle = dir * 90;
+                const canvas = document.createElement('canvas');
+                const img = document.getElementById('editor-image');
+                canvas.width = img.naturalHeight;
+                canvas.height = img.naturalWidth;
+                const ctx = canvas.getContext('2d');
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(angle * Math.PI / 180);
+                ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+
+                canvas.toBlob((blob) => {
+                    img.src = URL.createObjectURL(blob);
+                    // Re-init cropper on next load
+                }, 'image/jpeg', 0.95);
+                return;
+            }
+
             await performAction(`rotate?dir=${dir}`);
             // Immediately update status to get the new normalized coordinates of the rotated region from the host
             await updateStatus();
@@ -679,7 +754,7 @@
             img.src = `/database/current?t=${new Date().getTime()}`;
         }
 
-        function openEditor() {
+        function openEditor(isUpload = false, imageSrc = null) {
             const modal = document.getElementById('editor-modal');
             const img = document.getElementById('editor-image');
             const refOverlay = document.getElementById('editor-reference-overlay');
@@ -690,9 +765,18 @@
             }
 
             isCropperReady = false;
-            img.src = `/database/current?t=${new Date().getTime()}`;
+            isUploadEditing = isUpload;
+            img.src = imageSrc || `/database/current?t=${new Date().getTime()}`;
             modal.style.display = 'flex';
             isEditing = true;
+
+            // Adjust buttons for upload mode
+            document.getElementById('btnUploadEditor').style.display = isUpload ? 'inline-block' : 'none';
+            document.getElementById('btnDoneEditor').style.display = isUpload ? 'none' : 'inline-block';
+            document.getElementById('btnPresentNow').style.display = isUpload ? 'none' : 'inline-block';
+            document.getElementById('chkLiveSyncEditor').parentElement.style.display = isUpload ? 'none' : 'inline-block';
+            document.getElementById('chkAutoSendEditor').parentElement.style.display = isUpload ? 'none' : 'inline-block';
+            document.getElementById('editor-title').textContent = isUpload ? 'Edit Before Upload' : 'Edit / Crop Content';
 
             img.onload = () => {
                 // Wait for layout to settle
@@ -868,6 +952,8 @@
                 const btnEdit = document.getElementById('btnEditCrop');
                 if (status.currentFilePath) {
                     btnEdit.style.display = 'inline-block';
+                    btnEdit.classList.toggle('button-disabled', status.editButtonEnabled !== true);
+                    btnEdit.onclick = status.editButtonEnabled ? openEditor : null;
 
                     // Track new file to clear last crop data, but DON'T auto-open the editor
                     if (status.currentFilePath !== lastStatusFilePath) {
@@ -1054,6 +1140,40 @@
                 event.preventDefault();
             }
         });
+
+        async function toggleCamera() {
+            const container = document.getElementById('camera-preview-container');
+            const video = document.getElementById('camera-video');
+            const btn = document.getElementById('btnToggleCamera');
+
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+                container.style.display = 'none';
+                btn.textContent = 'Open Camera';
+            } else {
+                try {
+                    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    video.srcObject = cameraStream;
+                    container.style.display = 'flex';
+                    btn.textContent = 'Close Camera';
+                } catch (err) {
+                    showMessage('Camera access denied or unavailable.', 'error');
+                }
+            }
+        }
+
+        function captureImage() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            toggleCamera(); // Stop camera
+            openEditor(true, dataUrl);
+        }
 
         setInterval(updateStatus, 1000);
         updateStatus();
