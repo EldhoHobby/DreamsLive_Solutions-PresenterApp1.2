@@ -368,6 +368,27 @@
             gap: 20px;
             background-color: var(--header-bg);
         }
+
+        .rotation-slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .rotation-slider-container label {
+            color: white;
+            font-size: 0.9em;
+        }
+
+        #rotation-slider {
+            width: 80%;
+        }
     </style>
 </head>
 <body>
@@ -549,7 +570,14 @@
             <div id="editor-reference-overlay" style="position: absolute; border: 10px dotted var(--overlay-staged); background-color: transparent; pointer-events: none; display: none; box-sizing: border-box; z-index: 10;"></div>
         </div>
         <div class="modal-footer" style="flex-wrap: wrap; gap: 10px; justify-content: center;">
-            <div style="display: flex; gap: 10px; align-items: center; width: 100%; justify-content: center;">
+            <!-- Rotation Slider Container (Standard/Always Visible in upload mode) -->
+            <div id="rotation-container" class="rotation-slider-container">
+                <label>Rotation: <span id="rotation-val">0</span>°</label>
+                <input type="range" id="rotation-slider" min="-180" max="180" value="0" step="1" oninput="handleRotationSlider(this.value)">
+                <button onclick="handleRotationSlider(0); document.getElementById('rotation-slider').value = 0;" style="font-size: 0.8em; padding: 2px 10px;">Reset</button>
+            </div>
+
+            <div id="editor-nav-group" style="display: flex; gap: 10px; align-items: center; width: 100%; justify-content: center;">
                 <label style="color: white;">
                     <input type="checkbox" id="chkEnableScrollEditor" onchange="updateScrollSettings({enableScroll: this.checked})"> Auto Scroll
                 </label>
@@ -560,17 +588,21 @@
                     <button class="right" onclick="moveSelection(1, 0)">→</button>
                 </div>
             </div>
-            <label style="color: white;">
+
+            <div id="editor-rotate-buttons" style="display: flex; gap: 10px;">
+                <button onclick="rotateInEditor(-1)" style="font-size: 1.2em;">&#8634;</button>
+                <button onclick="rotateInEditor(1)" style="font-size: 1.2em;">&#8635;</button>
+            </div>
+
+            <label id="lblLiveSync" style="color: white;">
                 <input type="checkbox" id="chkLiveSyncEditor" onchange="toggleLiveSync()"> Live Sync
             </label>
-            <label style="color: white;">
+            <label id="lblAutoSendEditor" style="color: white;">
                 <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Send
             </label>
-            <button onclick="rotateInEditor(-1)" style="font-size: 1.2em;">&#8634;</button>
-            <button onclick="rotateInEditor(1)" style="font-size: 1.2em;">&#8635;</button>
+
             <button id="btnPresentNow" onclick="presentNow()" style="background-color: var(--accent-blue); color: white; min-width: 100px;">Present Now</button>
             <button id="btnDoneEditor" onclick="closeEditor(true)" style="background-color: var(--accent-green); color: white; min-width: 80px;">Done</button>
-            <button id="btnUploadEditor" onclick="finishUploadEditor()" style="background-color: var(--accent-orange); color: white; min-width: 100px; display: none;">Upload Now</button>
             <button onclick="closeEditor(false)" style="min-width: 80px;">Close</button>
         </div>
     </div>
@@ -857,10 +889,6 @@
             document.getElementById('upload-choice-prompt').textContent = 'Would you like to edit the image before uploading?';
         }
 
-        async function finishUploadEditor() {
-            // This function is now superseded by the new closeEditor -> upload-choice-modal workflow
-        }
-
         async function uploadFile(fileOrBlob, filenameHint) {
             updateSystemStatus('Uploading...', 'busy');
             try {
@@ -917,25 +945,17 @@
         }
 
 
+        function handleRotationSlider(val) {
+            if (!cropper) return;
+            const angle = parseInt(val);
+            document.getElementById('rotation-val').textContent = angle;
+            cropper.rotateTo(angle);
+        }
+
         async function rotateInEditor(dir) {
             updateSystemStatus('Rotating...', 'busy');
             if (isUploadEditing) {
-                const angle = dir * 90;
-                const canvas = document.createElement('canvas');
-                const img = document.getElementById('editor-image');
-                canvas.width = img.naturalHeight;
-                canvas.height = img.naturalWidth;
-                const ctx = canvas.getContext('2d');
-                ctx.translate(canvas.width / 2, canvas.height / 2);
-                ctx.rotate(angle * Math.PI / 180);
-                ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
-
-                const newSrc = canvas.toDataURL('image/jpeg', 0.95);
-                img.src = newSrc;
-                if (cropper) {
-                    cropper.replace(newSrc);
-                }
-                updateSystemStatus('Ready');
+                // Obsolete in favor of slider, but keeping logic just in case or for future ref
                 return;
             }
 
@@ -968,14 +988,18 @@
             modal.style.display = 'flex';
             isEditing = true;
 
-            // Adjust buttons for upload mode
-            document.getElementById('btnUploadEditor').style.display = isUpload ? 'inline-block' : 'none';
-            document.getElementById('btnDoneEditor').style.display = isUpload ? 'none' : 'inline-block';
+            // UI Visibility Adjustments for Upload Mode
+            document.getElementById('rotation-container').style.display = isUpload ? 'flex' : 'none';
+            document.getElementById('editor-nav-group').style.display = isUpload ? 'none' : 'flex';
+            document.getElementById('editor-rotate-buttons').style.display = isUpload ? 'none' : 'flex';
+            document.getElementById('lblLiveSync').style.display = isUpload ? 'none' : 'inline-block';
+            document.getElementById('lblAutoSendEditor').style.display = isUpload ? 'none' : 'inline-block';
             document.getElementById('btnPresentNow').style.display = isUpload ? 'none' : 'inline-block';
-            const chkLive = document.getElementById('chkLiveSyncEditor');
-            if (chkLive) chkLive.parentElement.style.display = isUpload ? 'none' : 'inline-block';
-            const chkAuto = document.getElementById('chkAutoSendEditor');
-            if (chkAuto) chkAuto.parentElement.style.display = isUpload ? 'none' : 'inline-block';
+            document.getElementById('btnDoneEditor').style.display = 'inline-block';
+
+            // Reset rotation slider
+            document.getElementById('rotation-slider').value = 0;
+            document.getElementById('rotation-val').textContent = '0';
 
             img.onload = () => {
                 // Wait for layout to settle
@@ -983,7 +1007,7 @@
                     if (cropper) cropper.destroy();
 
                     // If we have a normalized selection from host status, convert it to natural pixels for Cropper
-                    if (lastNormalizedSelection) {
+                    if (!isUpload && lastNormalizedSelection) {
                         lastCropData = {
                             x: lastNormalizedSelection.X * img.naturalWidth,
                             y: lastNormalizedSelection.Y * img.naturalHeight,
@@ -993,10 +1017,12 @@
                             scaleX: 1,
                             scaleY: 1
                         };
+                    } else {
+                        lastCropData = null;
                     }
 
             // Setup reference overlay (Gray Box) using the host's actual STAGED region
-            if (stagedNormalizedSelection) {
+            if (!isUpload && stagedNormalizedSelection) {
                 initialCropData = {
                     x: stagedNormalizedSelection.X * img.naturalWidth,
                     y: stagedNormalizedSelection.Y * img.naturalHeight,
@@ -1010,7 +1036,7 @@
                     }
 
                     cropper = new Cropper(img, {
-                        aspectRatio: currentPresenterAspectRatio,
+                        aspectRatio: isUpload ? NaN : currentPresenterAspectRatio,
                         viewMode: 0,
                         dragMode: 'move',
                         autoCropArea: 0.8,
