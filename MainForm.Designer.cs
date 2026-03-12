@@ -70,6 +70,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.label1 = new System.Windows.Forms.Label();
             this.btnSetDatabaseFolder = new System.Windows.Forms.Button();
             this.lblDatabaseFolderPath = new System.Windows.Forms.Label();
+            this.btnSnip = new System.Windows.Forms.Button();
             this.panelSecondaryPreviewBorder.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).BeginInit();
@@ -86,6 +87,16 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.tnBrowse.UseVisualStyleBackColor = true;
             this.tnBrowse.Click += new System.EventHandler(this.tnBrowse_Click);
             // 
+            // btnSnip
+            //
+            this.btnSnip.Location = new System.Drawing.Point(673, 81);
+            this.btnSnip.Name = "btnSnip";
+            this.btnSnip.Size = new System.Drawing.Size(75, 23);
+            this.btnSnip.TabIndex = 52;
+            this.btnSnip.Text = "Snip";
+            this.btnSnip.UseVisualStyleBackColor = true;
+            this.btnSnip.Click += new System.EventHandler(this.btnSnip_Click);
+            //
             // lblImagePath
             // 
             this.lblImagePath.AutoSize = true;
@@ -532,6 +543,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.picPreview);
             this.Controls.Add(this.btnSetDatabaseFolder);
             this.Controls.Add(this.lblDatabaseFolderPath);
+            this.Controls.Add(this.btnSnip);
             this.Name = "MainForm";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.MainForm_Load);
@@ -588,5 +600,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnSetDatabaseFolder;
         private System.Windows.Forms.Label lblDatabaseFolderPath;
+        private System.Windows.Forms.Button btnSnip;
     }
 }

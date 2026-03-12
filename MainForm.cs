@@ -3935,6 +3935,34 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             return ActivationStatusHelper.GetActivationStatusString(forTitleBar: true);
         }
+
+        private async void btnSnip_Click(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Minimized;
+            await Task.Delay(500); // Give time for minimize animation
+
+            using (SnipForm snipForm = new SnipForm())
+            {
+                if (snipForm.ShowDialog() == DialogResult.OK && snipForm.SnippedImage != null)
+                {
+                    string tempPath = Path.Combine(Path.GetTempPath(), $"snip_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+                    snipForm.SnippedImage.Save(tempPath, System.Drawing.Imaging.ImageFormat.Png);
+
+                    ProcessNewImage(tempPath);
+
+                    // Auto-select entire image and stage
+                    if (this.picPreview.Image != null)
+                    {
+                        RectangleF fullRect = new RectangleF(0, 0, this.picPreview.Image.Width, this.picPreview.Image.Height);
+                        this.selectionRectangle = ConvertOriginalImageRectToPreviewRect(fullRect);
+                        btnStageContent_Click(this, EventArgs.Empty);
+                    }
+                }
+            }
+
+            this.WindowState = FormWindowState.Normal;
+            this.BringToFront();
+        }
     }
 
 }
