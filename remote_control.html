@@ -46,19 +46,40 @@
         #status-bar {
             background-color: var(--container-bg);
             border: 1px solid var(--border-color);
-            padding: 8px 15px;
+            padding: 10px 5px;
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            font-size: 0.9em;
+            align-items: stretch;
+            font-size: 0.75em;
             border-radius: 4px;
         }
 
         .status-item {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            flex: 1;
+            gap: 2px;
+            text-align: center;
+            min-width: 0;
+        }
+
+        .status-item span:first-child {
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+
+        .status-item span:last-child {
+            font-weight: bold;
+            word-break: break-word;
+        }
+
+        .status-divider {
+            width: 1px;
+            height: 20px;
+            background-color: var(--border-color);
         }
 
         .status-indicator {
@@ -173,6 +194,8 @@
             font-size: 1.5em !important;
             padding: 15px 30px !important;
             font-weight: bold;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .d-pad {
@@ -289,7 +312,16 @@
             }
 
             .controls {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: 1fr 1fr;
+            }
+
+            #status-bar {
+                flex-direction: row;
+            }
+
+            .status-divider {
+                display: block;
+                align-self: center;
             }
         }
         .spinner-overlay {
@@ -430,10 +462,8 @@
                 </label>
             </div>
             <button id="btnEditCrop" onclick="openEditor()" style="display: none;">Edit / Crop</button>
-            <button id="btnClearPresenterDisplay" onclick="performAction('blackout')">Blackout</button>
-            <button id="btnCloseLivePresenter" onclick="performAction('close')">Close Live</button>
-            <button id="btnOpenSettings" onclick="toggleSettings()">Scroll Settings</button>
-            <button id="theme-toggle">Toggle Theme</button>
+            <button id="btnClearPresenterDisplay" onclick="performAction('blackout')" style="display: none;">Blackout</button>
+            <button id="btnCloseLivePresenter" onclick="performAction('close')" style="display: none;">Close Live</button>
         </div>
 
         <div class="pdf-controls" style="display: none;">
@@ -448,7 +478,7 @@
 
         <div class="upload">
             <input type="file" id="file-input" accept="image/*,.pdf" onchange="handleFileSelect()" style="display: none;">
-            <button id="btnChooseCapture" class="big-button" onclick="document.getElementById('file-input').click()" style="grid-column: 1 / -1;">Choose / Capture</button>
+            <button id="btnChooseCapture" class="big-button" onclick="document.getElementById('file-input').click()" style="grid-column: 1 / -1;">Choose File/ Capture</button>
         </div>
 
         <div id="gallery-section">
@@ -488,15 +518,22 @@
             <button id="message-okay-btn" onclick="clearMessage()">Okay</button>
         </div>
 
-        <div id="status-bar" style="margin-top: 30px;">
+        <div style="display: flex; gap: 10px; margin-top: 30px; margin-bottom: 10px;">
+            <button id="btnOpenSettings" onclick="toggleSettings()" style="flex: 1;">Scroll Settings</button>
+            <button id="theme-toggle" style="flex: 1;">Toggle Theme</button>
+        </div>
+
+        <div id="status-bar">
             <div class="status-item">
                 <span>System:</span>
                 <span id="system-status-text">System Ready</span>
             </div>
+            <div class="status-divider"></div>
             <div class="status-item">
                 <span>Presenter:</span>
                 <span id="presenter-status-val">Closed</span>
             </div>
+            <div class="status-divider"></div>
             <div class="status-item">
                 <span>Connection:</span>
                 <span id="connection-status-val">Checking...</span>
@@ -1340,12 +1377,14 @@
                 if (closeLiveButton) {
                     closeLiveButton.textContent = status.closeLiveButtonText;
                     closeLiveButton.classList.toggle('button-disabled', status.closeLiveButtonEnabled !== true);
+                    closeLiveButton.style.display = status.closeLiveButtonEnabled ? 'inline-block' : 'none';
                 }
 
                 const blackoutButton = document.getElementById('btnClearPresenterDisplay');
                 if (blackoutButton) {
                     blackoutButton.textContent = status.blackoutButtonText;
                     blackoutButton.classList.toggle('button-disabled', status.blackoutButtonEnabled !== true);
+                    blackoutButton.style.display = status.closeLiveButtonEnabled ? 'inline-block' : 'none';
                 }
 
                 const pdfPrevButton = document.getElementById('btnPdfPrev');
