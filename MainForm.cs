@@ -80,6 +80,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         public string SelectedImagePath => selectedImagePath;
         public int CurrentPageNumber => currentPageNumber;
         public int GetCurrentManualRotationAngle() => currentManualRotationAngle;
+        public bool PresenterDisplayIsBlack => isPresenterBlackedOut;
 
         public bool IsAutoSendEnabled() => chkLinkLocalPreviewToPresenter.Checked;
         public void SetAutoSendEnabled(bool enabled) => chkLinkLocalPreviewToPresenter.Checked = enabled;
