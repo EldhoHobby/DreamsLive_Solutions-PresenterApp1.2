@@ -22,6 +22,7 @@ namespace DreamsLive_Solutions_PresenterApp1
     public partial class MainForm : Form
     {
         private HttpWebServer _httpWebServer;
+        private GalleryForm _galleryForm;
         private System.Windows.Forms.Timer _statusUpdateTimer;
         private System.Windows.Forms.Timer _autoStageDebounceTimer;
 
@@ -645,9 +646,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             return subfolders;
         }
 
-        public List<object> GetDatabaseMediaFiles(string subfolder = "")
+        public List<DatabaseFileInfo> GetDatabaseMediaFiles(string subfolder = "")
         {
-            List<object> files = new List<object>();
+            List<DatabaseFileInfo> files = new List<DatabaseFileInfo>();
             if (string.IsNullOrEmpty(DatabaseFolderPath) || !Directory.Exists(DatabaseFolderPath))
                 return files;
 
@@ -656,15 +657,11 @@ namespace DreamsLive_Solutions_PresenterApp1
                 string targetPath = string.IsNullOrEmpty(subfolder) ? DatabaseFolderPath : Path.Combine(DatabaseFolderPath, subfolder);
                 if (!Directory.Exists(targetPath)) return files;
 
-                string[] extensions = { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".pdf" };
-                // Option B: Specific folder only (not recursive for simpler Option B experience, or recursive if preferred)
-                // The user said "show the gallery the pictures or pdf from the folder that i have selected"
-                var allFiles = Directory.EnumerateFiles(targetPath, "*.*", SearchOption.TopDirectoryOnly)
-                    .Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
+                var allFiles = Directory.EnumerateFiles(targetPath, "*.*", SearchOption.TopDirectoryOnly);
 
                 foreach (var file in allFiles)
                 {
-                    files.Add(new
+                    files.Add(new DatabaseFileInfo
                     {
                         Name = Path.GetFileName(file),
                         RelativePath = file.Substring(DatabaseFolderPath.Length).TrimStart(Path.DirectorySeparatorChar),
@@ -3934,6 +3931,16 @@ namespace DreamsLive_Solutions_PresenterApp1
         private string GetActivationStatus()
         {
             return ActivationStatusHelper.GetActivationStatusString(forTitleBar: true);
+        }
+
+        private void btnOpenGallery_Click(object sender, EventArgs e)
+        {
+            if (_galleryForm == null || _galleryForm.IsDisposed)
+            {
+                _galleryForm = new GalleryForm(this);
+            }
+            _galleryForm.Show();
+            _galleryForm.BringToFront();
         }
 
         private async void btnSnip_Click(object sender, EventArgs e)

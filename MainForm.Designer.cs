@@ -70,6 +70,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.label1 = new System.Windows.Forms.Label();
             this.btnSetDatabaseFolder = new System.Windows.Forms.Button();
             this.lblDatabaseFolderPath = new System.Windows.Forms.Label();
+            this.btnOpenGallery = new System.Windows.Forms.Button();
             this.btnSnip = new System.Windows.Forms.Button();
             this.panelSecondaryPreviewBorder.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -487,6 +488,17 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnSetDatabaseFolder.UseVisualStyleBackColor = true;
             this.btnSetDatabaseFolder.Click += new System.EventHandler(this.btnSetDatabaseFolder_Click);
             //
+            // btnOpenGallery
+            //
+            this.btnOpenGallery.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnOpenGallery.Location = new System.Drawing.Point(520, 544);
+            this.btnOpenGallery.Name = "btnOpenGallery";
+            this.btnOpenGallery.Size = new System.Drawing.Size(120, 23);
+            this.btnOpenGallery.TabIndex = 53;
+            this.btnOpenGallery.Text = "Open Gallery";
+            this.btnOpenGallery.UseVisualStyleBackColor = true;
+            this.btnOpenGallery.Click += new System.EventHandler(this.btnOpenGallery_Click);
+            //
             // lblDatabaseFolderPath
             //
             this.lblDatabaseFolderPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
@@ -542,6 +554,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.btnEditContent);
             this.Controls.Add(this.picPreview);
             this.Controls.Add(this.btnSetDatabaseFolder);
+            this.Controls.Add(this.btnOpenGallery);
             this.Controls.Add(this.lblDatabaseFolderPath);
             this.Controls.Add(this.btnSnip);
             this.Name = "MainForm";
@@ -600,6 +613,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnSetDatabaseFolder;
         private System.Windows.Forms.Label lblDatabaseFolderPath;
+        private System.Windows.Forms.Button btnOpenGallery;
         private System.Windows.Forms.Button btnSnip;
     }
 }
