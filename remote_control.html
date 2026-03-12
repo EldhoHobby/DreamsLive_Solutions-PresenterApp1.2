@@ -146,13 +146,14 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            justify-content: center;
             touch-action: none; /* Prevent scrolling while interacting with previews */
         }
 
         .preview-box {
             position: relative;
-            width: 50%;
-            min-height: 100px;
+            width: 35%;
+            min-height: 80px;
             background-color: #000;
             outline: 2px solid var(--border-color); /* Use outline instead of border to keep coordinate math clean */
             outline-offset: -2px;
@@ -176,6 +177,12 @@
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 10px;
             margin-bottom: 20px;
+        }
+
+        #btnChooseCapture {
+            background-color: var(--accent-orange);
+            color: white;
+            border: none;
         }
 
         .control-group {
@@ -466,7 +473,7 @@
         </div>
         <div class="controls">
             <div class="control-group">
-                <button id="btnPushToPresenter" class="big-button" onclick="performAction('push')">Go Live</button>
+                <button id="btnPushToPresenter" class="big-button" onclick="performAction('push')">&nbsp;&nbsp;&nbsp;Go Live&nbsp;&nbsp;&nbsp;</button>
                 <label>
                     <input type="checkbox" id="chkLinkLocalPreviewToPresenter" onchange="updateAutoSend(this)">
                     Auto Send
@@ -1296,10 +1303,12 @@
                 document.getElementById('connection-status-val').textContent = 'Online';
                 document.getElementById('connection-status-val').style.color = 'var(--status-ready)';
 
-                const presenterStatus = status.closeLiveButtonEnabled ? 'Open' : 'Closed';
+                let presenterStatus = status.closeLiveButtonEnabled ? 'Open' : 'Closed';
+                if (status.isBlackout) presenterStatus = 'Blackout';
                 const presenterEl = document.getElementById('presenter-status-val');
                 presenterEl.textContent = presenterStatus;
-                presenterEl.style.color = status.closeLiveButtonEnabled ? 'var(--status-ready)' : 'var(--text-color)';
+                if (status.isBlackout) presenterEl.style.color = 'var(--status-busy)';
+                else presenterEl.style.color = status.closeLiveButtonEnabled ? 'var(--status-ready)' : 'var(--text-color)';
 
 
                 const chkScrollEditor = document.getElementById('chkEnableScrollEditor');

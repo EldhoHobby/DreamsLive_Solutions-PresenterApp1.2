@@ -588,6 +588,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             bool autoStage = false;
             string moveStep = "50";
             bool editButtonEnabled = false;
+            bool isBlackout = false;
 
             _mainForm.Invoke((Action)(() =>
             {
@@ -643,6 +644,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 autoStage = _mainForm.AutoStagePreview;
                 moveStep = _mainForm.MoveStepText;
                 editButtonEnabled = !string.IsNullOrEmpty(_mainForm.SelectedImagePath);
+                isBlackout = _mainForm.PresenterDisplayIsBlack;
             }));
 
             var statusObject = new
@@ -674,7 +676,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 enableScroll,
                 autoStage,
                 moveStep,
-                editButtonEnabled
+                editButtonEnabled,
+                isBlackout
             };
 
             return JsonConvert.SerializeObject(statusObject);
