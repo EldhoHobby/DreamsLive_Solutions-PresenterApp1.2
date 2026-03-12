@@ -3950,12 +3950,11 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                     ProcessNewImage(tempPath);
 
-                    // Auto-select entire image and stage
+                    // Select entire image for main preview
                     if (this.picPreview.Image != null)
                     {
                         RectangleF fullRect = new RectangleF(0, 0, this.picPreview.Image.Width, this.picPreview.Image.Height);
                         this.selectionRectangle = ConvertOriginalImageRectToPreviewRect(fullRect);
-                        btnStageContent_Click(this, EventArgs.Empty);
                     }
                 }
             }

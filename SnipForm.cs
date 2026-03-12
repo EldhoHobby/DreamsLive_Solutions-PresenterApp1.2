@@ -19,7 +19,12 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.DoubleBuffered = true;
             this.Cursor = Cursors.Cross;
             this.FormBorderStyle = FormBorderStyle.None;
-            this.WindowState = FormWindowState.Maximized;
+
+            // Cover all monitors
+            Rectangle bounds = SystemInformation.VirtualScreen;
+            this.StartPosition = FormStartPosition.Manual;
+            this.Bounds = bounds;
+
             this.TopMost = true;
             this.ShowInTaskbar = false;
         }
@@ -31,6 +36,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             fullScreenCapture = new Bitmap(bounds.Width, bounds.Height);
             using (Graphics g = Graphics.FromImage(fullScreenCapture))
             {
+                // Must use bounds.Location for the source to capture across all screens
                 g.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
             }
             this.BackgroundImage = fullScreenCapture;
