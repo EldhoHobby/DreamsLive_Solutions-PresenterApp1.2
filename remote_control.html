@@ -6,21 +6,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <style>
+        :root {
+            --bg-color: #f0f0f0;
+            --text-color: #333;
+            --container-bg: #fff;
+            --border-color: #ccc;
+            --button-bg: #fff;
+            --button-text: #333;
+            --modal-bg: rgba(0, 0, 0, 0.9);
+            --header-bg: #222;
+            --accent-blue: #2196F3;
+            --accent-green: #4CAF50;
+            --accent-orange: #FF9800;
+            --status-ready: #4CAF50;
+            --status-busy: #FF9800;
+            --status-error: #f44336;
+            --spinner-bg: rgba(255, 255, 255, 0.8);
+            --spinner-color: #3498db;
+            --overlay-staged: rgba(128, 128, 128, 0.8);
+            --overlay-active: red;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --container-bg: #1e1e1e;
+            --border-color: #444;
+            --button-bg: #333;
+            --button-text: #e0e0e0;
+            --header-bg: #000;
+            --spinner-bg: rgba(0, 0, 0, 0.8);
+        }
+
         h1 {
             text-align: center;
+            margin-bottom: 10px;
+        }
+
+        #status-bar {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            padding: 8px 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            border-radius: 4px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-indicator {
+            width: 100%;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--status-ready);
+        }
+
+        #system-status-text {
+            font-weight: bold;
+            color: var(--status-ready);
         }
 
         body {
             font-family: sans-serif;
-            background-color: #f0f0f0;
-            color: #333;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             transition: background-color 0.3s, color 0.3s;
         }
-
-            body.dark-mode {
-                background-color: #121212;
-                color: #e0e0e0;
-            }
 
         .container {
             max-width: 800px;
@@ -37,17 +95,12 @@
         }
 
         .gallery-item {
-            background-color: #fff;
-            border: 1px solid #ccc;
+            background-color: var(--button-bg);
+            border: 1px solid var(--border-color);
             padding: 10px;
             text-align: center;
             cursor: pointer;
             transition: transform 0.2s;
-        }
-
-        body.dark-mode .gallery-item {
-            background-color: #333;
-            border-color: #555;
         }
 
         .gallery-item:hover {
@@ -80,17 +133,13 @@
             width: 50%;
             min-height: 100px;
             background-color: #000;
-            outline: 2px solid #ccc; /* Use outline instead of border to keep coordinate math clean */
+            outline: 2px solid var(--border-color); /* Use outline instead of border to keep coordinate math clean */
             outline-offset: -2px;
             box-sizing: border-box;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        body.dark-mode .preview-box {
-            outline-color: #555;
         }
 
         .preview-box img {
@@ -124,6 +173,9 @@
 
         .d-pad {
             display: grid;
+            grid-template-areas:
+                ". up ."
+                "left down right";
             grid-template-columns: repeat(3, 1fr);
             gap: 5px;
             width: 150px;
@@ -135,20 +187,19 @@
             font-size: 1.1em;
         }
 
+        .d-pad button.up { grid-area: up; }
+        .d-pad button.left { grid-area: left; }
+        .d-pad button.down { grid-area: down; }
+        .d-pad button.right { grid-area: right; }
+
         button {
             padding: 10px;
             font-size: 1em;
-            background-color: #fff;
-            color: #333;
-            border: 1px solid #ccc;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: 1px solid var(--border-color);
             cursor: pointer;
             transition: background-color 0.3s, color 0.3s;
-        }
-
-        body.dark-mode button {
-            background-color: #333;
-            color: #e0e0e0;
-            border-color: #555;
         }
 
         .button-disabled {
@@ -186,16 +237,11 @@
             left: 0;
             right: 0;
             padding: 10px;
-            background-color: #f0f0f0;
-            border-top: 1px solid #ccc;
+            background-color: var(--bg-color);
+            border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-
-        body.dark-mode .message-box {
-            background-color: #333;
-            border-top-color: #555;
         }
 
         .message-box span {
@@ -207,15 +253,15 @@
         }
 
             .message-box.error {
-                color: red;
+                color: var(--status-error);
             }
 
             .message-box.warning {
-                color: orange;
+                color: var(--status-busy);
             }
 
             .message-box.info {
-                color: blue;
+                color: var(--accent-blue);
             }
 
         @media (max-width: 768px) {
@@ -237,7 +283,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: var(--spinner-bg);
             z-index: 1000;
             display: flex;
             justify-content: center;
@@ -246,8 +292,8 @@
         }
 
         .spinner {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #3498db;
+            border: 8px solid var(--border-color);
+            border-top: 8px solid var(--spinner-color);
             border-radius: 50%;
             width: 60px;
             height: 60px;
@@ -255,17 +301,9 @@
         }
 
         .spinner-text {
-            color: #333;
+            color: var(--text-color);
             margin-top: 20px;
             font-size: 1.5em;
-        }
-
-        body.dark-mode .spinner-overlay {
-            background-color: rgba(0, 0, 0, 0.8);
-        }
-
-        body.dark-mode .spinner-text {
-            color: #e0e0e0;
         }
 
         @keyframes spin {
@@ -282,7 +320,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.9);
+            background-color: var(--modal-bg);
             flex-direction: column;
         }
 
@@ -304,7 +342,7 @@
             padding: 10px;
             display: flex;
             justify-content: space-between;
-            background-color: #222;
+            background-color: var(--header-bg);
             color: white;
         }
 
@@ -313,7 +351,7 @@
             display: flex;
             justify-content: center;
             gap: 20px;
-            background-color: #222;
+            background-color: var(--header-bg);
         }
     </style>
 </head>
@@ -326,6 +364,22 @@
     <div class="container">
         <button id="theme-toggle">Toggle Theme</button>
         <h1>Dreams LIVE Solutions Presenter App Remote</h1>
+
+        <div id="status-bar">
+            <div class="status-item">
+                <span>System:</span>
+                <span id="system-status-text">System Ready</span>
+            </div>
+            <div class="status-item">
+                <span>Presenter:</span>
+                <span id="presenter-status-val">Closed</span>
+            </div>
+            <div class="status-item">
+                <span>Connection:</span>
+                <span id="connection-status-val">Checking...</span>
+            </div>
+        </div>
+
         <div class="preview-container">
             <div id="picSecondaryContainer" class="preview-box">
                 <img id="picSecondaryPreview" src="">
@@ -333,9 +387,9 @@
             <div id="picPreviewContainer" class="preview-box" onclick="openEditor()" style="cursor: pointer;">
                 <img id="picPreview" src="">
                 <!-- Persistent Staged Reference Box -->
-                <div id="staged-selection-overlay" style="position: absolute; border: 6px dotted rgba(128, 128, 128, 0.8); pointer-events: none; display: none; box-sizing: border-box;"></div>
+                <div id="staged-selection-overlay" style="position: absolute; border: 6px dotted var(--overlay-staged); pointer-events: none; display: none; box-sizing: border-box;"></div>
                 <!-- Current Active Selection Box -->
-                <div id="selection-overlay" style="position: absolute; border: 2px solid red; pointer-events: none; display: none; box-sizing: border-box;"></div>
+                <div id="selection-overlay" style="position: absolute; border: 2px solid var(--overlay-active); pointer-events: none; display: none; box-sizing: border-box;"></div>
             </div>
         </div>
         <div class="controls">
@@ -364,15 +418,10 @@
                     </label>
                 </div>
                 <div class="d-pad">
-                    <div></div>
-                    <button onclick="moveSelection(0, -1)">↑</button>
-                    <div></div>
-                    <button onclick="moveSelection(-1, 0)">←</button>
-                    <button onclick="moveSelection(0, 1)">↓</button>
-                    <button onclick="moveSelection(1, 0)">→</button>
-                    <div></div>
-                    <div></div>
-                    <div></div>
+                    <button class="up" onclick="moveSelection(0, -1)">↑</button>
+                    <button class="left" onclick="moveSelection(-1, 0)">←</button>
+                    <button class="down" onclick="moveSelection(0, 1)">↓</button>
+                    <button class="right" onclick="moveSelection(1, 0)">→</button>
                 </div>
             </div>
         </div>
@@ -392,7 +441,7 @@
 
         <div id="camera-preview-container">
             <video id="camera-video" autoplay playsinline></video>
-            <button onclick="captureImage()" style="background-color: #4CAF50; color: white;">Capture</button>
+            <button onclick="captureImage()" style="background-color: var(--accent-green); color: white;">Capture</button>
         </div>
 
         <div class="upload">
@@ -447,8 +496,8 @@
         <div class="modal-content" style="flex-direction: column; gap: 20px; color: white;">
             <p>Would you like to edit the image before uploading?</p>
             <div style="display: flex; gap: 20px;">
-                <button onclick="startUploadEdit()" style="background-color: #2196F3; color: white;">Edit Before Upload</button>
-                <button onclick="finishDirectUpload()" style="background-color: #4CAF50; color: white;">Upload Now</button>
+                <button onclick="startUploadEdit()" style="background-color: var(--accent-blue); color: white;">Edit Before Upload</button>
+                <button onclick="finishDirectUpload()" style="background-color: var(--accent-green); color: white;">Upload Now</button>
             </div>
         </div>
         <div class="modal-footer">
@@ -486,7 +535,7 @@
         <div class="modal-content">
             <img id="editor-image" src="">
             <!-- Gray Box for previous selection reference (Matches host's staged area) -->
-            <div id="editor-reference-overlay" style="position: absolute; border: 10px dotted rgba(128, 128, 128, 0.9); background-color: transparent; pointer-events: none; display: none; box-sizing: border-box; z-index: 10;"></div>
+            <div id="editor-reference-overlay" style="position: absolute; border: 10px dotted var(--overlay-staged); background-color: transparent; pointer-events: none; display: none; box-sizing: border-box; z-index: 10;"></div>
         </div>
         <div class="modal-footer" style="flex-wrap: wrap; gap: 10px; justify-content: center;">
             <div style="display: flex; gap: 10px; align-items: center; width: 100%; justify-content: center;">
@@ -494,15 +543,10 @@
                     <input type="checkbox" id="chkEnableScrollEditor" onchange="updateScrollSettings({enableScroll: this.checked})"> Auto Scroll
                 </label>
                 <div class="d-pad" style="width: 150px; margin: 0;">
-                    <div></div>
-                    <button onclick="moveSelection(0, -1)">↑</button>
-                    <div></div>
-                    <button onclick="moveSelection(-1, 0)">←</button>
-                    <button onclick="moveSelection(0, 1)">↓</button>
-                    <button onclick="moveSelection(1, 0)">→</button>
-                    <div></div>
-                    <div></div>
-                    <div></div>
+                    <button class="up" onclick="moveSelection(0, -1)">↑</button>
+                    <button class="left" onclick="moveSelection(-1, 0)">←</button>
+                    <button class="down" onclick="moveSelection(0, 1)">↓</button>
+                    <button class="right" onclick="moveSelection(1, 0)">→</button>
                 </div>
             </div>
             <label style="color: white;">
@@ -513,9 +557,9 @@
             </label>
             <button onclick="rotateInEditor(-1)" style="font-size: 1.2em;">&#8634;</button>
             <button onclick="rotateInEditor(1)" style="font-size: 1.2em;">&#8635;</button>
-            <button id="btnPresentNow" onclick="presentNow()" style="background-color: #2196F3; color: white; min-width: 100px;">Present Now</button>
-            <button id="btnDoneEditor" onclick="closeEditor(true)" style="background-color: #4CAF50; color: white; min-width: 80px;">Done</button>
-            <button id="btnUploadEditor" onclick="finishUploadEditor()" style="background-color: #FF9800; color: white; min-width: 100px; display: none;">Upload Now</button>
+            <button id="btnPresentNow" onclick="presentNow()" style="background-color: var(--accent-blue); color: white; min-width: 100px;">Present Now</button>
+            <button id="btnDoneEditor" onclick="closeEditor(true)" style="background-color: var(--accent-green); color: white; min-width: 80px;">Done</button>
+            <button id="btnUploadEditor" onclick="finishUploadEditor()" style="background-color: var(--accent-orange); color: white; min-width: 100px; display: none;">Upload Now</button>
             <button onclick="closeEditor(false)" style="min-width: 80px;">Close</button>
         </div>
     </div>
@@ -547,21 +591,62 @@
         let secondaryZoom = 1.0;
         let lastTouchDist = 0;
         let lastTouchCenter = null;
+        let systemStatusTimer = null;
+
+        function triggerHaptic(duration = 20) {
+            if ("vibrate" in navigator) {
+                navigator.vibrate(duration);
+            }
+        }
+
+        function updateSystemStatus(msg, type = 'ready') {
+            const el = document.getElementById('system-status-text');
+            el.textContent = msg;
+
+            if (type === 'busy') el.style.color = 'var(--status-busy)';
+            else if (type === 'error') el.style.color = 'var(--status-error)';
+            else el.style.color = 'var(--status-ready)';
+
+            clearTimeout(systemStatusTimer);
+            if (msg !== 'System Ready') {
+                systemStatusTimer = setTimeout(() => updateSystemStatus('System Ready'), 3000);
+            }
+        }
 
         async function performAction(action) {
-            await fetch(`/action/${action}`);
+            triggerHaptic();
+            updateSystemStatus('Busy...', 'busy');
+            try {
+                await fetch(`/action/${action}`);
+                updateSystemStatus('Success');
+            } catch (e) {
+                updateSystemStatus('Error', 'error');
+            }
         }
 
         async function moveSelection(x, y, isShift = false) {
-            await fetch(`/action/move-selection?x=${x}&y=${y}&isShift=${isShift}`);
+            triggerHaptic();
+            updateSystemStatus('Moving...', 'busy');
+            try {
+                await fetch(`/action/move-selection?x=${x}&y=${y}&isShift=${isShift}`);
+                updateSystemStatus('Ready');
+            } catch (e) {
+                updateSystemStatus('Error', 'error');
+            }
         }
 
         async function updateScrollSettings(settings) {
+            updateSystemStatus('Updating...', 'busy');
             let query = "";
             for (let key in settings) {
                 query += `${key}=${settings[key]}&`;
             }
-            await fetch(`/action/update-settings?${query}`);
+            try {
+                await fetch(`/action/update-settings?${query}`);
+                updateSystemStatus('Settings Updated');
+            } catch (e) {
+                updateSystemStatus('Update Failed', 'error');
+            }
         }
 
         function toggleSettings() {
@@ -573,12 +658,18 @@
         }
 
         async function updateAutoSend(el) {
+            updateSystemStatus('Updating...', 'busy');
             const val = el.checked;
             // Sync all auto-send checkboxes
             document.getElementById('chkLinkLocalPreviewToPresenter').checked = val;
             const editorChk = document.getElementById('chkAutoSendEditor');
             if (editorChk) editorChk.checked = val;
-            await fetch(`/action/auto-send?enable=${val}`);
+            try {
+                await fetch(`/action/auto-send?enable=${val}`);
+                updateSystemStatus('Auto Send Updated');
+            } catch (e) {
+                updateSystemStatus('Update Failed', 'error');
+            }
         }
 
         async function clearMessage() {
@@ -608,6 +699,7 @@
         }
 
         async function populateFolderDropdowns() {
+            updateSystemStatus('Refreshing Folders...', 'busy');
             try {
                 const response = await fetch('/database/folders');
                 const folders = await response.json();
@@ -626,12 +718,15 @@
 
                 gallerySelect.value = currentGalleryVal;
                 uploadSelect.value = currentUploadVal;
+                updateSystemStatus('System Ready');
             } catch (err) {
                 console.error("Error populating folders:", err);
+                updateSystemStatus('Folder Error', 'error');
             }
         }
 
         async function refreshGallery() {
+            updateSystemStatus('Refreshing Gallery...', 'busy');
             console.log("refreshGallery() triggered");
             const gallery = document.getElementById('gallery');
             const subfolder = document.getElementById('gallery-subfolder-select').value;
@@ -664,7 +759,9 @@
                     item.appendChild(span);
                     gallery.appendChild(item);
                 });
+                updateSystemStatus('Gallery Ready');
             } catch (err) {
+                updateSystemStatus('Gallery Error', 'error');
                 gallery.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: red;">Error: ${err.message}</p>`;
                 showMessage('Failed to refresh gallery: ' + err.message, 'error');
             }
@@ -747,6 +844,7 @@
         }
 
         async function uploadFile(fileOrBlob, filenameHint) {
+            updateSystemStatus('Uploading...', 'busy');
             try {
                 const formData = new FormData();
                 const filename = filenameHint || fileOrBlob.name || 'upload.jpg';
@@ -773,6 +871,7 @@
 
                 const responseData = await response.json();
                 if (response.ok) {
+                    updateSystemStatus('Upload Success');
                     uploadErrorLock = false; // Clear lock on success
                     showMessage(responseData.message, 'info');
                     document.getElementById('file-input').value = '';
@@ -788,11 +887,13 @@
                     }
                     await updateStatus();
                 } else {
+                    updateSystemStatus('Upload Failed', 'error');
                     uploadErrorLock = true; // Lock message on screen
                     const responseText = await response.text();
                     showMessage(responseText, 'error');
                 }
             } catch (err) {
+                updateSystemStatus('Upload Error', 'error');
                 uploadErrorLock = true;
                 showMessage('Upload failed: ' + err.message, 'error');
             }
@@ -811,6 +912,7 @@
         }
 
         async function rotateInEditor(dir) {
+            updateSystemStatus('Rotating...', 'busy');
             if (isUploadEditing) {
                 const angle = dir * 90;
                 const canvas = document.createElement('canvas');
@@ -827,10 +929,16 @@
                 if (cropper) {
                     cropper.replace(newSrc);
                 }
+                updateSystemStatus('Ready');
                 return;
             }
 
-            await performAction(`rotate?dir=${dir}`);
+            try {
+                await fetch(`/action/rotate?dir=${dir}`);
+                updateSystemStatus('Rotated');
+            } catch (e) {
+                updateSystemStatus('Error', 'error');
+            }
             // Immediately update status to get the new normalized coordinates of the rotated region from the host
             await updateStatus();
             // Then reload the image in editor
@@ -955,15 +1063,20 @@
 
         async function presentNow() {
             if (cropper) {
+                updateSystemStatus('Presenting...', 'busy');
                 const detail = cropper.getData();
                 const imageData = cropper.getImageData();
-                // Send the crop data first
-                await syncCrop(detail, imageData.naturalWidth, imageData.naturalHeight, true);
-                // Then trigger the Go Live action
-                await performAction('push');
-
-                // Immediately update status to refresh the gray reference box
-                await updateStatus();
+                try {
+                    // Send the crop data first
+                    await syncCrop(detail, imageData.naturalWidth, imageData.naturalHeight, true);
+                    // Then trigger the Go Live action
+                    await fetch('/action/push');
+                    updateSystemStatus('Going Live');
+                    // Immediately update status to refresh the gray reference box
+                    await updateStatus();
+                } catch (e) {
+                    updateSystemStatus('Error', 'error');
+                }
             }
         }
 
@@ -979,13 +1092,19 @@
             const liveSync = document.getElementById('chkLiveSyncEditor').checked;
             if (!liveSync && !force) return;
 
+            updateSystemStatus('Syncing Crop...', 'busy');
             const x = detail.x / naturalWidth;
             const y = detail.y / naturalHeight;
             const w = detail.width / naturalWidth;
             const h = detail.height / naturalHeight;
 
             if (w > 0 && h > 0) {
-                await fetch(`/action/remote-crop?x=${x}&y=${y}&w=${w}&h=${h}`);
+                try {
+                    await fetch(`/action/remote-crop?x=${x}&y=${y}&w=${w}&h=${h}`);
+                    updateSystemStatus('Crop Synced');
+                } catch (e) {
+                    updateSystemStatus('Sync Failed', 'error');
+                }
 
                 // Update local staged reference immediately after a sync completes
                 initialCropData = {
@@ -1029,7 +1148,17 @@
         async function updateStatus() {
             try {
                 const response = await fetch('/status');
+                if (!response.ok) throw new Error();
                 const status = await response.json();
+
+                document.getElementById('connection-status-val').textContent = 'Online';
+                document.getElementById('connection-status-val').style.color = 'var(--status-ready)';
+
+                const presenterStatus = status.closeLiveButtonEnabled ? 'Open' : 'Closed';
+                const presenterEl = document.getElementById('presenter-status-val');
+                presenterEl.textContent = presenterStatus;
+                presenterEl.style.color = status.closeLiveButtonEnabled ? 'var(--status-ready)' : 'var(--text-color)';
+
 
                 const chkScrollEditor = document.getElementById('chkEnableScrollEditor');
                 if (chkScrollEditor) chkScrollEditor.checked = status.enableScroll;
@@ -1197,6 +1326,9 @@
                 isInitialStatusLoad = false;
             } catch (error) {
                 console.error('Error fetching status:', error);
+                document.getElementById('connection-status-val').textContent = 'Offline';
+                document.getElementById('connection-status-val').style.color = 'var(--status-error)';
+                document.getElementById('presenter-status-val').textContent = 'Unknown';
             }
         }
 
