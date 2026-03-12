@@ -169,6 +169,12 @@
             cursor: pointer;
         }
 
+        .big-button {
+            font-size: 1.5em !important;
+            padding: 15px 30px !important;
+            font-weight: bold;
+        }
+
         .d-pad {
             display: grid;
             grid-template-areas:
@@ -293,7 +299,7 @@
             width: 100%;
             height: 100%;
             background-color: var(--spinner-bg);
-            z-index: 1000;
+            z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -372,23 +378,7 @@
     </div>
     <div class="container">
         <div class="sticky-header">
-            <button id="theme-toggle">Toggle Theme</button>
             <h1>Dreams LIVE Solutions Presenter App Remote</h1>
-
-            <div id="status-bar">
-                <div class="status-item">
-                    <span>System:</span>
-                    <span id="system-status-text">System Ready</span>
-                </div>
-                <div class="status-item">
-                    <span>Presenter:</span>
-                    <span id="presenter-status-val">Closed</span>
-                </div>
-                <div class="status-item">
-                    <span>Connection:</span>
-                    <span id="connection-status-val">Checking...</span>
-                </div>
-            </div>
 
             <div class="preview-container">
                 <div id="picSecondaryContainer" class="preview-box">
@@ -405,23 +395,24 @@
         </div>
         <div class="controls">
             <div class="control-group">
-                <button id="btnStageContent" onclick="performAction('stage')">Stage Preview</button>
-                <label>
-                    <input type="checkbox" id="chkAutoStagePreview" onchange="updateScrollSettings({autoStage: this.checked})">
-                    Auto Stage
-                </label>
-            </div>
-            <div class="control-group">
-                <button id="btnPushToPresenter" onclick="performAction('push')">Go Live</button>
+                <button id="btnPushToPresenter" class="big-button" onclick="performAction('push')">Go Live</button>
                 <label>
                     <input type="checkbox" id="chkLinkLocalPreviewToPresenter" onchange="updateAutoSend(this)">
                     Auto Send
+                </label>
+            </div>
+            <div class="control-group">
+                <button id="btnStageContent" class="big-button" onclick="performAction('stage')">Stage Preview</button>
+                <label>
+                    <input type="checkbox" id="chkAutoStagePreview" onchange="updateScrollSettings({autoStage: this.checked})">
+                    Auto Stage
                 </label>
             </div>
             <button id="btnEditCrop" onclick="openEditor()" style="display: none;">Edit / Crop</button>
             <button id="btnClearPresenterDisplay" onclick="performAction('blackout')">Blackout</button>
             <button id="btnCloseLivePresenter" onclick="performAction('close')">Close Live</button>
             <button id="btnOpenSettings" onclick="toggleSettings()">Scroll Settings</button>
+            <button id="theme-toggle">Toggle Theme</button>
         </div>
 
         <div class="pdf-controls" style="display: none;">
@@ -435,24 +426,8 @@
 
 
         <div class="upload">
-            <input type="file" id="file-input" accept="image/*,.pdf" onchange="handleFileSelect()">
-            <div id="db-upload-options" style="display: none; grid-column: 1 / -1; gap: 10px; grid-template-columns: 1fr 1fr;">
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <select id="subfolder-select"></select>
-                    <div id="new-folder-container" style="display: none; flex-direction: column; gap: 5px;">
-                        <input type="text" id="new-folder-input" placeholder="New folder name">
-                    </div>
-                    <button id="btnToggleNewFolder" onclick="toggleNewFolderInput()" style="font-size: 0.8em; padding: 2px; min-height: 20px;">+ New Folder</button>
-                </div>
-                <input type="text" id="custom-filename" placeholder="Custom filename (optional)">
-            </div>
-            <button id="btnUpload" onclick="prepareUpload()" disabled>Upload</button>
-            <div style="grid-column: 1 / -1;">
-                <label>
-                    <input type="checkbox" id="chkUploadToDatabase" onchange="toggleDatabaseUpload()">
-                    Upload to Database
-                </label>
-            </div>
+            <input type="file" id="file-input" accept="image/*,.pdf" onchange="handleFileSelect()" style="display: none;">
+            <button id="btnChooseCapture" class="big-button" onclick="document.getElementById('file-input').click()" style="grid-column: 1 / -1;">Choose / Capture</button>
         </div>
 
         <div id="gallery-section">
@@ -491,6 +466,21 @@
             <span id="message-text"></span>
             <button id="message-okay-btn" onclick="clearMessage()">Okay</button>
         </div>
+
+        <div id="status-bar" style="margin-top: 30px;">
+            <div class="status-item">
+                <span>System:</span>
+                <span id="system-status-text">System Ready</span>
+            </div>
+            <div class="status-item">
+                <span>Presenter:</span>
+                <span id="presenter-status-val">Closed</span>
+            </div>
+            <div class="status-item">
+                <span>Connection:</span>
+                <span id="connection-status-val">Checking...</span>
+            </div>
+        </div>
     </div>
 
     <!-- Choice Modal for Upload -->
@@ -498,11 +488,27 @@
         <div class="modal-header">
             <span>Upload Options</span>
         </div>
-        <div class="modal-content" style="flex-direction: column; gap: 20px; color: white;">
-            <p>Would you like to edit the image before uploading?</p>
-            <div style="display: flex; gap: 20px;">
-                <button onclick="startUploadEdit()" style="background-color: var(--accent-blue); color: white;">Edit Before Upload</button>
-                <button onclick="finishDirectUpload()" style="background-color: var(--accent-green); color: white;">Upload Now</button>
+        <div class="modal-content" style="flex-direction: column; gap: 20px; color: white; padding: 20px; overflow-y: auto;">
+            <p id="upload-choice-prompt">Would you like to edit the image before uploading?</p>
+
+            <div id="db-upload-options-modal" style="display: flex; flex-direction: column; gap: 10px; width: 100%; border: 1px solid var(--border-color); padding: 10px; border-radius: 4px;">
+                <label>
+                    <input type="checkbox" id="chkUploadToDatabase" onchange="toggleDatabaseUpload()">
+                    Upload to Database
+                </label>
+                <div id="db-fields" style="display: none; flex-direction: column; gap: 10px;">
+                    <select id="subfolder-select" style="width: 100%; padding: 5px;"></select>
+                    <div id="new-folder-container" style="display: none; flex-direction: column; gap: 5px;">
+                        <input type="text" id="new-folder-input" placeholder="New folder name" style="width: 100%; padding: 5px;">
+                    </div>
+                    <button id="btnToggleNewFolder" onclick="toggleNewFolderInput()" style="font-size: 0.8em; padding: 5px;">+ New Folder</button>
+                    <input type="text" id="custom-filename" placeholder="Custom filename (optional)" style="width: 100%; padding: 5px;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 20px; justify-content: center; width: 100%;">
+                <button id="btnUploadEdit" onclick="startUploadEdit()" style="background-color: var(--accent-blue); color: white; flex: 1;">Edit Before Upload</button>
+                <button id="btnUploadNow" onclick="finishDirectUpload()" style="background-color: var(--accent-green); color: white; flex: 1;">Upload Now</button>
             </div>
         </div>
         <div class="modal-footer">
@@ -694,8 +700,8 @@
 
         async function toggleDatabaseUpload() {
             const isChecked = document.getElementById('chkUploadToDatabase').checked;
-            const options = document.getElementById('db-upload-options');
-            options.style.display = isChecked ? 'grid' : 'none';
+            const fields = document.getElementById('db-fields');
+            fields.style.display = isChecked ? 'flex' : 'none';
             if (isChecked) {
                 await populateFolderDropdowns();
             }
@@ -788,7 +794,9 @@
 
         function handleFileSelect() {
             const fileInput = document.getElementById('file-input');
-            document.getElementById('btnUpload').disabled = !fileInput.files[0];
+            if (fileInput.files[0]) {
+                prepareUpload();
+            }
         }
 
         function prepareUpload() {
@@ -800,11 +808,14 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     pendingUploadBlob = e.target.result;
+                    document.getElementById('btnUploadEdit').style.display = 'inline-block';
                     document.getElementById('upload-choice-modal').style.display = 'flex';
                 };
                 reader.readAsDataURL(file);
             } else {
-                uploadFile(file);
+                pendingUploadBlob = null;
+                document.getElementById('btnUploadEdit').style.display = 'none';
+                document.getElementById('upload-choice-modal').style.display = 'flex';
             }
         }
 
@@ -814,36 +825,40 @@
         }
 
         function finishDirectUpload() {
+            const isModified = document.getElementById('btnUploadNow').textContent === 'Upload Modified Now';
             const fileInput = document.getElementById('file-input');
             const file = fileInput.files[0];
+
             closeUploadChoice();
 
-            if (file) {
+            if (isModified && pendingUploadBlob) {
+                // pendingUploadBlob is already a Blob from canvas.toBlob
+                const filename = file ? file.name : 'upload.jpg';
+                uploadFile(pendingUploadBlob, filename);
+            } else if (file) {
                 uploadFile(file);
             } else if (pendingUploadBlob) {
-                // If it was a camera capture (dataURL), convert to blob
-                fetch(pendingUploadBlob).then(res => res.blob()).then(blob => {
-                    uploadFile(blob, 'capture.jpg');
-                });
+                // Fallback for camera/dataURL if it wasn't a Blob yet
+                if (typeof pendingUploadBlob === 'string' && pendingUploadBlob.startsWith('data:')) {
+                    fetch(pendingUploadBlob).then(res => res.blob()).then(blob => {
+                        uploadFile(blob, 'capture.jpg');
+                    });
+                } else {
+                    uploadFile(pendingUploadBlob, 'upload.jpg');
+                }
             }
         }
 
         function closeUploadChoice() {
             document.getElementById('upload-choice-modal').style.display = 'none';
+            // Reset modal states
+            document.getElementById('btnUploadNow').textContent = 'Upload Now';
+            document.getElementById('btnUploadEdit').textContent = 'Edit Before Upload';
+            document.getElementById('upload-choice-prompt').textContent = 'Would you like to edit the image before uploading?';
         }
 
         async function finishUploadEditor() {
-            if (cropper) {
-                cropper.getCroppedCanvas().toBlob((blob) => {
-                    const originalFile = document.getElementById('file-input').files[0];
-                    let filename = 'capture.jpg';
-                    if (originalFile) {
-                        filename = originalFile.name;
-                    }
-                    uploadFile(blob, filename);
-                    closeEditor(false);
-                }, 'image/jpeg', 0.9);
-            }
+            // This function is now superseded by the new closeEditor -> upload-choice-modal workflow
         }
 
         async function uploadFile(fileOrBlob, filenameHint) {
@@ -878,7 +893,6 @@
                     uploadErrorLock = false; // Clear lock on success
                     showMessage(responseData.message, 'info');
                     document.getElementById('file-input').value = '';
-                    document.getElementById('btnUpload').disabled = true;
 
                     if (document.getElementById('chkUploadToDatabase').checked) {
                         const subfolder = formData.get('subfolder');
@@ -1120,13 +1134,27 @@
                 const detail = cropper.getData();
                 const imageData = cropper.getImageData();
 
+                const canvas = cropper.getCroppedCanvas();
+
                 cropper.destroy();
                 cropper = null;
 
                 if (save) {
-                    await syncCrop(detail, imageData.naturalWidth, imageData.naturalHeight, true);
-                    // Explicitly clear references on host after saving a remote crop
-                    await fetch('/action/stage'); // Trigger status update and reference clearing
+                    if (isUploadEditing) {
+                        // Store the cropped blob for later upload
+                        canvas.toBlob((blob) => {
+                            pendingUploadBlob = blob;
+                            // For upload mode, return to the upload choice modal
+                            document.getElementById('btnUploadNow').textContent = 'Upload Modified Now';
+                            document.getElementById('btnUploadEdit').textContent = 'Edit Again';
+                            document.getElementById('upload-choice-prompt').textContent = 'Selection updated. Ready to upload?';
+                            document.getElementById('upload-choice-modal').style.display = 'flex';
+                        }, 'image/jpeg', 0.9);
+                    } else {
+                        await syncCrop(detail, imageData.naturalWidth, imageData.naturalHeight, true);
+                        // Explicitly clear references on host after saving a remote crop
+                        await fetch('/action/stage'); // Trigger status update and reference clearing
+                    }
                 } else {
                     // Restore last selection on host if we cancelled but were live syncing
                     if (document.getElementById('chkLiveSyncEditor').checked && initialCropData) {
