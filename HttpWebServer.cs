@@ -589,6 +589,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             string moveStep = "50";
             bool editButtonEnabled = false;
             bool isBlackout = false;
+            int selectionWidth = 0;
+            int selectionHeight = 0;
 
             _mainForm.Invoke((Action)(() =>
             {
@@ -645,6 +647,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 moveStep = _mainForm.MoveStepText;
                 editButtonEnabled = !string.IsNullOrEmpty(_mainForm.SelectedImagePath);
                 isBlackout = _mainForm.PresenterDisplayIsBlack;
+                selectionWidth = _mainForm.SelectionWidth;
+                selectionHeight = _mainForm.SelectionHeight;
             }));
 
             var statusObject = new
@@ -677,7 +681,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                 autoStage,
                 moveStep,
                 editButtonEnabled,
-                isBlackout
+                isBlackout,
+                selectionWidth,
+                selectionHeight
             };
 
             return JsonConvert.SerializeObject(statusObject);

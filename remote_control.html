@@ -479,14 +479,14 @@
                 <button id="btnPushToPresenter" class="big-button" onclick="performAction('push')">&nbsp;&nbsp;&nbsp;Go Live&nbsp;&nbsp;&nbsp;</button>
                 <label>
                     <input type="checkbox" id="chkLinkLocalPreviewToPresenter" onchange="updateAutoSend(this)">
-                    Auto Send
+                    Auto Stage
                 </label>
             </div>
             <div class="control-group">
                 <button id="btnStageContent" class="big-button" onclick="performAction('stage')">Stage Preview</button>
                 <label>
                     <input type="checkbox" id="chkAutoStagePreview" onchange="updateScrollSettings({autoStage: this.checked})">
-                    Auto Stage
+                    Auto Preview
                 </label>
             </div>
             <button id="btnEditCrop" onclick="openEditor()" style="display: none;">Edit / Crop Preview</button>
@@ -531,6 +531,7 @@
                         Step:
                         <input type="number" id="txtMoveStep" style="width: 50px;" onchange="updateScrollSettings({moveStep: this.value})">
                     </label>
+                    <div style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">W: <span id="host-w">0</span> H: <span id="host-h">0</span></div>
                 </div>
                 <div class="d-pad">
                     <button class="up" onclick="moveSelection(0, -1)">↑</button>
@@ -647,11 +648,15 @@
                     <input type="checkbox" id="chkEnableScrollEditor" onchange="updateScrollSettings({enableScroll: this.checked})"> Auto Scroll
                 </label>
                 <div class="d-pad" style="width: 150px; margin: 0;">
-                    <button class="up" onclick="moveSelection(0, -1)">↑</button>
-                    <button class="left" onclick="moveSelection(-1, 0)">←</button>
-                    <button class="down" onclick="moveSelection(0, 1)">↓</button>
-                    <button class="right" onclick="moveSelection(1, 0)">→</button>
+                    <button class="up" onclick="moveInEditor(0, -1)">↑</button>
+                    <button class="left" onclick="moveInEditor(-1, 0)">←</button>
+                    <button class="down" onclick="moveInEditor(0, 1)">↓</button>
+                    <button class="right" onclick="moveInEditor(1, 0)">→</button>
                 </div>
+            </div>
+
+            <div id="editor-dims" style="color: white; font-size: 0.9em; width: 100%; text-align: center;">
+                W: <span id="editor-w">0</span> H: <span id="editor-h">0</span>
             </div>
 
             <div id="editor-rotate-buttons" style="display: flex; gap: 10px;">
@@ -663,7 +668,7 @@
                 <input type="checkbox" id="chkLiveSyncEditor" onchange="toggleLiveSync()"> Live Sync
             </label>
             <label id="lblAutoSendEditor" style="color: white;">
-                <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Send
+                <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Stage
             </label>
 
             <button id="btnPresentNow" onclick="presentNow()" style="background-color: var(--accent-blue); color: white; min-width: 100px;">Present Now</button>
@@ -769,15 +774,16 @@
         }
 
         async function updateAutoSend(el) {
-            updateSystemStatus('Updating...', 'busy');
             const val = el.checked;
             // Sync all auto-send checkboxes
             document.getElementById('chkLinkLocalPreviewToPresenter').checked = val;
             const editorChk = document.getElementById('chkAutoSendEditor');
             if (editorChk) editorChk.checked = val;
+
+            updateSystemStatus('Updating...', 'busy');
             try {
                 await fetch(`/action/auto-send?enable=${val}`);
-                updateSystemStatus('Auto Send Updated');
+                updateSystemStatus('Auto Stage Updated');
             } catch (e) {
                 updateSystemStatus('Update Failed', 'error');
             }
@@ -1068,7 +1074,13 @@
             document.getElementById('editor-nav-group').style.display = isUpload ? 'none' : 'flex';
             document.getElementById('editor-rotate-buttons').style.display = isUpload ? 'none' : 'flex';
             document.getElementById('lblLiveSync').style.display = isUpload ? 'none' : 'inline-block';
-            document.getElementById('lblAutoSendEditor').style.display = isUpload ? 'none' : 'inline-block';
+            const autoSendLbl = document.getElementById('lblAutoSendEditor');
+            autoSendLbl.style.display = isUpload ? 'none' : 'inline-block';
+            const liveSyncChk = document.getElementById('chkLiveSyncEditor');
+            const autoSendChk = document.getElementById('chkAutoSendEditor');
+            if (!isUpload) {
+                autoSendChk.disabled = !liveSyncChk.checked;
+            }
             document.getElementById('btnPresentNow').style.display = isUpload ? 'none' : 'inline-block';
             document.getElementById('btnDoneEditor').style.display = 'inline-block';
 
@@ -1186,9 +1198,29 @@
             return Math.atan2(dy, dx) * 180 / Math.PI;
         }
 
+        function moveInEditor(xDir, yDir) {
+            triggerHaptic();
+            if (!cropper) return;
+
+            const step = parseInt(document.getElementById('txtMoveStep').value) || 50;
+            const data = cropper.getData();
+
+            cropper.setData({
+                x: data.x + (xDir * step),
+                y: data.y + (yDir * step)
+            });
+            //setData triggers the 'crop' event which handles syncing if Live Sync is on
+        }
+
         function updateEditorReferenceOverlay() {
             const refOverlay = document.getElementById('editor-reference-overlay');
-            if (!cropper || !initialCropData || !isEditing) return;
+            if (!cropper || !isEditing) return;
+
+            const data = cropper.getData();
+            document.getElementById('editor-w').textContent = Math.round(data.width);
+            document.getElementById('editor-h').textContent = Math.round(data.height);
+
+            if (!initialCropData) return;
 
             const canvasData = cropper.getCanvasData();
             const imageData = cropper.getImageData();
@@ -1229,6 +1261,16 @@
 
         async function toggleLiveSync() {
             const liveSync = document.getElementById('chkLiveSyncEditor').checked;
+            const autoSendChk = document.getElementById('chkAutoSendEditor');
+
+            if (autoSendChk) {
+                autoSendChk.disabled = !liveSync;
+                if (!liveSync) {
+                    autoSendChk.checked = false;
+                    await updateAutoSend(autoSendChk);
+                }
+            }
+
             if (liveSync && isEditing && cropper && isCropperReady) {
                 const imageData = cropper.getImageData();
                 await syncCrop(cropper.getData(), imageData.naturalWidth, imageData.naturalHeight, true);
@@ -1333,6 +1375,8 @@
                 if (txtMoveStep && document.activeElement !== txtMoveStep) {
                     txtMoveStep.value = status.moveStep;
                 }
+                document.getElementById('host-w').textContent = status.selectionWidth;
+                document.getElementById('host-h').textContent = status.selectionHeight;
 
                 currentPresenterAspectRatio = status.secondaryPreviewAspectRatio || (16/9);
 
