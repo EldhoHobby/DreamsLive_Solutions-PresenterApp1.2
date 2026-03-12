@@ -62,6 +62,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnHighlighter = new System.Windows.Forms.Button();
             this.btnEditContent = new System.Windows.Forms.Button();
             this.btnMessageOkay = new System.Windows.Forms.Button();
+            this.lblPreviewLabel = new System.Windows.Forms.Label();
+            this.lblStagedLabel = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.picSecondaryPreview = new System.Windows.Forms.PictureBox();
             this.picPreview = new System.Windows.Forms.PictureBox();
@@ -387,8 +389,30 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnEditContent.Name = "btnEditContent";
             this.btnEditContent.Size = new System.Drawing.Size(136, 36);
             this.btnEditContent.TabIndex = 38;
-            this.btnEditContent.Text = "Edit / Crop";
+            this.btnEditContent.Text = "Edit / Crop Preview";
             this.btnEditContent.UseVisualStyleBackColor = true;
+            //
+            // lblPreviewLabel
+            //
+            this.lblPreviewLabel.AutoSize = true;
+            this.lblPreviewLabel.BackColor = System.Drawing.Color.Black;
+            this.lblPreviewLabel.ForeColor = System.Drawing.Color.White;
+            this.lblPreviewLabel.Location = new System.Drawing.Point(6, 110);
+            this.lblPreviewLabel.Name = "lblPreviewLabel";
+            this.lblPreviewLabel.Size = new System.Drawing.Size(45, 13);
+            this.lblPreviewLabel.TabIndex = 50;
+            this.lblPreviewLabel.Text = "Preview";
+            //
+            // lblStagedLabel
+            //
+            this.lblStagedLabel.AutoSize = true;
+            this.lblStagedLabel.BackColor = System.Drawing.Color.Black;
+            this.lblStagedLabel.ForeColor = System.Drawing.Color.White;
+            this.lblStagedLabel.Location = new System.Drawing.Point(756, 108);
+            this.lblStagedLabel.Name = "lblStagedLabel";
+            this.lblStagedLabel.Size = new System.Drawing.Size(41, 13);
+            this.lblStagedLabel.TabIndex = 51;
+            this.lblStagedLabel.Text = "Staged";
             //
             // btnMessageOkay
             // 
@@ -501,6 +525,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.txtMoveStep);
             this.Controls.Add(this.lblSelectionSize);
             this.Controls.Add(this.chkLaserPointer);
+            this.Controls.Add(this.lblPreviewLabel);
+            this.Controls.Add(this.lblStagedLabel);
             this.Controls.Add(this.btnHighlighter);
             this.Controls.Add(this.btnEditContent);
             this.Controls.Add(this.picPreview);
@@ -556,6 +582,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnHighlighter;
         private System.Windows.Forms.Button btnEditContent;
         private System.Windows.Forms.Button btnMessageOkay;
+        private System.Windows.Forms.Label lblPreviewLabel;
+        private System.Windows.Forms.Label lblStagedLabel;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnSetDatabaseFolder;

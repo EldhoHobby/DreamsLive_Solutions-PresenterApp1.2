@@ -451,8 +451,9 @@
 <body>
     <div id="spinner" class="spinner-overlay">
         <img src="splash.png" alt="Loading..." style="width: 80%; max-width: 400px; margin-bottom: 20px;">
+        <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 20px;">Where Ideas Go Live.</div>
         <div class="spinner"></div>
-        <div class="spinner-text">Loading...</div>
+        <div class="spinner-text">System Initializing...</div>
     </div>
     <div class="container">
         <div class="sticky-header">
@@ -460,9 +461,11 @@
 
             <div class="preview-container">
                 <div id="picSecondaryContainer" class="preview-box">
+                    <div style="position: absolute; top: 2px; left: 2px; background: rgba(0,0,0,0.5); color: white; padding: 2px 5px; font-size: 0.6em; z-index: 5;">Preview</div>
                     <img id="picSecondaryPreview" src="">
                 </div>
                 <div id="picPreviewContainer" class="preview-box" onclick="openEditor()" style="cursor: pointer;">
+                    <div style="position: absolute; top: 2px; left: 2px; background: rgba(0,0,0,0.5); color: white; padding: 2px 5px; font-size: 0.6em; z-index: 5;">Staged</div>
                     <img id="picPreview" src="">
                     <!-- Persistent Staged Reference Box -->
                     <div id="staged-selection-overlay" style="position: absolute; border: 6px dotted var(--overlay-staged); pointer-events: none; display: none; box-sizing: border-box;"></div>
@@ -486,7 +489,7 @@
                     Auto Stage
                 </label>
             </div>
-            <button id="btnEditCrop" onclick="openEditor()" style="display: none;">Edit / Crop</button>
+            <button id="btnEditCrop" onclick="openEditor()" style="display: none;">Edit / Crop Preview</button>
             <button id="btnClearPresenterDisplay" onclick="performAction('blackout')" style="display: none;">Blackout</button>
             <button id="btnCloseLivePresenter" onclick="performAction('close')" style="display: none;">Close Live</button>
         </div>
@@ -584,7 +587,7 @@
                     <div id="new-folder-container" style="display: none; flex-direction: column; gap: 5px;">
                         <input type="text" id="new-folder-input" placeholder="New folder name" style="width: 100%; padding: 5px;">
                     </div>
-                    <button id="btnToggleNewFolder" onclick="toggleNewFolderInput()" style="font-size: 0.8em; padding: 5px;">+ New Folder</button>
+                    <button id="btnToggleNewFolder" onclick="toggleNewFolderInput()" style="font-size: 1.2em; padding: 12px; background-color: var(--accent-blue); color: white; border: none;">+ New Folder</button>
                     <input type="text" id="custom-filename" placeholder="Custom filename (optional)" style="width: 100%; padding: 5px;">
                 </div>
             </div>
@@ -623,7 +626,7 @@
     <!-- Editor Modal -->
     <div id="editor-modal" class="modal">
         <div class="modal-header">
-            <span id="editor-title">Edit / Crop Content</span>
+            <span id="editor-title">Edit / Crop Preview Content</span>
             <button onclick="closeEditor(false)" style="background: none; border: none; color: white; font-size: 1.5em; cursor: pointer;">&times;</button>
         </div>
         <div class="modal-content">
@@ -692,6 +695,7 @@
         let isUploadEditing = false;
         let initialTouchAngle = 0;
         let lastRotationValue = 0;
+        let isPinching = false;
 
 
         let secondaryPan = { x: 0, y: 0 };
@@ -1057,7 +1061,7 @@
             modal.style.display = 'flex';
             isEditing = true;
 
-            title.textContent = isUpload ? "Upload Edit / Crop Content" : "Edit / Crop Content";
+            title.textContent = isUpload ? "Upload Edit / Crop Content" : "Edit / Crop Preview Content";
 
             // UI Visibility Adjustments for Upload Mode
             document.getElementById('rotation-container').style.display = isUpload ? 'flex' : 'none';
@@ -1144,13 +1148,15 @@
                     const container = cropper.container;
                     container.addEventListener('touchstart', (e) => {
                         if (e.touches.length === 2 && isUploadEditing) {
+                            isPinching = true;
                             initialTouchAngle = getTouchAngle(e.touches);
                             lastRotationValue = parseInt(document.getElementById('rotation-slider').value);
                         }
-                    }, { passive: true });
+                    }, { passive: false });
 
                     container.addEventListener('touchmove', (e) => {
-                        if (e.touches.length === 2 && isUploadEditing) {
+                        if (e.touches.length === 2 && isUploadEditing && isPinching) {
+                            e.preventDefault();
                             const currentAngle = getTouchAngle(e.touches);
                             let diff = currentAngle - initialTouchAngle;
 
@@ -1161,6 +1167,12 @@
                             const roundedAngle = Math.round(newAngle);
                             document.getElementById('rotation-slider').value = roundedAngle;
                             handleRotationSlider(roundedAngle);
+                        }
+                    }, { passive: false });
+
+                    container.addEventListener('touchend', (e) => {
+                        if (e.touches.length < 2) {
+                            isPinching = false;
                         }
                     }, { passive: true });
 
