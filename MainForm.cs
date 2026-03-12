@@ -274,6 +274,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                 _autoStageDebounceTimer.Stop();
                 btnStageContent_Click(this, EventArgs.Empty);
             };
+
+            this.lblPreviewLabel.BringToFront();
+            this.lblStagedLabel.BringToFront();
         }
 
         private void StatusUpdateTimer_Tick(object sender, EventArgs e)

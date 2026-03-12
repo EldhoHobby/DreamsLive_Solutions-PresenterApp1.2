@@ -591,6 +591,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             bool isBlackout = false;
             int selectionWidth = 0;
             int selectionHeight = 0;
+            bool isLicenseExpired = false;
 
             _mainForm.Invoke((Action)(() =>
             {
@@ -649,6 +650,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 isBlackout = _mainForm.PresenterDisplayIsBlack;
                 selectionWidth = _mainForm.SelectionWidth;
                 selectionHeight = _mainForm.SelectionHeight;
+                isLicenseExpired = new UsageManager().IsLicenseExpired();
             }));
 
             var statusObject = new
@@ -683,7 +685,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 editButtonEnabled,
                 isBlackout,
                 selectionWidth,
-                selectionHeight
+                selectionHeight,
+                isLicenseExpired
             };
 
             return JsonConvert.SerializeObject(statusObject);

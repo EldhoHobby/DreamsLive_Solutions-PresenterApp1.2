@@ -360,6 +360,31 @@
             font-size: 1.5em;
         }
 
+        .expired-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--modal-bg);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .expired-content {
+            background-color: var(--container-bg);
+            color: var(--text-color);
+            padding: 40px;
+            border-radius: 8px;
+            border: 2px solid var(--status-error);
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -454,6 +479,14 @@
         <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 20px;">Where Ideas Go Live.</div>
         <div class="spinner"></div>
         <div class="spinner-text">System Initializing...</div>
+    </div>
+
+    <div id="expired-overlay" class="expired-overlay">
+        <div class="expired-content">
+            <h2 style="color: var(--status-error);">License Expired</h2>
+            <p style="font-size: 1.2em; margin-bottom: 20px;">The trial period or usage limit for this application has been reached.</p>
+            <p>Please contact support to activate your full license.</p>
+        </div>
     </div>
     <div class="container">
         <div class="sticky-header">
@@ -1348,11 +1381,21 @@
             }
         }
 
+        let isStatusUpdateRunning = false;
+
         async function updateStatus() {
+            if (isStatusUpdateRunning) return;
+            isStatusUpdateRunning = true;
             try {
                 const response = await fetch('/status');
                 if (!response.ok) throw new Error();
                 const status = await response.json();
+
+                if (status.isLicenseExpired) {
+                    document.getElementById('expired-overlay').style.display = 'flex';
+                    // Stop further updates
+                    return;
+                }
 
                 document.getElementById('connection-status-val').textContent = 'Online';
                 document.getElementById('connection-status-val').style.color = 'var(--status-ready)';
@@ -1536,6 +1579,8 @@
                 document.getElementById('connection-status-val').textContent = 'Offline';
                 document.getElementById('connection-status-val').style.color = 'var(--status-error)';
                 document.getElementById('presenter-status-val').textContent = 'Unknown';
+            } finally {
+                isStatusUpdateRunning = false;
             }
         }
 
