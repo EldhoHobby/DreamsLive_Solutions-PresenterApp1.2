@@ -13,7 +13,7 @@
             --border-color: #ccc;
             --button-bg: #fff;
             --button-text: #333;
-            --modal-bg: rgba(0, 0, 0, 0.9);
+            --modal-bg: rgba(0, 0, 0, 0.6);
             --header-bg: #222;
             --accent-blue: #2196F3;
             --accent-green: #4CAF50;
@@ -401,6 +401,24 @@
             background-color: var(--header-bg);
         }
 
+        .modal-content input[type="text"],
+        .modal-content select {
+            font-size: 1.2em;
+            padding: 12px !important;
+        }
+
+        .modal-content input[type="checkbox"] {
+            width: 25px;
+            height: 25px;
+            margin-right: 10px;
+        }
+
+        .modal-content label {
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+        }
+
         .rotation-slider-container {
             display: flex;
             flex-direction: column;
@@ -598,7 +616,7 @@
     <!-- Editor Modal -->
     <div id="editor-modal" class="modal">
         <div class="modal-header">
-            <span>Edit / Crop Content</span>
+            <span id="editor-title">Edit / Crop Content</span>
             <button onclick="closeEditor(false)" style="background: none; border: none; color: white; font-size: 1.5em; cursor: pointer;">&times;</button>
         </div>
         <div class="modal-content">
@@ -665,6 +683,8 @@
         let cameraStream = null;
         let pendingUploadBlob = null;
         let isUploadEditing = false;
+        let initialTouchAngle = 0;
+        let lastRotationValue = 0;
 
 
         let secondaryPan = { x: 0, y: 0 };
@@ -890,11 +910,15 @@
 
         function startUploadEdit() {
             closeUploadChoice();
-            openEditor(pendingUploadBlob, true);
+            let src = pendingUploadBlob;
+            if (pendingUploadBlob instanceof Blob) {
+                src = URL.createObjectURL(pendingUploadBlob);
+            }
+            openEditor(src, true);
         }
 
         function finishDirectUpload() {
-            const isModified = document.getElementById('btnUploadNow').textContent === 'Upload Modified Now';
+            const isModified = document.getElementById('btnUploadNow').textContent === 'Upload Modified';
             const fileInput = document.getElementById('file-input');
             const file = fileInput.files[0];
 
@@ -1013,6 +1037,7 @@
             const modal = document.getElementById('editor-modal');
             const img = document.getElementById('editor-image');
             const refOverlay = document.getElementById('editor-reference-overlay');
+            const title = document.getElementById('editor-title');
 
             if (cropper) {
                 cropper.destroy();
@@ -1024,6 +1049,8 @@
             img.src = imageSrc || `/database/current?t=${new Date().getTime()}`;
             modal.style.display = 'flex';
             isEditing = true;
+
+            title.textContent = isUpload ? "Upload Edit / Crop Content" : "Edit / Crop Content";
 
             // UI Visibility Adjustments for Upload Mode
             document.getElementById('rotation-container').style.display = isUpload ? 'flex' : 'none';
@@ -1059,7 +1086,8 @@
                     }
 
             // Setup reference overlay (Gray Box) using the host's actual STAGED region
-            if (!isUpload && stagedNormalizedSelection) {
+            // User requested: Edit/ Crop content shouldn't have the pre selection window (Gray dotted box)
+            if (false && !isUpload && stagedNormalizedSelection) {
                 initialCropData = {
                     x: stagedNormalizedSelection.X * img.naturalWidth,
                     y: stagedNormalizedSelection.Y * img.naturalHeight,
@@ -1104,8 +1132,39 @@
                             }, 1000);
                         }
                     });
+
+                    // 2-finger rotation gesture
+                    const container = cropper.container;
+                    container.addEventListener('touchstart', (e) => {
+                        if (e.touches.length === 2 && isUploadEditing) {
+                            initialTouchAngle = getTouchAngle(e.touches);
+                            lastRotationValue = parseInt(document.getElementById('rotation-slider').value);
+                        }
+                    }, { passive: true });
+
+                    container.addEventListener('touchmove', (e) => {
+                        if (e.touches.length === 2 && isUploadEditing) {
+                            const currentAngle = getTouchAngle(e.touches);
+                            let diff = currentAngle - initialTouchAngle;
+
+                            let newAngle = lastRotationValue + diff;
+                            while (newAngle > 180) newAngle -= 360;
+                            while (newAngle < -180) newAngle += 360;
+
+                            const roundedAngle = Math.round(newAngle);
+                            document.getElementById('rotation-slider').value = roundedAngle;
+                            handleRotationSlider(roundedAngle);
+                        }
+                    }, { passive: true });
+
                 }, 300);
             };
+        }
+
+        function getTouchAngle(touches) {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.atan2(dy, dx) * 180 / Math.PI;
         }
 
         function updateEditorReferenceOverlay() {
@@ -1208,7 +1267,7 @@
                         canvas.toBlob((blob) => {
                             pendingUploadBlob = blob;
                             // For upload mode, return to the upload choice modal
-                            document.getElementById('btnUploadNow').textContent = 'Upload Modified Now';
+                            document.getElementById('btnUploadNow').textContent = 'Upload Modified';
                             document.getElementById('btnUploadEdit').textContent = 'Edit Again';
                             document.getElementById('upload-choice-prompt').textContent = 'Selection updated. Ready to upload?';
                             document.getElementById('upload-choice-modal').style.display = 'flex';
