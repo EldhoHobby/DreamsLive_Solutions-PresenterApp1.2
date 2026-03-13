@@ -28,6 +28,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.tnBrowse = new System.Windows.Forms.Button();
             this.lblImagePath = new System.Windows.Forms.Label();
             this.cmbDisplays = new System.Windows.Forms.ComboBox();
@@ -80,9 +81,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             // tnBrowse
             // 
-            this.tnBrowse.Location = new System.Drawing.Point(754, 81);
+            this.tnBrowse.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.tnBrowse.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.tnBrowse.Location = new System.Drawing.Point(690, 81);
             this.tnBrowse.Name = "tnBrowse";
-            this.tnBrowse.Size = new System.Drawing.Size(75, 23);
+            this.tnBrowse.Size = new System.Drawing.Size(80, 25);
             this.tnBrowse.TabIndex = 0;
             this.tnBrowse.Text = "Browse...";
             this.tnBrowse.UseVisualStyleBackColor = true;
@@ -90,9 +93,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             // btnSnip
             //
-            this.btnSnip.Location = new System.Drawing.Point(673, 81);
+            this.btnSnip.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSnip.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.btnSnip.Location = new System.Drawing.Point(600, 81);
             this.btnSnip.Name = "btnSnip";
-            this.btnSnip.Size = new System.Drawing.Size(75, 23);
+            this.btnSnip.Size = new System.Drawing.Size(80, 25);
             this.btnSnip.TabIndex = 52;
             this.btnSnip.Text = "Snip";
             this.btnSnip.UseVisualStyleBackColor = true;
@@ -101,26 +106,32 @@ namespace DreamsLive_Solutions_PresenterApp1
             // lblImagePath
             // 
             this.lblImagePath.AutoSize = true;
-            this.lblImagePath.Location = new System.Drawing.Point(835, 86);
+            this.lblImagePath.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.lblImagePath.Location = new System.Drawing.Point(780, 86);
             this.lblImagePath.Name = "lblImagePath";
-            this.lblImagePath.Size = new System.Drawing.Size(113, 13);
+            this.lblImagePath.Size = new System.Drawing.Size(124, 15);
             this.lblImagePath.TabIndex = 1;
             this.lblImagePath.Text = "Selected Image: None";
             // 
             // cmbDisplays
             // 
             this.cmbDisplays.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbDisplays.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmbDisplays.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.cmbDisplays.FormattingEnabled = true;
-            this.cmbDisplays.Location = new System.Drawing.Point(456, 78);
+            this.cmbDisplays.Location = new System.Drawing.Point(440, 81);
             this.cmbDisplays.Name = "cmbDisplays";
-            this.cmbDisplays.Size = new System.Drawing.Size(146, 21);
+            this.cmbDisplays.Size = new System.Drawing.Size(146, 23);
             this.cmbDisplays.TabIndex = 2;
+            this.cmbDisplays.SelectedIndexChanged += new System.EventHandler(this.CmbDisplays_SelectedIndexChanged);
             // 
             // btnStageContent
             // 
-            this.btnStageContent.Location = new System.Drawing.Point(612, 328);
+            this.btnStageContent.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnStageContent.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
+            this.btnStageContent.Location = new System.Drawing.Point(608, 310);
             this.btnStageContent.Name = "btnStageContent";
-            this.btnStageContent.Size = new System.Drawing.Size(136, 36);
+            this.btnStageContent.Size = new System.Drawing.Size(142, 45);
             this.btnStageContent.TabIndex = 3;
             this.btnStageContent.Text = "Stage Preview";
             this.btnStageContent.UseVisualStyleBackColor = true;
@@ -162,9 +173,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             // btnPushToPresenter
             // 
-            this.btnPushToPresenter.Location = new System.Drawing.Point(612, 388);
+            this.btnPushToPresenter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnPushToPresenter.Font = new System.Drawing.Font("Segoe UI Semibold", 12F, System.Drawing.FontStyle.Bold);
+            this.btnPushToPresenter.Location = new System.Drawing.Point(608, 385);
             this.btnPushToPresenter.Name = "btnPushToPresenter";
-            this.btnPushToPresenter.Size = new System.Drawing.Size(136, 36);
+            this.btnPushToPresenter.Size = new System.Drawing.Size(142, 50);
             this.btnPushToPresenter.TabIndex = 10;
             this.btnPushToPresenter.Text = "Go Live";
             this.btnPushToPresenter.UseVisualStyleBackColor = true;
@@ -172,9 +185,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             // chkLinkLocalPreviewToPresenter
             // 
             this.chkLinkLocalPreviewToPresenter.AutoSize = true;
-            this.chkLinkLocalPreviewToPresenter.Location = new System.Drawing.Point(614, 424);
+            this.chkLinkLocalPreviewToPresenter.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            this.chkLinkLocalPreviewToPresenter.Location = new System.Drawing.Point(602, 440);
             this.chkLinkLocalPreviewToPresenter.Name = "chkLinkLocalPreviewToPresenter";
-            this.chkLinkLocalPreviewToPresenter.Size = new System.Drawing.Size(136, 17);
+            this.chkLinkLocalPreviewToPresenter.Size = new System.Drawing.Size(155, 19);
             this.chkLinkLocalPreviewToPresenter.TabIndex = 11;
             this.chkLinkLocalPreviewToPresenter.Text = "Auto-Send to Presenter";
             this.chkLinkLocalPreviewToPresenter.UseVisualStyleBackColor = true;
@@ -182,15 +196,19 @@ namespace DreamsLive_Solutions_PresenterApp1
             // btnClearPresenterDisplay
             // 
             this.btnClearPresenterDisplay.Enabled = false;
-            this.btnClearPresenterDisplay.Location = new System.Drawing.Point(612, 154);
+            this.btnClearPresenterDisplay.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnClearPresenterDisplay.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            this.btnClearPresenterDisplay.Location = new System.Drawing.Point(608, 155);
             this.btnClearPresenterDisplay.Name = "btnClearPresenterDisplay";
-            this.btnClearPresenterDisplay.Size = new System.Drawing.Size(136, 36);
+            this.btnClearPresenterDisplay.Size = new System.Drawing.Size(142, 40);
             this.btnClearPresenterDisplay.TabIndex = 12;
             this.btnClearPresenterDisplay.Text = "Blank Presenter";
             this.btnClearPresenterDisplay.UseVisualStyleBackColor = true;
             // 
             // btnToggleTheme
             // 
+            this.btnToggleTheme.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnToggleTheme.Font = new System.Drawing.Font("Segoe UI", 8.25F);
             this.btnToggleTheme.Location = new System.Drawing.Point(1252, 5);
             this.btnToggleTheme.Name = "btnToggleTheme";
             this.btnToggleTheme.Size = new System.Drawing.Size(100, 23);
@@ -201,9 +219,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             // btnCloseLivePresenter
             // 
-            this.btnCloseLivePresenter.Location = new System.Drawing.Point(612, 112);
+            this.btnCloseLivePresenter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCloseLivePresenter.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            this.btnCloseLivePresenter.Location = new System.Drawing.Point(608, 110);
             this.btnCloseLivePresenter.Name = "btnCloseLivePresenter";
-            this.btnCloseLivePresenter.Size = new System.Drawing.Size(136, 36);
+            this.btnCloseLivePresenter.Size = new System.Drawing.Size(142, 40);
             this.btnCloseLivePresenter.TabIndex = 15;
             this.btnCloseLivePresenter.Text = "Close Live";
             this.btnCloseLivePresenter.UseVisualStyleBackColor = true;
@@ -221,6 +241,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             // cmbDisplayMode
             // 
             this.cmbDisplayMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbDisplayMode.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmbDisplayMode.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.cmbDisplayMode.FormattingEnabled = true;
             this.cmbDisplayMode.Items.AddRange(new object[] {
             "Fit",
@@ -228,9 +250,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             "Stretch",
             "Tile",
             "Center"});
-            this.cmbDisplayMode.Location = new System.Drawing.Point(284, 78);
+            this.cmbDisplayMode.Location = new System.Drawing.Point(284, 81);
             this.cmbDisplayMode.Name = "cmbDisplayMode";
-            this.cmbDisplayMode.Size = new System.Drawing.Size(146, 21);
+            this.cmbDisplayMode.Size = new System.Drawing.Size(146, 23);
             this.cmbDisplayMode.TabIndex = 17;
             this.cmbDisplayMode.SelectedIndexChanged += new System.EventHandler(this.cmbDisplayMode_SelectedIndexChanged);
             // 
@@ -311,6 +333,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             // btnSettings
             //
+            this.btnSettings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSettings.Font = new System.Drawing.Font("Segoe UI", 8.25F);
             this.btnSettings.Location = new System.Drawing.Point(1044, 5);
             this.btnSettings.Name = "btnSettings";
             this.btnSettings.Size = new System.Drawing.Size(100, 23);
@@ -322,22 +346,26 @@ namespace DreamsLive_Solutions_PresenterApp1
             // lblMoveStep
             // 
             this.lblMoveStep.AutoSize = true;
+            this.lblMoveStep.Font = new System.Drawing.Font("Segoe UI", 8.25F);
             this.lblMoveStep.Location = new System.Drawing.Point(754, 555);
             this.lblMoveStep.Name = "lblMoveStep";
-            this.lblMoveStep.Size = new System.Drawing.Size(62, 13);
+            this.lblMoveStep.Size = new System.Drawing.Size(64, 13);
             this.lblMoveStep.TabIndex = 29;
             this.lblMoveStep.Text = "Move Step:";
             // 
             // txtMoveStep
             // 
+            this.txtMoveStep.Font = new System.Drawing.Font("Segoe UI", 8.25F);
             this.txtMoveStep.Location = new System.Drawing.Point(817, 552);
             this.txtMoveStep.Name = "txtMoveStep";
-            this.txtMoveStep.Size = new System.Drawing.Size(40, 20);
+            this.txtMoveStep.Size = new System.Drawing.Size(40, 22);
             this.txtMoveStep.TabIndex = 30;
             this.txtMoveStep.Text = "50";
             // 
             // btnHelp
             // 
+            this.btnHelp.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnHelp.Font = new System.Drawing.Font("Segoe UI", 8.25F);
             this.btnHelp.Location = new System.Drawing.Point(1148, 5);
             this.btnHelp.Name = "btnHelp";
             this.btnHelp.Size = new System.Drawing.Size(100, 23);
@@ -349,9 +377,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             // chkEnableScroll
             // 
             this.chkEnableScroll.AutoSize = true;
-            this.chkEnableScroll.Location = new System.Drawing.Point(1264, 536);
+            this.chkEnableScroll.Font = new System.Drawing.Font("Segoe UI", 8.25F);
+            this.chkEnableScroll.Location = new System.Drawing.Point(1240, 536);
             this.chkEnableScroll.Name = "chkEnableScroll";
-            this.chkEnableScroll.Size = new System.Drawing.Size(120, 17);
+            this.chkEnableScroll.Size = new System.Drawing.Size(117, 17);
             this.chkEnableScroll.TabIndex = 23;
             this.chkEnableScroll.Text = "Enable Auto Scroll";
             this.chkEnableScroll.UseVisualStyleBackColor = true;
@@ -359,9 +388,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             // chkAutoStagePreview
             // 
             this.chkAutoStagePreview.AutoSize = true;
-            this.chkAutoStagePreview.Location = new System.Drawing.Point(621, 364);
+            this.chkAutoStagePreview.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.chkAutoStagePreview.Location = new System.Drawing.Point(612, 360);
             this.chkAutoStagePreview.Name = "chkAutoStagePreview";
-            this.chkAutoStagePreview.Size = new System.Drawing.Size(120, 17);
+            this.chkAutoStagePreview.Size = new System.Drawing.Size(127, 19);
             this.chkAutoStagePreview.TabIndex = 24;
             this.chkAutoStagePreview.Text = "Auto Stage Preview";
             this.chkAutoStagePreview.UseVisualStyleBackColor = true;
@@ -369,27 +399,31 @@ namespace DreamsLive_Solutions_PresenterApp1
             // lblSelectionSize
             // 
             this.lblSelectionSize.AutoSize = true;
+            this.lblSelectionSize.Font = new System.Drawing.Font("Segoe UI", 8.25F);
             this.lblSelectionSize.Location = new System.Drawing.Point(751, 537);
             this.lblSelectionSize.Name = "lblSelectionSize";
-            this.lblSelectionSize.Size = new System.Drawing.Size(96, 13);
+            this.lblSelectionSize.Size = new System.Drawing.Size(101, 13);
             this.lblSelectionSize.TabIndex = 31;
             this.lblSelectionSize.Text = "Width: 0, Height: 0";
             // 
             // chkLaserPointer
             // 
             this.chkLaserPointer.AutoSize = true;
-            this.chkLaserPointer.Location = new System.Drawing.Point(636, 237);
+            this.chkLaserPointer.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.chkLaserPointer.Location = new System.Drawing.Point(608, 205);
             this.chkLaserPointer.Name = "chkLaserPointer";
-            this.chkLaserPointer.Size = new System.Drawing.Size(88, 17);
+            this.chkLaserPointer.Size = new System.Drawing.Size(94, 19);
             this.chkLaserPointer.TabIndex = 32;
             this.chkLaserPointer.Text = "Laser Pointer";
             this.chkLaserPointer.UseVisualStyleBackColor = true;
             // 
             // btnHighlighter
             // 
-            this.btnHighlighter.Location = new System.Drawing.Point(635, 260);
+            this.btnHighlighter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnHighlighter.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            this.btnHighlighter.Location = new System.Drawing.Point(608, 225);
             this.btnHighlighter.Name = "btnHighlighter";
-            this.btnHighlighter.Size = new System.Drawing.Size(91, 25);
+            this.btnHighlighter.Size = new System.Drawing.Size(142, 35);
             this.btnHighlighter.TabIndex = 33;
             this.btnHighlighter.Text = "Highlighter";
             this.btnHighlighter.UseVisualStyleBackColor = true;
@@ -397,9 +431,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             // btnEditContent
             //
-            this.btnEditContent.Location = new System.Drawing.Point(612, 290);
+            this.btnEditContent.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnEditContent.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            this.btnEditContent.Location = new System.Drawing.Point(608, 265);
             this.btnEditContent.Name = "btnEditContent";
-            this.btnEditContent.Size = new System.Drawing.Size(136, 36);
+            this.btnEditContent.Size = new System.Drawing.Size(142, 40);
             this.btnEditContent.TabIndex = 38;
             this.btnEditContent.Text = "Edit / Crop Preview";
             this.btnEditContent.UseVisualStyleBackColor = true;
@@ -408,10 +444,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             //
             this.lblPreviewLabel.AutoSize = true;
             this.lblPreviewLabel.BackColor = System.Drawing.Color.Black;
+            this.lblPreviewLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.lblPreviewLabel.ForeColor = System.Drawing.Color.White;
             this.lblPreviewLabel.Location = new System.Drawing.Point(6, 110);
             this.lblPreviewLabel.Name = "lblPreviewLabel";
-            this.lblPreviewLabel.Size = new System.Drawing.Size(45, 13);
+            this.lblPreviewLabel.Size = new System.Drawing.Size(52, 15);
             this.lblPreviewLabel.TabIndex = 50;
             this.lblPreviewLabel.Text = "Preview";
             //
@@ -419,10 +456,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             //
             this.lblStagedLabel.AutoSize = true;
             this.lblStagedLabel.BackColor = System.Drawing.Color.Black;
+            this.lblStagedLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.lblStagedLabel.ForeColor = System.Drawing.Color.White;
             this.lblStagedLabel.Location = new System.Drawing.Point(756, 108);
             this.lblStagedLabel.Name = "lblStagedLabel";
-            this.lblStagedLabel.Size = new System.Drawing.Size(41, 13);
+            this.lblStagedLabel.Size = new System.Drawing.Size(46, 15);
             this.lblStagedLabel.TabIndex = 51;
             this.lblStagedLabel.Text = "Staged";
             //
@@ -470,7 +508,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Segoe UI Variable Small Semibol", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Font = new System.Drawing.Font("Segoe UI Semibold", 12F, System.Drawing.FontStyle.Bold);
             this.label1.Location = new System.Drawing.Point(61, 70);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(166, 21);
@@ -480,9 +518,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             // btnSetDatabaseFolder
             //
             this.btnSetDatabaseFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnSetDatabaseFolder.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSetDatabaseFolder.Font = new System.Drawing.Font("Segoe UI", 8.25F);
             this.btnSetDatabaseFolder.Location = new System.Drawing.Point(250, 544);
             this.btnSetDatabaseFolder.Name = "btnSetDatabaseFolder";
-            this.btnSetDatabaseFolder.Size = new System.Drawing.Size(120, 23);
+            this.btnSetDatabaseFolder.Size = new System.Drawing.Size(120, 25);
             this.btnSetDatabaseFolder.TabIndex = 36;
             this.btnSetDatabaseFolder.Text = "Set Database Folder";
             this.btnSetDatabaseFolder.UseVisualStyleBackColor = true;
@@ -491,9 +531,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             // btnOpenGallery
             //
             this.btnOpenGallery.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnOpenGallery.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnOpenGallery.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
             this.btnOpenGallery.Location = new System.Drawing.Point(520, 544);
             this.btnOpenGallery.Name = "btnOpenGallery";
-            this.btnOpenGallery.Size = new System.Drawing.Size(120, 23);
+            this.btnOpenGallery.Size = new System.Drawing.Size(120, 25);
             this.btnOpenGallery.TabIndex = 53;
             this.btnOpenGallery.Text = "Open Gallery";
             this.btnOpenGallery.UseVisualStyleBackColor = true;
@@ -503,9 +545,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             //
             this.lblDatabaseFolderPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lblDatabaseFolderPath.AutoSize = true;
+            this.lblDatabaseFolderPath.Font = new System.Drawing.Font("Segoe UI", 8.25F);
             this.lblDatabaseFolderPath.Location = new System.Drawing.Point(376, 549);
             this.lblDatabaseFolderPath.Name = "lblDatabaseFolderPath";
-            this.lblDatabaseFolderPath.Size = new System.Drawing.Size(121, 13);
+            this.lblDatabaseFolderPath.Size = new System.Drawing.Size(130, 13);
             this.lblDatabaseFolderPath.TabIndex = 37;
             this.lblDatabaseFolderPath.Text = "Database Folder: Not Set";
             //
