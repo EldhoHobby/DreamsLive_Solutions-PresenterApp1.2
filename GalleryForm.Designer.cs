@@ -17,6 +17,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.pnlTop = new System.Windows.Forms.Panel();
             this.lblThumbSize = new System.Windows.Forms.Label();
             this.trackThumbSize = new System.Windows.Forms.TrackBar();
@@ -131,5 +132,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.TrackBar trackThumbSize;
         private System.Windows.Forms.Label lblThumbSize;
         private System.Windows.Forms.FlowLayoutPanel flowThumbs;
+        private System.Windows.Forms.Timer timerDebounce;
     }
 }

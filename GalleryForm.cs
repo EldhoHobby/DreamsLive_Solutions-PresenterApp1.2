@@ -22,6 +22,13 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Opacity = 0.85;
             _settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DreamsLivePresenterApp", "gallery_settings.json");
             LoadGallerySettings();
+
+            this.timerDebounce = new Timer(this.components);
+            this.timerDebounce.Interval = 500;
+            this.timerDebounce.Tick += (s, e) => {
+                this.timerDebounce.Stop();
+                RefreshGallery();
+            };
         }
 
         private void GalleryForm_Load(object sender, EventArgs e)
@@ -52,6 +59,9 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void SaveGallerySettings()
         {
+            string dir = Path.GetDirectoryName(_settingsPath);
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
             _settings.ThumbnailSize = trackThumbSize.Value;
             _settings.X = this.Location.X;
             _settings.Y = this.Location.Y;
@@ -141,6 +151,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private async Task LoadThumbnailAsync(PictureBox pb, DatabaseFileInfo file)
         {
+            if (pb.IsDisposed) return;
             Image thumb = null;
             try
             {
@@ -177,9 +188,18 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             if (thumb != null)
             {
+                if (pb.IsDisposed)
+                {
+                    thumb.Dispose();
+                    return;
+                }
+
                 if (pb.InvokeRequired)
                 {
-                    pb.Invoke((Action)(() => pb.Image = thumb));
+                    pb.Invoke((Action)(() => {
+                        if (!pb.IsDisposed) pb.Image = thumb;
+                        else thumb.Dispose();
+                    }));
                 }
                 else
                 {
@@ -202,13 +222,15 @@ namespace DreamsLive_Solutions_PresenterApp1
         private void trackThumbSize_Scroll(object sender, EventArgs e)
         {
             _settings.ThumbnailSize = trackThumbSize.Value;
-            RefreshGallery();
+            this.timerDebounce.Stop();
+            this.timerDebounce.Start();
         }
 
         private void DisposeControlsRecursive(Control parent)
         {
-            foreach (Control ctrl in parent.Controls)
+            while (parent.Controls.Count > 0)
             {
+                Control ctrl = parent.Controls[0];
                 DisposeControlsRecursive(ctrl);
                 if (ctrl is PictureBox pb)
                 {

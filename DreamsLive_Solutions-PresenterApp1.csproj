@@ -98,6 +98,19 @@
     </Compile>
     <Compile Include="ActivationStatusHelper.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="DatabaseFileInfo.cs" />
+    <Compile Include="GalleryForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GalleryForm.Designer.cs">
+      <DependentUpon>GalleryForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AddToDatabaseForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AddToDatabaseForm.Designer.cs">
+      <DependentUpon>AddToDatabaseForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="CopyableMessageBox.cs">
       <SubType>Form</SubType>
     </Compile>
