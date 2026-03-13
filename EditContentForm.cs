@@ -47,6 +47,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             picEdit.MouseMove += PicEdit_MouseMove;
             picEdit.MouseDown += PicEdit_MouseDown;
             picEdit.MouseUp += PicEdit_MouseUp;
+            picEdit.MouseWheel += PicEdit_MouseWheel;
             picEdit.Paint += PicEdit_Paint;
             picEdit.Resize += (s, e) => UpdateCropRectFromNormalized();
             this.KeyDown += EditContentForm_KeyDown;
@@ -172,10 +173,17 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             using (Brush b = new SolidBrush(Color.White))
             {
+                // Corners
                 g.FillRectangle(b, _cropRect.Left - HandleSize / 2, _cropRect.Top - HandleSize / 2, HandleSize, HandleSize); // TL
                 g.FillRectangle(b, _cropRect.Right - HandleSize / 2, _cropRect.Top - HandleSize / 2, HandleSize, HandleSize); // TR
                 g.FillRectangle(b, _cropRect.Left - HandleSize / 2, _cropRect.Bottom - HandleSize / 2, HandleSize, HandleSize); // BL
                 g.FillRectangle(b, _cropRect.Right - HandleSize / 2, _cropRect.Bottom - HandleSize / 2, HandleSize, HandleSize); // BR
+
+                // Edges
+                g.FillRectangle(b, _cropRect.Left + _cropRect.Width / 2 - HandleSize / 2, _cropRect.Top - HandleSize / 2, HandleSize, HandleSize); // Top
+                g.FillRectangle(b, _cropRect.Left + _cropRect.Width / 2 - HandleSize / 2, _cropRect.Bottom - HandleSize / 2, HandleSize, HandleSize); // Bottom
+                g.FillRectangle(b, _cropRect.Left - HandleSize / 2, _cropRect.Top + _cropRect.Height / 2 - HandleSize / 2, HandleSize, HandleSize); // Left
+                g.FillRectangle(b, _cropRect.Right - HandleSize / 2, _cropRect.Top + _cropRect.Height / 2 - HandleSize / 2, HandleSize, HandleSize); // Right
             }
         }
 
@@ -250,15 +258,29 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 _isDragging = true;
             }
+            else
+            {
+                // New rubberband selection
+                _isResizing = true;
+                _resizeHandle = "BR"; // Act as if dragging bottom-right corner
+                _cropRect = new Rectangle(e.Location, new Size(0, 0));
+            }
             _lastMousePos = e.Location;
         }
 
         private string GetHandleAtPoint(Point p)
         {
-            if (new Rectangle(_cropRect.Left - HandleSize, _cropRect.Top - HandleSize, HandleSize * 2, HandleSize * 2).Contains(p)) return "TL";
-            if (new Rectangle(_cropRect.Right - HandleSize, _cropRect.Top - HandleSize, HandleSize * 2, HandleSize * 2).Contains(p)) return "TR";
-            if (new Rectangle(_cropRect.Left - HandleSize, _cropRect.Bottom - HandleSize, HandleSize * 2, HandleSize * 2).Contains(p)) return "BL";
-            if (new Rectangle(_cropRect.Right - HandleSize, _cropRect.Bottom - HandleSize, HandleSize * 2, HandleSize * 2).Contains(p)) return "BR";
+            int range = HandleSize + 5;
+            if (new Rectangle(_cropRect.Left - range, _cropRect.Top - range, range * 2, range * 2).Contains(p)) return "TL";
+            if (new Rectangle(_cropRect.Right - range, _cropRect.Top - range, range * 2, range * 2).Contains(p)) return "TR";
+            if (new Rectangle(_cropRect.Left - range, _cropRect.Bottom - range, range * 2, range * 2).Contains(p)) return "BL";
+            if (new Rectangle(_cropRect.Right - range, _cropRect.Bottom - range, range * 2, range * 2).Contains(p)) return "BR";
+
+            if (new Rectangle(_cropRect.Left + _cropRect.Width / 2 - range, _cropRect.Top - range, range * 2, range * 2).Contains(p)) return "T";
+            if (new Rectangle(_cropRect.Left + _cropRect.Width / 2 - range, _cropRect.Bottom - range, range * 2, range * 2).Contains(p)) return "B";
+            if (new Rectangle(_cropRect.Left - range, _cropRect.Top + _cropRect.Height / 2 - range, range * 2, range * 2).Contains(p)) return "L";
+            if (new Rectangle(_cropRect.Right - range, _cropRect.Top + _cropRect.Height / 2 - range, range * 2, range * 2).Contains(p)) return "R";
+
             return "";
         }
 
@@ -286,7 +308,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                 if (!string.IsNullOrEmpty(handle))
                 {
                     if (handle == "TL" || handle == "BR") picEdit.Cursor = Cursors.SizeNWSE;
-                    else picEdit.Cursor = Cursors.SizeNESW;
+                    else if (handle == "TR" || handle == "BL") picEdit.Cursor = Cursors.SizeNESW;
+                    else if (handle == "T" || handle == "B") picEdit.Cursor = Cursors.SizeNS;
+                    else if (handle == "L" || handle == "R") picEdit.Cursor = Cursors.SizeWE;
                 }
                 else if (_cropRect.Contains(e.Location))
                 {
@@ -312,6 +336,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 case "TR": right = p.X; top = p.Y; break;
                 case "BL": left = p.X; bottom = p.Y; break;
                 case "BR": right = p.X; bottom = p.Y; break;
+                case "T": top = p.Y; break;
+                case "B": bottom = p.Y; break;
+                case "L": left = p.X; break;
+                case "R": right = p.X; break;
             }
 
             int w = right - left;
@@ -319,23 +347,48 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             if (_targetAspectRatio > 0)
             {
-                if (Math.Abs(w) / _targetAspectRatio > Math.Abs(h))
+                // For edge handles, we must adjust the OTHER dimension to maintain aspect ratio
+                // For corner handles, we use the logic above
+                if (_resizeHandle.Length == 1) // Edge handles T, B, L, R
                 {
-                    h = (int)(w / _targetAspectRatio);
+                    if (_resizeHandle == "T" || _resizeHandle == "B")
+                    {
+                        w = (int)(h * _targetAspectRatio);
+                        left = left + (right - left - w) / 2;
+                        right = left + w;
+                    }
+                    else // L or R
+                    {
+                        h = (int)(w / _targetAspectRatio);
+                        top = top + (bottom - top - h) / 2;
+                        bottom = top + h;
+                    }
                 }
-                else
+                else // Corner handles TL, TR, BL, BR
                 {
-                    w = (int)(h * _targetAspectRatio);
+                    if (Math.Abs(w) / _targetAspectRatio > Math.Abs(h))
+                    {
+                        h = (int)(w / _targetAspectRatio);
+                    }
+                    else
+                    {
+                        w = (int)(h * _targetAspectRatio);
+                    }
                 }
             }
 
-            // Re-apply based on handle to keep anchor point
+            // Re-apply based on handle to keep anchor point (for corner handles)
+            // For edge handles, anchor is the opposite edge
             switch (_resizeHandle)
             {
                 case "TL": left = right - w; top = bottom - h; break;
                 case "TR": right = left + w; top = bottom - h; break;
                 case "BL": left = right - w; bottom = top + h; break;
                 case "BR": right = left + w; bottom = top + h; break;
+                case "T": top = bottom - h; break;
+                case "B": bottom = top + h; break;
+                case "L": left = right - w; break;
+                case "R": right = left + w; break;
             }
 
             _cropRect = Rectangle.FromLTRB(
@@ -348,7 +401,56 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             _isDragging = false;
             _isResizing = false;
+            if (_cropRect.Width < 5 || _cropRect.Height < 5)
+            {
+                MaximizeCropArea();
+            }
             UpdateNormalizedFromCropRect();
+        }
+
+        private void PicEdit_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (_cropRect.IsEmpty) return;
+
+            float zoomFactor = (e.Delta > 0) ? 0.9f : 1.1f;
+            int newW = (int)(_cropRect.Width * zoomFactor);
+            int newH = (int)(_cropRect.Height * zoomFactor);
+
+            // Maintain aspect ratio if set
+            if (_targetAspectRatio > 0)
+            {
+                newH = (int)(newW / _targetAspectRatio);
+            }
+
+            // Zoom relative to center
+            int dx = (newW - _cropRect.Width) / 2;
+            int dy = (newH - _cropRect.Height) / 2;
+
+            _cropRect = new Rectangle(_cropRect.X - dx, _cropRect.Y - dy, newW, newH);
+
+            // Clamp and sync
+            RectangleF displayRect = GetDisplayedImageRect();
+            if (_cropRect.Width > (int)displayRect.Width)
+            {
+                 float ratio = displayRect.Width / _cropRect.Width;
+                 _cropRect.Width = (int)displayRect.Width;
+                 _cropRect.Height = (int)(_cropRect.Height * ratio);
+            }
+            if (_cropRect.Height > (int)displayRect.Height)
+            {
+                float ratio = displayRect.Height / _cropRect.Height;
+                _cropRect.Height = (int)displayRect.Height;
+                _cropRect.Width = (int)(_cropRect.Width * ratio);
+            }
+
+            // Re-center if clamped
+            if (_cropRect.X < (int)displayRect.Left) _cropRect.X = (int)displayRect.Left;
+            if (_cropRect.Y < (int)displayRect.Top) _cropRect.Y = (int)displayRect.Top;
+            if (_cropRect.Right > (int)displayRect.Right) _cropRect.X = (int)displayRect.Right - _cropRect.Width;
+            if (_cropRect.Bottom > (int)displayRect.Bottom) _cropRect.Y = (int)displayRect.Bottom - _cropRect.Height;
+
+            UpdateNormalizedFromCropRect();
+            picEdit.Invalidate();
         }
 
         private void EditContentForm_KeyDown(object sender, KeyEventArgs e)

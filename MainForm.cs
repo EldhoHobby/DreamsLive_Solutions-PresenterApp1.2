@@ -22,6 +22,7 @@ namespace DreamsLive_Solutions_PresenterApp1
     public partial class MainForm : Form
     {
         private HttpWebServer _httpWebServer;
+        private GalleryForm _galleryForm;
         private System.Windows.Forms.Timer _statusUpdateTimer;
         private System.Windows.Forms.Timer _autoStageDebounceTimer;
 
@@ -3585,6 +3586,10 @@ namespace DreamsLive_Solutions_PresenterApp1
         private void chkAlwaysOnTop_CheckedChanged(object sender, EventArgs e)
         {
             this.TopMost = chkAlwaysOnTop.Checked;
+            if (_galleryForm != null && !_galleryForm.IsDisposed)
+            {
+                _galleryForm.TopMost = this.TopMost;
+            }
         }
 
         public void ShowMessage(string message, string type)
@@ -3944,9 +3949,19 @@ namespace DreamsLive_Solutions_PresenterApp1
                 return;
             }
 
-            GalleryForm gallery = new GalleryForm(this);
-            gallery.Owner = this;
-            gallery.Show();
+            if (_galleryForm == null || _galleryForm.IsDisposed)
+            {
+                _galleryForm = new GalleryForm(this);
+                _galleryForm.Owner = this;
+                _galleryForm.TopMost = this.TopMost;
+                _galleryForm.Show();
+            }
+            else
+            {
+                _galleryForm.BringToFront();
+                if (_galleryForm.WindowState == FormWindowState.Minimized)
+                    _galleryForm.WindowState = FormWindowState.Normal;
+            }
         }
 
         private void btnAddToDatabase_Click(object sender, EventArgs e)
