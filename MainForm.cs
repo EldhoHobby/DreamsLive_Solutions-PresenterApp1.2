@@ -2788,6 +2788,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             Color textBoxBackColor;
             Color textBoxForeColor;
             Color accentColor = Color.FromArgb(0, 120, 215); // Modern Blue
+            Color sidebarColor;
+            Color titleBarColor;
 
             if (isDarkMode)
             {
@@ -2798,6 +2800,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 buttonForeColor = Color.White;
                 textBoxBackColor = Color.FromArgb(35, 35, 35);
                 textBoxForeColor = Color.White;
+                sidebarColor = Color.FromArgb(32, 32, 32);
+                titleBarColor = Color.FromArgb(20, 20, 20);
             }
             else
             {
@@ -2808,55 +2812,102 @@ namespace DreamsLive_Solutions_PresenterApp1
                 buttonForeColor = Color.Black;
                 textBoxBackColor = Color.White;
                 textBoxForeColor = Color.Black;
+                sidebarColor = Color.FromArgb(240, 240, 240);
+                titleBarColor = Color.FromArgb(235, 235, 235);
             }
 
             this.BackColor = backColor;
             this.ForeColor = foreColor;
 
+            pnlSideBar.BackColor = sidebarColor;
+            pnlTitleBar.BackColor = titleBarColor;
+            lblAppTitle.ForeColor = foreColor;
+
+            // Setup Sidebar Icons
+            btnOpenGallery.Font = new Font("Segoe MDL2 Assets", 16F);
+            btnOpenGallery.Text = ModernUIHelper.Icons.Gallery;
+            btnSettings.Font = new Font("Segoe MDL2 Assets", 16F);
+            btnSettings.Text = ModernUIHelper.Icons.Settings;
+            btnHelp.Font = new Font("Segoe MDL2 Assets", 16F);
+            btnHelp.Text = ModernUIHelper.Icons.Help;
+            btnToggleTheme.Font = new Font("Segoe MDL2 Assets", 16F);
+            btnToggleTheme.Text = isDarkMode ? ModernUIHelper.Icons.LightTheme : ModernUIHelper.Icons.DarkTheme;
+
+            // Sidebar Button Positions
+            btnOpenGallery.Location = new Point(0, 10);
+            btnOpenGallery.Size = new Size(50, 50);
+            btnSettings.Location = new Point(0, 65);
+            btnSettings.Size = new Size(50, 50);
+            btnHelp.Location = new Point(0, 120);
+            btnHelp.Size = new Size(50, 50);
+            btnToggleTheme.Location = new Point(0, 175);
+            btnToggleTheme.Size = new Size(50, 50);
+
             // Apply to all controls on the form
             foreach (Control control in this.Controls)
             {
-                ApplyThemeToControl(control, backColor, foreColor, buttonBackColor, buttonForeColor, textBoxBackColor, textBoxForeColor, accentColor);
+                ApplyThemeToControl(control, backColor, foreColor, buttonBackColor, buttonForeColor, textBoxBackColor, textBoxForeColor, accentColor, titleBarColor);
             }
+
+            ModernUIHelper.ApplyRoundedCorners(this, 15);
+            ModernUIHelper.ApplyRoundedCorners(panelSecondaryPreviewBorder, 10);
+            ModernUIHelper.ApplyRoundedCorners(picPreview, 10);
+
             UpdateButtonAppearanceAndState(); // Re-apply specific button style after general theme application
         }
 
-        private void ApplyThemeToControl(Control control, Color backColor, Color foreColor, Color buttonBackColor, Color buttonForeColor, Color textBoxBackColor, Color textBoxForeColor, Color accentColor)
+        private void ApplyThemeToControl(Control control, Color backColor, Color foreColor, Color buttonBackColor, Color buttonForeColor, Color textBoxBackColor, Color textBoxForeColor, Color accentColor, Color titleBarColor)
         {
-            control.BackColor = backColor;
+            if (control != pnlSideBar && control != pnlTitleBar)
+            {
+                control.BackColor = backColor;
+            }
             control.ForeColor = foreColor;
 
             if (control is Button button) // Use pattern matching
             {
                 button.FlatStyle = FlatStyle.Flat;
-                button.FlatAppearance.BorderSize = 1;
-                button.FlatAppearance.BorderColor = isDarkMode ? Color.FromArgb(70, 70, 70) : Color.FromArgb(200, 200, 200);
+                button.FlatAppearance.BorderSize = 0; // Modern look often has no border
                 button.FlatAppearance.MouseOverBackColor = isDarkMode ? Color.FromArgb(60, 60, 60) : Color.FromArgb(210, 210, 210);
 
-                if (button == this.btnPushToPresenter || button == this.btnStageContent)
+                if (button.Parent == pnlSideBar)
+                {
+                    button.BackColor = Color.Transparent;
+                    button.ForeColor = foreColor;
+                }
+                else if (button == btnAppClose)
+                {
+                    button.BackColor = titleBarColor;
+                    button.FlatAppearance.MouseOverBackColor = Color.Red;
+                }
+                else if (button == btnAppMinimize)
+                {
+                    button.BackColor = titleBarColor;
+                }
+                else if (button == this.btnPushToPresenter || button == this.btnStageContent)
                 {
                     button.BackColor = accentColor;
                     button.ForeColor = Color.White;
-                    button.FlatAppearance.BorderColor = accentColor;
                     button.FlatAppearance.MouseOverBackColor = Color.FromArgb(0, 140, 240);
+                    ModernUIHelper.ApplyRoundedCorners(button, 8);
                 }
                 else if (button == this.btnClearPresenterDisplay)
                 {
-                    // Specific styling for btnClearPresenterDisplay is handled by UpdateButtonAppearanceAndState,
-                    // which is called after ApplyTheme finishes iterating.
+                    ModernUIHelper.ApplyRoundedCorners(button, 8);
                 }
                 else if (button == this.btnHighlighter && this.highlighterActive)
                 {
-                    // Keep highlighter button yellow if active
                     button.BackColor = Color.Yellow;
                     button.ForeColor = Color.Black;
-                    button.FlatAppearance.BorderColor = Color.FromArgb(180, 180, 0);
+                    ModernUIHelper.ApplyRoundedCorners(button, 8);
                 }
                 else
                 {
-                    // Apply generic button theme to other buttons
                     button.BackColor = buttonBackColor;
                     button.ForeColor = buttonForeColor;
+                    button.FlatAppearance.BorderSize = 1;
+                    button.FlatAppearance.BorderColor = isDarkMode ? Color.FromArgb(70, 70, 70) : Color.FromArgb(200, 200, 200);
+                    ModernUIHelper.ApplyRoundedCorners(button, 8);
                 }
             }
             else if (control is TextBox)
@@ -2896,7 +2947,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 foreach (Control childControl in control.Controls)
                 {
-                    ApplyThemeToControl(childControl, backColor, foreColor, buttonBackColor, buttonForeColor, textBoxBackColor, textBoxForeColor, accentColor);
+                    ApplyThemeToControl(childControl, backColor, foreColor, buttonBackColor, buttonForeColor, textBoxBackColor, textBoxForeColor, accentColor, titleBarColor);
                 }
             }
         }
@@ -2924,6 +2975,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
             }
             return null;
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            ModernUIHelper.HandleResize(ref m, this);
+            base.WndProc(ref m);
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -3947,6 +4004,24 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
             _galleryForm.Show(this); // Set MainForm as owner
             _galleryForm.BringToFront();
+        }
+
+        private void pnlTitleBar_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                ModernUIHelper.DragForm(this.Handle);
+            }
+        }
+
+        private void btnAppClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void btnAppMinimize_Click(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Minimized;
         }
 
         private async void btnSnip_Click(object sender, EventArgs e)

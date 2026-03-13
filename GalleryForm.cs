@@ -31,24 +31,58 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void ApplyTheme()
         {
-            this.BackColor = Color.FromArgb(45, 45, 48);
-            this.ForeColor = Color.White;
-            pnlTop.BackColor = Color.FromArgb(30, 30, 30);
-            flowLayoutPanel1.BackColor = Color.FromArgb(45, 45, 48);
+            Color backColor = Color.FromArgb(28, 28, 28);
+            Color titleBarColor = Color.FromArgb(20, 20, 20);
+            Color topPnlColor = Color.FromArgb(35, 35, 35);
+            Color foreColor = Color.FromArgb(240, 240, 240);
+            Color accentColor = Color.FromArgb(0, 120, 215);
+
+            this.BackColor = backColor;
+            this.ForeColor = foreColor;
+            pnlTitleBar.BackColor = titleBarColor;
+            lblFormTitle.ForeColor = foreColor;
+            pnlTop.BackColor = topPnlColor;
+            flowLayoutPanel1.BackColor = backColor;
 
             foreach (Control c in pnlTop.Controls)
             {
                 if (c is Button btn)
                 {
-                    btn.BackColor = Color.FromArgb(63, 63, 70);
+                    btn.BackColor = Color.FromArgb(45, 45, 48);
                     btn.ForeColor = Color.White;
                     btn.FlatStyle = FlatStyle.Flat;
+                    btn.FlatAppearance.BorderSize = 0;
+                    btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(60, 60, 60);
+                    if (btn == btnAddFile)
+                    {
+                        btn.BackColor = accentColor;
+                        btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(0, 140, 240);
+                    }
+                    ModernUIHelper.ApplyRoundedCorners(btn, 6);
                 }
                 else if (c is Label || c is CheckBox)
                 {
-                    c.ForeColor = Color.White;
+                    c.ForeColor = foreColor;
                 }
             }
+
+            btnAppClose.BackColor = titleBarColor;
+            btnAppClose.FlatAppearance.MouseOverBackColor = Color.Red;
+
+            ModernUIHelper.ApplyRoundedCorners(this, 15);
+        }
+
+        private void pnlTitleBar_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                ModernUIHelper.DragForm(this.Handle);
+            }
+        }
+
+        private void btnAppClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
 
         private void RefreshFolders()
@@ -112,10 +146,11 @@ namespace DreamsLive_Solutions_PresenterApp1
                 Size = new Size(_thumbSize, _thumbSize),
                 Location = new Point(5, 5),
                 SizeMode = PictureBoxSizeMode.Zoom,
-                BorderStyle = BorderStyle.FixedSingle,
+                BorderStyle = BorderStyle.None,
                 Cursor = Cursors.Hand,
-                BackColor = Color.Black
+                BackColor = Color.FromArgb(40, 40, 40)
             };
+            ModernUIHelper.ApplyRoundedCorners(pb, 8);
 
             Label lbl = new Label
             {
@@ -212,11 +247,23 @@ namespace DreamsLive_Solutions_PresenterApp1
             RefreshGallery();
         }
 
-        private async void trackBarThumbSize_Scroll(object sender, EventArgs e)
+        private Timer _sliderDebounceTimer;
+
+        private void trackBarThumbSize_Scroll(object sender, EventArgs e)
         {
             _thumbSize = trackBarThumbSize.Value;
-            // Debounce or just refresh
-            RefreshGallery();
+
+            if (_sliderDebounceTimer == null)
+            {
+                _sliderDebounceTimer = new Timer();
+                _sliderDebounceTimer.Interval = 250;
+                _sliderDebounceTimer.Tick += (s, ev) => {
+                    _sliderDebounceTimer.Stop();
+                    RefreshGallery();
+                };
+            }
+            _sliderDebounceTimer.Stop();
+            _sliderDebounceTimer.Start();
         }
 
         private void btnAddFile_Click(object sender, EventArgs e)
@@ -272,9 +319,16 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
+        protected override void WndProc(ref Message m)
+        {
+            ModernUIHelper.HandleResize(ref m, this);
+            base.WndProc(ref m);
+        }
+
         private void GalleryForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             _cts?.Cancel();
+            _sliderDebounceTimer?.Stop();
             SaveGallerySettings();
         }
 

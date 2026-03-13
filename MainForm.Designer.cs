@@ -29,6 +29,11 @@ namespace DreamsLive_Solutions_PresenterApp1
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            this.pnlSideBar = new System.Windows.Forms.Panel();
+            this.pnlTitleBar = new System.Windows.Forms.Panel();
+            this.btnAppClose = new System.Windows.Forms.Button();
+            this.btnAppMinimize = new System.Windows.Forms.Button();
+            this.lblAppTitle = new System.Windows.Forms.Label();
             this.tnBrowse = new System.Windows.Forms.Button();
             this.lblImagePath = new System.Windows.Forms.Label();
             this.cmbDisplays = new System.Windows.Forms.ComboBox();
@@ -73,6 +78,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.lblDatabaseFolderPath = new System.Windows.Forms.Label();
             this.btnOpenGallery = new System.Windows.Forms.Button();
             this.btnSnip = new System.Windows.Forms.Button();
+            this.pnlSideBar.SuspendLayout();
+            this.pnlTitleBar.SuspendLayout();
             this.panelSecondaryPreviewBorder.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).BeginInit();
@@ -269,7 +276,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // panelSecondaryPreviewBorder
             // 
             this.panelSecondaryPreviewBorder.Controls.Add(this.picSecondaryPreview);
-            this.panelSecondaryPreviewBorder.Location = new System.Drawing.Point(4, 108);
+            this.panelSecondaryPreviewBorder.Location = new System.Drawing.Point(54, 108);
             this.panelSecondaryPreviewBorder.Name = "panelSecondaryPreviewBorder";
             this.panelSecondaryPreviewBorder.Padding = new System.Windows.Forms.Padding(2);
             this.panelSecondaryPreviewBorder.Size = new System.Drawing.Size(600, 425);
@@ -446,7 +453,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.lblPreviewLabel.BackColor = System.Drawing.Color.Black;
             this.lblPreviewLabel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.lblPreviewLabel.ForeColor = System.Drawing.Color.White;
-            this.lblPreviewLabel.Location = new System.Drawing.Point(6, 110);
+            this.lblPreviewLabel.Location = new System.Drawing.Point(56, 110);
             this.lblPreviewLabel.Name = "lblPreviewLabel";
             this.lblPreviewLabel.Size = new System.Drawing.Size(52, 15);
             this.lblPreviewLabel.TabIndex = 50;
@@ -477,7 +484,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             this.pictureBox1.BackColor = System.Drawing.SystemColors.Control;
             this.pictureBox1.Image = global::DreamsLive_Solutions_PresenterApp1.Properties.Resources.DreamsLiveSolutions_Logo1;
-            this.pictureBox1.Location = new System.Drawing.Point(6, 5);
+            this.pictureBox1.Location = new System.Drawing.Point(56, 35);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(277, 63);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -509,7 +516,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Segoe UI Semibold", 12F, System.Drawing.FontStyle.Bold);
-            this.label1.Location = new System.Drawing.Point(61, 70);
+            this.label1.Location = new System.Drawing.Point(111, 70);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(166, 21);
             this.label1.TabIndex = 35;
@@ -552,11 +559,77 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.lblDatabaseFolderPath.TabIndex = 37;
             this.lblDatabaseFolderPath.Text = "Database Folder: Not Set";
             //
+            // pnlSideBar
+            //
+            this.pnlSideBar.Controls.Add(this.btnSettings);
+            this.pnlSideBar.Controls.Add(this.btnHelp);
+            this.pnlSideBar.Controls.Add(this.btnToggleTheme);
+            this.pnlSideBar.Controls.Add(this.btnOpenGallery);
+            this.pnlSideBar.Dock = System.Windows.Forms.DockStyle.Left;
+            this.pnlSideBar.Location = new System.Drawing.Point(0, 32);
+            this.pnlSideBar.Name = "pnlSideBar";
+            this.pnlSideBar.Size = new System.Drawing.Size(50, 568);
+            this.pnlSideBar.TabIndex = 60;
+            //
+            // pnlTitleBar
+            //
+            this.pnlTitleBar.Controls.Add(this.lblAppTitle);
+            this.pnlTitleBar.Controls.Add(this.btnAppMinimize);
+            this.pnlTitleBar.Controls.Add(this.btnAppClose);
+            this.pnlTitleBar.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pnlTitleBar.Location = new System.Drawing.Point(0, 0);
+            this.pnlTitleBar.Name = "pnlTitleBar";
+            this.pnlTitleBar.Size = new System.Drawing.Size(1359, 32);
+            this.pnlTitleBar.TabIndex = 61;
+            this.pnlTitleBar.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pnlTitleBar_MouseDown);
+            //
+            // btnAppClose
+            //
+            this.btnAppClose.Dock = System.Windows.Forms.DockStyle.Right;
+            this.btnAppClose.FlatAppearance.BorderSize = 0;
+            this.btnAppClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnAppClose.Font = new System.Drawing.Font("Segoe MDL2 Assets", 10F);
+            this.btnAppClose.Location = new System.Drawing.Point(1314, 0);
+            this.btnAppClose.Name = "btnAppClose";
+            this.btnAppClose.Size = new System.Drawing.Size(45, 32);
+            this.btnAppClose.TabIndex = 0;
+            this.btnAppClose.Text = "";
+            this.btnAppClose.UseVisualStyleBackColor = true;
+            this.btnAppClose.Click += new System.EventHandler(this.btnAppClose_Click);
+            //
+            // btnAppMinimize
+            //
+            this.btnAppMinimize.Dock = System.Windows.Forms.DockStyle.Right;
+            this.btnAppMinimize.FlatAppearance.BorderSize = 0;
+            this.btnAppMinimize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnAppMinimize.Font = new System.Drawing.Font("Segoe MDL2 Assets", 10F);
+            this.btnAppMinimize.Location = new System.Drawing.Point(1269, 0);
+            this.btnAppMinimize.Name = "btnAppMinimize";
+            this.btnAppMinimize.Size = new System.Drawing.Size(45, 32);
+            this.btnAppMinimize.TabIndex = 1;
+            this.btnAppMinimize.Text = "";
+            this.btnAppMinimize.UseVisualStyleBackColor = true;
+            this.btnAppMinimize.Click += new System.EventHandler(this.btnAppMinimize_Click);
+            //
+            // lblAppTitle
+            //
+            this.lblAppTitle.AutoSize = true;
+            this.lblAppTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular);
+            this.lblAppTitle.Location = new System.Drawing.Point(10, 8);
+            this.lblAppTitle.Name = "lblAppTitle";
+            this.lblAppTitle.Size = new System.Drawing.Size(200, 15);
+            this.lblAppTitle.TabIndex = 2;
+            this.lblAppTitle.Text = "Dreams LIVE Solutions Presenter App";
+            this.lblAppTitle.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pnlTitleBar_MouseDown);
+            //
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1359, 600);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Controls.Add(this.pnlSideBar);
+            this.Controls.Add(this.pnlTitleBar);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.btnMessageOkay);
@@ -656,6 +729,11 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnSetDatabaseFolder;
         private System.Windows.Forms.Label lblDatabaseFolderPath;
+        private System.Windows.Forms.Panel pnlSideBar;
+        private System.Windows.Forms.Panel pnlTitleBar;
+        private System.Windows.Forms.Button btnAppClose;
+        private System.Windows.Forms.Button btnAppMinimize;
+        private System.Windows.Forms.Label lblAppTitle;
         private System.Windows.Forms.Button btnOpenGallery;
         private System.Windows.Forms.Button btnSnip;
     }

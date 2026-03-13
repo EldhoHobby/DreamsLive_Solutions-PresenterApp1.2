@@ -28,6 +28,9 @@ namespace DreamsLive_Solutions_PresenterApp1
         /// </summary>
         private void InitializeComponent()
         {
+            this.pnlTitleBar = new System.Windows.Forms.Panel();
+            this.btnAppClose = new System.Windows.Forms.Button();
+            this.lblFormTitle = new System.Windows.Forms.Label();
             this.pnlTop = new System.Windows.Forms.Panel();
             this.btnAddFile = new System.Windows.Forms.Button();
             this.btnRefresh = new System.Windows.Forms.Button();
@@ -35,9 +38,46 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.trackBarThumbSize = new System.Windows.Forms.TrackBar();
             this.cmbSubfolders = new System.Windows.Forms.ComboBox();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
+            this.pnlTitleBar.SuspendLayout();
             this.pnlTop.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarThumbSize)).BeginInit();
             this.SuspendLayout();
+            //
+            // pnlTitleBar
+            //
+            this.pnlTitleBar.Controls.Add(this.lblFormTitle);
+            this.pnlTitleBar.Controls.Add(this.btnAppClose);
+            this.pnlTitleBar.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pnlTitleBar.Location = new System.Drawing.Point(0, 0);
+            this.pnlTitleBar.Name = "pnlTitleBar";
+            this.pnlTitleBar.Size = new System.Drawing.Size(800, 32);
+            this.pnlTitleBar.TabIndex = 62;
+            this.pnlTitleBar.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pnlTitleBar_MouseDown);
+            //
+            // btnAppClose
+            //
+            this.btnAppClose.Dock = System.Windows.Forms.DockStyle.Right;
+            this.btnAppClose.FlatAppearance.BorderSize = 0;
+            this.btnAppClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnAppClose.Font = new System.Drawing.Font("Segoe MDL2 Assets", 10F);
+            this.btnAppClose.Location = new System.Drawing.Point(755, 0);
+            this.btnAppClose.Name = "btnAppClose";
+            this.btnAppClose.Size = new System.Drawing.Size(45, 32);
+            this.btnAppClose.TabIndex = 0;
+            this.btnAppClose.Text = "";
+            this.btnAppClose.UseVisualStyleBackColor = true;
+            this.btnAppClose.Click += new System.EventHandler(this.btnAppClose_Click);
+            //
+            // lblFormTitle
+            //
+            this.lblFormTitle.AutoSize = true;
+            this.lblFormTitle.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.lblFormTitle.Location = new System.Drawing.Point(10, 8);
+            this.lblFormTitle.Name = "lblFormTitle";
+            this.lblFormTitle.Size = new System.Drawing.Size(43, 15);
+            this.lblFormTitle.TabIndex = 1;
+            this.lblFormTitle.Text = "Gallery";
+            this.lblFormTitle.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pnlTitleBar_MouseDown);
             //
             // pnlTop
             //
@@ -47,7 +87,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.pnlTop.Controls.Add(this.trackBarThumbSize);
             this.pnlTop.Controls.Add(this.cmbSubfolders);
             this.pnlTop.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlTop.Location = new System.Drawing.Point(0, 0);
+            this.pnlTop.Location = new System.Drawing.Point(0, 32);
             this.pnlTop.Name = "pnlTop";
             this.pnlTop.Size = new System.Drawing.Size(800, 60);
             this.pnlTop.TabIndex = 0;
@@ -117,8 +157,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 600);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Controls.Add(this.flowLayoutPanel1);
             this.Controls.Add(this.pnlTop);
+            this.Controls.Add(this.pnlTitleBar);
             this.Name = "GalleryForm";
             this.Text = "Gallery";
             this.pnlTop.ResumeLayout(false);
@@ -137,5 +179,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnRefresh;
         private System.Windows.Forms.Button btnAddFile;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
+        private System.Windows.Forms.Panel pnlTitleBar;
+        private System.Windows.Forms.Button btnAppClose;
+        private System.Windows.Forms.Label lblFormTitle;
     }
 }
