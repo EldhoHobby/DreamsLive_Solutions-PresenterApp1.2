@@ -19,9 +19,6 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void InitializeComponent()
         {
-            this.pnlTitleBar = new System.Windows.Forms.Panel();
-            this.btnAppClose = new System.Windows.Forms.Button();
-            this.lblFormTitle = new System.Windows.Forms.Label();
             this.picEdit = new System.Windows.Forms.PictureBox();
             this.panelFooter = new System.Windows.Forms.Panel();
             this.btnDone = new System.Windows.Forms.Button();
@@ -37,56 +34,19 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnRight = new System.Windows.Forms.Button();
             this.chkEnableAutoScroll = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.picEdit)).BeginInit();
-            this.pnlTitleBar.SuspendLayout();
             this.panelFooter.SuspendLayout();
             this.SuspendLayout();
 
-            // pnlTitleBar
-            this.pnlTitleBar.Controls.Add(this.lblFormTitle);
-            this.pnlTitleBar.Controls.Add(this.btnAppClose);
-            this.pnlTitleBar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlTitleBar.Location = new System.Drawing.Point(0, 0);
-            this.pnlTitleBar.Name = "pnlTitleBar";
-            this.pnlTitleBar.Size = new System.Drawing.Size(1000, 32);
-            this.pnlTitleBar.TabIndex = 64;
-            this.pnlTitleBar.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pnlTitleBar_MouseDown);
-
-            // btnAppClose
-            this.btnAppClose.Dock = System.Windows.Forms.DockStyle.Right;
-            this.btnAppClose.FlatAppearance.BorderSize = 0;
-            this.btnAppClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAppClose.Font = new System.Drawing.Font("Segoe MDL2 Assets", 10F);
-            this.btnAppClose.ForeColor = System.Drawing.Color.White;
-            this.btnAppClose.Location = new System.Drawing.Point(955, 0);
-            this.btnAppClose.Name = "btnAppClose";
-            this.btnAppClose.Size = new System.Drawing.Size(45, 32);
-            this.btnAppClose.TabIndex = 0;
-            this.btnAppClose.Text = "";
-            this.btnAppClose.UseVisualStyleBackColor = true;
-            this.btnAppClose.Click += new System.EventHandler(this.btnAppClose_Click);
-
-            // lblFormTitle
-            this.lblFormTitle.AutoSize = true;
-            this.lblFormTitle.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.lblFormTitle.ForeColor = System.Drawing.Color.White;
-            this.lblFormTitle.Location = new System.Drawing.Point(10, 8);
-            this.lblFormTitle.Name = "lblFormTitle";
-            this.lblFormTitle.Size = new System.Drawing.Size(130, 15);
-            this.lblFormTitle.TabIndex = 1;
-            this.lblFormTitle.Text = "Edit / Crop Preview Content";
-            this.lblFormTitle.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pnlTitleBar_MouseDown);
-
             // picEdit
             this.picEdit.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.picEdit.Location = new System.Drawing.Point(0, 32);
+            this.picEdit.Location = new System.Drawing.Point(0, 0);
             this.picEdit.Name = "picEdit";
-            this.picEdit.Size = new System.Drawing.Size(1000, 668);
+            this.picEdit.Size = new System.Drawing.Size(1000, 700);
             this.picEdit.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.picEdit.TabIndex = 0;
             this.picEdit.TabStop = false;
 
             // panelFooter
-            this.panelFooter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(34)))), ((int)(((byte)(34)))));
             this.panelFooter.Controls.Add(this.chkEnableAutoScroll);
             this.panelFooter.Controls.Add(this.btnRight);
             this.panelFooter.Controls.Add(this.btnLeft);
@@ -108,7 +68,6 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             // chkAutoSend
             this.chkAutoSend.AutoSize = true;
-            this.chkAutoSend.ForeColor = System.Drawing.Color.White;
             this.chkAutoSend.Location = new System.Drawing.Point(20, 40);
             this.chkAutoSend.Name = "chkAutoSend";
             this.chkAutoSend.Size = new System.Drawing.Size(100, 20);
@@ -119,7 +78,6 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             // chkLiveSync
             this.chkLiveSync.AutoSize = true;
-            this.chkLiveSync.ForeColor = System.Drawing.Color.White;
             this.chkLiveSync.Location = new System.Drawing.Point(20, 20);
             this.chkLiveSync.Name = "chkLiveSync";
             this.chkLiveSync.Size = new System.Drawing.Size(100, 20);
@@ -220,7 +178,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             // chkEnableAutoScroll
             //
             this.chkEnableAutoScroll.AutoSize = true;
-            this.chkEnableAutoScroll.ForeColor = System.Drawing.Color.White;
             this.chkEnableAutoScroll.Location = new System.Drawing.Point(280, 75);
             this.chkEnableAutoScroll.Name = "chkEnableAutoScroll";
             this.chkEnableAutoScroll.Size = new System.Drawing.Size(120, 20);
@@ -232,9 +189,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1000, 800);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Controls.Add(this.picEdit);
-            this.Controls.Add(this.pnlTitleBar);
             this.Controls.Add(this.panelFooter);
             this.Name = "EditContentForm";
             ((System.ComponentModel.ISupportInitialize)(this.picEdit)).EndInit();
@@ -245,9 +200,6 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private System.Windows.Forms.PictureBox picEdit;
         private System.Windows.Forms.Panel panelFooter;
-        private System.Windows.Forms.Panel pnlTitleBar;
-        private System.Windows.Forms.Button btnAppClose;
-        private System.Windows.Forms.Label lblFormTitle;
         private System.Windows.Forms.Button btnDone;
         private System.Windows.Forms.Button btnClose;
         private System.Windows.Forms.Button btnPresentNow;

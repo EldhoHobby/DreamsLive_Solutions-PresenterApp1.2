@@ -80,63 +80,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 SyncOutbound();
             };
 
-            ApplyTheme();
-
             this.FormClosing += (s, e) => {
                 _syncTimer.Stop();
                 _outboundSyncTimer.Stop();
             };
-        }
-
-        private void ApplyTheme()
-        {
-            Color backColor = Color.FromArgb(28, 28, 28);
-            Color titleBarColor = Color.FromArgb(20, 20, 20);
-            Color footerColor = Color.FromArgb(35, 35, 35);
-            Color foreColor = Color.FromArgb(240, 240, 240);
-            Color accentColor = Color.FromArgb(0, 120, 215);
-
-            this.BackColor = backColor;
-            this.ForeColor = foreColor;
-            pnlTitleBar.BackColor = titleBarColor;
-            lblFormTitle.ForeColor = foreColor;
-            panelFooter.BackColor = footerColor;
-            picEdit.BackColor = Color.FromArgb(20, 20, 20);
-
-            foreach (Control c in panelFooter.Controls)
-            {
-                if (c is Button btn)
-                {
-                    btn.FlatStyle = FlatStyle.Flat;
-                    btn.FlatAppearance.BorderSize = 0;
-                    btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(60, 60, 60);
-                    if (btn == btnPresentNow)
-                    {
-                        btn.BackColor = accentColor;
-                        btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(0, 140, 240);
-                    }
-                    else if (btn == btnDone)
-                    {
-                        btn.BackColor = Color.FromArgb(76, 175, 80);
-                        btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(90, 190, 95);
-                    }
-                    else
-                    {
-                        btn.BackColor = Color.FromArgb(45, 45, 48);
-                        btn.ForeColor = Color.White;
-                    }
-                    ModernUIHelper.ApplyRoundedCorners(btn, 6);
-                }
-                else if (c is CheckBox cb)
-                {
-                    cb.ForeColor = foreColor;
-                }
-            }
-
-            btnAppClose.BackColor = titleBarColor;
-            btnAppClose.FlatAppearance.MouseOverBackColor = Color.Red;
-
-            ModernUIHelper.ApplyRoundedCorners(this, 15);
         }
 
         private void SyncTimer_Tick(object sender, EventArgs e)
@@ -526,19 +473,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         }
 
         private void btnClose_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
-        private void pnlTitleBar_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                ModernUIHelper.DragForm(this.Handle);
-            }
-        }
-
-        private void btnAppClose_Click(object sender, EventArgs e)
         {
             this.Close();
         }

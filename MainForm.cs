@@ -59,7 +59,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         private Bitmap stagedStitchedImage = null;          // High-res stitched bitmap if stitching is active
         private Bitmap stagedMasterImage = null;            // High-res master bitmap for non-stitched content
         private bool isSecondaryPreviewPopulated = false;   // True if secondary preview has content
-        private bool isDarkMode = false; // Added for theme switching
         private bool isPresenterBlackedOut = false; // Added for blackout toggle
 
         // New PDF Navigation Settings - Reset to false on startup
@@ -120,8 +119,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
             }
 
-            // Initialize theme
-            ApplyTheme();
             // Subscribe to picPreview mouse events
             if (this.picPreview != null) // Ensure picPreview is not null
             {
@@ -276,8 +273,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                 btnStageContent_Click(this, EventArgs.Empty);
             };
 
-            this.lblPreviewLabel.BringToFront();
-            this.lblStagedLabel.BringToFront();
         }
 
         private void StatusUpdateTimer_Tick(object sender, EventArgs e)
@@ -2357,36 +2352,26 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             if (!canControlPresenter)
             {
-                // If disabled, revert to theme-default appearance for a disabled button
-                // The ApplyThemeToControl method will handle disabled appearance based on theme.
-                // We just need to ensure it's not stuck on "active" colors if it becomes disabled.
-                Color defaultBackColor = isDarkMode ? Constants.DarkTheme_BlackoutButton_Normal_Back : Constants.LightTheme_BlackoutButton_Normal_Back;
-                Color defaultForeColor = isDarkMode ? Constants.DarkTheme_BlackoutButton_Normal_Fore : Constants.LightTheme_BlackoutButton_Normal_Fore;
-
-                // ApplyThemeToControl handles general theming; for specific state when disabled,
-                // it might be simpler to set generic disabled look or ensure ApplyThemeToControl does this.
-                // For now, let's assume the general ApplyThemeToControl called elsewhere will fix it if it's disabled.
-                // Or, explicitly set a "disabled" look based on theme here.
-                // To ensure it resets from "active" state if it becomes disabled:
-                this.btnClearPresenterDisplay.Text = "Blackout Presenter"; // Default text when disabled or inactive
-                this.btnClearPresenterDisplay.BackColor = defaultBackColor; // Reset to normal theme color
-                this.btnClearPresenterDisplay.ForeColor = defaultForeColor;
-                // The OS usually handles the visual "disabled" state (graying out)
+                this.btnClearPresenterDisplay.Text = "Blackout Presenter";
+                this.btnClearPresenterDisplay.BackColor = SystemColors.Control;
+                this.btnClearPresenterDisplay.ForeColor = SystemColors.ControlText;
+                this.btnClearPresenterDisplay.UseVisualStyleBackColor = true;
                 return;
             }
 
-            // If it's enabled, style based on isPresenterBlackedOut and current theme
             if (isPresenterBlackedOut)
             {
                 this.btnClearPresenterDisplay.Text = "Restore Presenter";
-                this.btnClearPresenterDisplay.BackColor = isDarkMode ? Constants.DarkTheme_BlackoutButton_Active_Back : Constants.LightTheme_BlackoutButton_Active_Back;
-                this.btnClearPresenterDisplay.ForeColor = isDarkMode ? Constants.DarkTheme_BlackoutButton_Active_Fore : Constants.LightTheme_BlackoutButton_Active_Fore;
+                this.btnClearPresenterDisplay.BackColor = Color.LightBlue;
+                this.btnClearPresenterDisplay.ForeColor = Color.Black;
+                this.btnClearPresenterDisplay.UseVisualStyleBackColor = false;
             }
             else
             {
                 this.btnClearPresenterDisplay.Text = "Blackout Presenter";
-                this.btnClearPresenterDisplay.BackColor = isDarkMode ? Constants.DarkTheme_BlackoutButton_Normal_Back : Constants.LightTheme_BlackoutButton_Normal_Back;
-                this.btnClearPresenterDisplay.ForeColor = isDarkMode ? Constants.DarkTheme_BlackoutButton_Normal_Fore : Constants.LightTheme_BlackoutButton_Normal_Fore;
+                this.btnClearPresenterDisplay.BackColor = SystemColors.Control;
+                this.btnClearPresenterDisplay.ForeColor = SystemColors.ControlText;
+                this.btnClearPresenterDisplay.UseVisualStyleBackColor = true;
             }
         }
 
@@ -2778,190 +2763,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        // Theme switching logic
-        private void ApplyTheme()
-        {
-            Color backColor;
-            Color foreColor;
-            Color buttonBackColor;
-            Color buttonForeColor;
-            Color textBoxBackColor;
-            Color textBoxForeColor;
-            Color accentColor = Color.FromArgb(0, 120, 215); // Modern Blue
-            Color sidebarColor;
-            Color titleBarColor;
 
-            if (isDarkMode)
-            {
-                // Dark Theme
-                backColor = Color.FromArgb(28, 28, 28);
-                foreColor = Color.FromArgb(240, 240, 240);
-                buttonBackColor = Color.FromArgb(45, 45, 48);
-                buttonForeColor = Color.White;
-                textBoxBackColor = Color.FromArgb(35, 35, 35);
-                textBoxForeColor = Color.White;
-                sidebarColor = Color.FromArgb(32, 32, 32);
-                titleBarColor = Color.FromArgb(20, 20, 20);
-            }
-            else
-            {
-                // Light Theme (default)
-                backColor = Color.FromArgb(250, 250, 250);
-                foreColor = Color.FromArgb(30, 30, 30);
-                buttonBackColor = Color.FromArgb(225, 225, 225);
-                buttonForeColor = Color.Black;
-                textBoxBackColor = Color.White;
-                textBoxForeColor = Color.Black;
-                sidebarColor = Color.FromArgb(240, 240, 240);
-                titleBarColor = Color.FromArgb(235, 235, 235);
-            }
-
-            this.BackColor = backColor;
-            this.ForeColor = foreColor;
-
-            pnlSideBar.BackColor = sidebarColor;
-            pnlTitleBar.BackColor = titleBarColor;
-            lblAppTitle.ForeColor = foreColor;
-
-            // Setup Sidebar Icons
-            btnOpenGallery.Font = new Font("Segoe MDL2 Assets", 16F);
-            btnOpenGallery.Text = ModernUIHelper.Icons.Gallery;
-            btnSettings.Font = new Font("Segoe MDL2 Assets", 16F);
-            btnSettings.Text = ModernUIHelper.Icons.Settings;
-            btnHelp.Font = new Font("Segoe MDL2 Assets", 16F);
-            btnHelp.Text = ModernUIHelper.Icons.Help;
-            btnToggleTheme.Font = new Font("Segoe MDL2 Assets", 16F);
-            btnToggleTheme.Text = isDarkMode ? ModernUIHelper.Icons.LightTheme : ModernUIHelper.Icons.DarkTheme;
-
-            // Sidebar Button Positions
-            btnOpenGallery.Location = new Point(0, 10);
-            btnOpenGallery.Size = new Size(50, 50);
-            btnSettings.Location = new Point(0, 65);
-            btnSettings.Size = new Size(50, 50);
-            btnHelp.Location = new Point(0, 120);
-            btnHelp.Size = new Size(50, 50);
-            btnToggleTheme.Location = new Point(0, 175);
-            btnToggleTheme.Size = new Size(50, 50);
-
-            // Apply to all controls on the form
-            foreach (Control control in this.Controls)
-            {
-                ApplyThemeToControl(control, backColor, foreColor, buttonBackColor, buttonForeColor, textBoxBackColor, textBoxForeColor, accentColor, titleBarColor);
-            }
-
-            ModernUIHelper.ApplyRoundedCorners(this, 15);
-            ModernUIHelper.ApplyRoundedCorners(panelSecondaryPreviewBorder, 10);
-            ModernUIHelper.ApplyRoundedCorners(picPreview, 10);
-
-            UpdateButtonAppearanceAndState(); // Re-apply specific button style after general theme application
-        }
-
-        private void ApplyThemeToControl(Control control, Color backColor, Color foreColor, Color buttonBackColor, Color buttonForeColor, Color textBoxBackColor, Color textBoxForeColor, Color accentColor, Color titleBarColor)
-        {
-            if (control != pnlSideBar && control != pnlTitleBar)
-            {
-                control.BackColor = backColor;
-            }
-            control.ForeColor = foreColor;
-
-            if (control is Button button) // Use pattern matching
-            {
-                button.FlatStyle = FlatStyle.Flat;
-                button.FlatAppearance.BorderSize = 0; // Modern look often has no border
-                button.FlatAppearance.MouseOverBackColor = isDarkMode ? Color.FromArgb(60, 60, 60) : Color.FromArgb(210, 210, 210);
-
-                if (button.Parent == pnlSideBar)
-                {
-                    button.BackColor = Color.Transparent;
-                    button.ForeColor = foreColor;
-                }
-                else if (button == btnAppClose)
-                {
-                    button.BackColor = titleBarColor;
-                    button.FlatAppearance.MouseOverBackColor = Color.Red;
-                }
-                else if (button == btnAppMinimize)
-                {
-                    button.BackColor = titleBarColor;
-                }
-                else if (button == this.btnPushToPresenter || button == this.btnStageContent)
-                {
-                    button.BackColor = accentColor;
-                    button.ForeColor = Color.White;
-                    button.FlatAppearance.MouseOverBackColor = Color.FromArgb(0, 140, 240);
-                    ModernUIHelper.ApplyRoundedCorners(button, 8);
-                }
-                else if (button == this.btnClearPresenterDisplay)
-                {
-                    ModernUIHelper.ApplyRoundedCorners(button, 8);
-                }
-                else if (button == this.btnHighlighter && this.highlighterActive)
-                {
-                    button.BackColor = Color.Yellow;
-                    button.ForeColor = Color.Black;
-                    ModernUIHelper.ApplyRoundedCorners(button, 8);
-                }
-                else
-                {
-                    button.BackColor = buttonBackColor;
-                    button.ForeColor = buttonForeColor;
-                    button.FlatAppearance.BorderSize = 1;
-                    button.FlatAppearance.BorderColor = isDarkMode ? Color.FromArgb(70, 70, 70) : Color.FromArgb(200, 200, 200);
-                    ModernUIHelper.ApplyRoundedCorners(button, 8);
-                }
-            }
-            else if (control is TextBox)
-            {
-                var textBox = (TextBox)control;
-                textBox.BackColor = textBoxBackColor;
-                textBox.ForeColor = textBoxForeColor;
-                textBox.BorderStyle = BorderStyle.FixedSingle; // Ensure border is visible
-            }
-            else if (control is ComboBox)
-            {
-                var comboBox = (ComboBox)control;
-                comboBox.BackColor = textBoxBackColor; // Use TextBox colors for ComboBox
-                comboBox.ForeColor = textBoxForeColor;
-                // ComboBox style is harder to customize fully without custom drawing
-            }
-            else if (control is CheckBox)
-            {
-                // CheckBoxes use the parent's BackColor for their background area typically
-                control.ForeColor = foreColor; // Text color
-            }
-            else if (control is Label)
-            {
-                control.ForeColor = foreColor;
-            }
-            else if (control is PictureBox)
-            {
-                control.BackColor = isDarkMode ? Color.FromArgb(20, 20, 20) : Color.FromArgb(240, 240, 240);
-            }
-            else if (control is Panel && control.Name == "panelSecondaryPreviewBorder")
-            {
-                // Let the border update logic handle this specific panel's BackColor
-            }
-
-            // Recursively apply to child controls if the control is a container
-            if (control.HasChildren)
-            {
-                foreach (Control childControl in control.Controls)
-                {
-                    ApplyThemeToControl(childControl, backColor, foreColor, buttonBackColor, buttonForeColor, textBoxBackColor, textBoxForeColor, accentColor, titleBarColor);
-                }
-            }
-        }
-
-        private void ToggleTheme()
-        {
-            isDarkMode = !isDarkMode;
-            ApplyTheme();
-        }
-
-        private void btnToggleTheme_Click(object sender, EventArgs e)
-        {
-            ToggleTheme();
-        }
 
 
         private string GetLocalIPAddress()
@@ -2975,12 +2777,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
             }
             return null;
-        }
-
-        protected override void WndProc(ref Message m)
-        {
-            ModernUIHelper.HandleResize(ref m, this);
-            base.WndProc(ref m);
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -3853,8 +3649,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 // Clear highlights when disabling
                 ClearHighlights();
-                this.btnHighlighter.BackColor = isDarkMode ? Color.FromArgb(63, 63, 70) : SystemColors.Control;
-                this.btnHighlighter.ForeColor = isDarkMode ? Color.White : SystemColors.ControlText;
+                this.btnHighlighter.BackColor = SystemColors.Control;
+                this.btnHighlighter.ForeColor = SystemColors.ControlText;
             }
         }
 
@@ -4004,24 +3800,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
             _galleryForm.Show(this); // Set MainForm as owner
             _galleryForm.BringToFront();
-        }
-
-        private void pnlTitleBar_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                ModernUIHelper.DragForm(this.Handle);
-            }
-        }
-
-        private void btnAppClose_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
-        private void btnAppMinimize_Click(object sender, EventArgs e)
-        {
-            this.WindowState = FormWindowState.Minimized;
         }
 
         private async void btnSnip_Click(object sender, EventArgs e)
