@@ -877,7 +877,9 @@
             updateSystemStatus('Refreshing Gallery...', 'busy');
             console.log("refreshGallery() triggered");
             const gallery = document.getElementById('gallery');
-            const subfolder = document.getElementById('gallery-subfolder-select').value;
+            const subfolderSelect = document.getElementById('gallery-subfolder-select');
+            const subfolder = subfolderSelect.value;
+            localStorage.setItem('lastGallerySubfolder', subfolder);
             try {
                 gallery.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Loading...</p>';
                 const response = await fetch(`/database/gallery?subfolder=${encodeURIComponent(subfolder)}`);
@@ -1622,7 +1624,16 @@
 
         setInterval(updateStatus, 1000);
         updateStatus();
-        populateFolderDropdowns().then(() => refreshGallery());
+        populateFolderDropdowns().then(() => {
+            const lastSubfolder = localStorage.getItem('lastGallerySubfolder');
+            if (lastSubfolder) {
+                const gallerySelect = document.getElementById('gallery-subfolder-select');
+                if (gallerySelect.querySelector(`option[value="${lastSubfolder}"]`)) {
+                    gallerySelect.value = lastSubfolder;
+                }
+            }
+            refreshGallery();
+        });
 
         // --- Pinch-to-zoom on Staging Preview ---
         const secondaryContainer = document.getElementById('picSecondaryContainer');

@@ -71,6 +71,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnSetDatabaseFolder = new System.Windows.Forms.Button();
             this.lblDatabaseFolderPath = new System.Windows.Forms.Label();
             this.btnSnip = new System.Windows.Forms.Button();
+            this.btnOpenGallery = new System.Windows.Forms.Button();
+            this.btnAddToDatabase = new System.Windows.Forms.Button();
             this.panelSecondaryPreviewBorder.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).BeginInit();
@@ -96,6 +98,26 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnSnip.Text = "Snip";
             this.btnSnip.UseVisualStyleBackColor = true;
             this.btnSnip.Click += new System.EventHandler(this.btnSnip_Click);
+            //
+            // btnOpenGallery
+            //
+            this.btnOpenGallery.Location = new System.Drawing.Point(835, 55);
+            this.btnOpenGallery.Name = "btnOpenGallery";
+            this.btnOpenGallery.Size = new System.Drawing.Size(100, 23);
+            this.btnOpenGallery.TabIndex = 53;
+            this.btnOpenGallery.Text = "Open Gallery";
+            this.btnOpenGallery.UseVisualStyleBackColor = true;
+            this.btnOpenGallery.Click += new System.EventHandler(this.btnOpenGallery_Click);
+            //
+            // btnAddToDatabase
+            //
+            this.btnAddToDatabase.Location = new System.Drawing.Point(941, 55);
+            this.btnAddToDatabase.Name = "btnAddToDatabase";
+            this.btnAddToDatabase.Size = new System.Drawing.Size(120, 23);
+            this.btnAddToDatabase.TabIndex = 54;
+            this.btnAddToDatabase.Text = "Add to Database";
+            this.btnAddToDatabase.UseVisualStyleBackColor = true;
+            this.btnAddToDatabase.Click += new System.EventHandler(this.btnAddToDatabase_Click);
             //
             // lblImagePath
             // 
@@ -544,6 +566,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.btnSetDatabaseFolder);
             this.Controls.Add(this.lblDatabaseFolderPath);
             this.Controls.Add(this.btnSnip);
+            this.Controls.Add(this.btnOpenGallery);
+            this.Controls.Add(this.btnAddToDatabase);
             this.Name = "MainForm";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.MainForm_Load);
@@ -601,5 +625,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnSetDatabaseFolder;
         private System.Windows.Forms.Label lblDatabaseFolderPath;
         private System.Windows.Forms.Button btnSnip;
+        private System.Windows.Forms.Button btnOpenGallery;
+        private System.Windows.Forms.Button btnAddToDatabase;
     }
 }

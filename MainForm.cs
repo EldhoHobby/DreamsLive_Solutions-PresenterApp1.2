@@ -92,6 +92,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         public bool EnableAutoScroll { get => chkEnableScroll.Checked; set => chkEnableScroll.Checked = value; }
         public bool AutoStagePreview { get => chkAutoStagePreview.Checked; set => chkAutoStagePreview.Checked = value; }
         public string MoveStepText { get => txtMoveStep.Text; set => txtMoveStep.Text = value; }
+        public bool IsDarkMode => isDarkMode;
 
         public MainForm()
         {
@@ -645,9 +646,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             return subfolders;
         }
 
-        public List<object> GetDatabaseMediaFiles(string subfolder = "")
+        public List<DatabaseFileInfo> GetDatabaseMediaFiles(string subfolder = "")
         {
-            List<object> files = new List<object>();
+            List<DatabaseFileInfo> files = new List<DatabaseFileInfo>();
             if (string.IsNullOrEmpty(DatabaseFolderPath) || !Directory.Exists(DatabaseFolderPath))
                 return files;
 
@@ -656,21 +657,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                 string targetPath = string.IsNullOrEmpty(subfolder) ? DatabaseFolderPath : Path.Combine(DatabaseFolderPath, subfolder);
                 if (!Directory.Exists(targetPath)) return files;
 
-                string[] extensions = { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".pdf" };
-                // Option B: Specific folder only (not recursive for simpler Option B experience, or recursive if preferred)
-                // The user said "show the gallery the pictures or pdf from the folder that i have selected"
-                var allFiles = Directory.EnumerateFiles(targetPath, "*.*", SearchOption.TopDirectoryOnly)
-                    .Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
+                // Requirement: all files in folder without extension filtering, support non-media with icons
+                var allFiles = Directory.EnumerateFiles(targetPath, "*.*", SearchOption.TopDirectoryOnly);
 
                 foreach (var file in allFiles)
                 {
-                    files.Add(new
-                    {
-                        Name = Path.GetFileName(file),
-                        RelativePath = file.Substring(DatabaseFolderPath.Length).TrimStart(Path.DirectorySeparatorChar),
-                        FullPath = file,
-                        Extension = Path.GetExtension(file).ToLowerInvariant()
-                    });
+                    files.Add(new DatabaseFileInfo(file, DatabaseFolderPath));
                 }
             }
             catch (Exception ex)
@@ -2350,6 +2342,14 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.btnEditContent.Enabled = (this.picPreview.Image != null);
             }
 
+            if (this.btnAddToDatabase != null)
+            {
+                bool isLoaded = !string.IsNullOrEmpty(selectedImagePath);
+                bool isInDatabase = isLoaded && !string.IsNullOrEmpty(DatabaseFolderPath) &&
+                                   selectedImagePath.StartsWith(DatabaseFolderPath, StringComparison.OrdinalIgnoreCase);
+                this.btnAddToDatabase.Enabled = isLoaded && !isInDatabase;
+            }
+
             if (this.btnClearPresenterDisplay == null) return;
 
             bool canControlPresenter = this.activePresentationForm != null &&
@@ -3934,6 +3934,98 @@ namespace DreamsLive_Solutions_PresenterApp1
         private string GetActivationStatus()
         {
             return ActivationStatusHelper.GetActivationStatusString(forTitleBar: true);
+        }
+
+        private void btnOpenGallery_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(DatabaseFolderPath))
+            {
+                ShowWarningMessage("Please set the Database Folder first.");
+                return;
+            }
+
+            GalleryForm gallery = new GalleryForm(this);
+            gallery.Owner = this;
+            gallery.Show();
+        }
+
+        private void btnAddToDatabase_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(selectedImagePath) || !File.Exists(selectedImagePath))
+            {
+                ShowWarningMessage("No file loaded to add to database.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(DatabaseFolderPath))
+            {
+                ShowWarningMessage("Please set the Database Folder first.");
+                return;
+            }
+
+            var subfolders = GetDatabaseSubfolders();
+            using (var addForm = new AddToDatabaseForm(subfolders, selectedImagePath))
+            {
+                if (addForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    string targetSub = addForm.SelectedSubfolder;
+                    if (!string.IsNullOrEmpty(addForm.NewSubfolderName))
+                    {
+                        // Sanitize new folder name
+                        string sanitizedNewFolder = string.Join("_", addForm.NewSubfolderName.Split(Path.GetInvalidFileNameChars()));
+                        targetSub = string.IsNullOrEmpty(targetSub) ? sanitizedNewFolder : Path.Combine(targetSub, sanitizedNewFolder);
+                    }
+
+                    string targetDir = Path.GetFullPath(Path.Combine(DatabaseFolderPath, targetSub));
+                    // Security check: Ensure target is within DatabaseFolderPath
+                    if (!targetDir.StartsWith(Path.GetFullPath(DatabaseFolderPath), StringComparison.OrdinalIgnoreCase))
+                    {
+                        ShowErrorMessage("Invalid target path.");
+                        return;
+                    }
+
+                    Directory.CreateDirectory(targetDir);
+
+                    string ext = Path.GetExtension(selectedImagePath);
+                    string finalName = addForm.CustomFileName;
+                    if (string.IsNullOrEmpty(finalName))
+                    {
+                        finalName = Path.GetFileNameWithoutExtension(selectedImagePath);
+                    }
+                    else
+                    {
+                        // Sanitize custom filename and prevent double extension
+                        finalName = string.Join("_", finalName.Split(Path.GetInvalidFileNameChars()));
+                        if (finalName.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
+                        {
+                            finalName = finalName.Substring(0, finalName.Length - ext.Length);
+                        }
+                    }
+                    string destPath = Path.Combine(targetDir, finalName + ext);
+
+                    // Handle filename collision
+                    if (File.Exists(destPath))
+                    {
+                        int counter = 1;
+                        while (File.Exists(destPath))
+                        {
+                            destPath = Path.Combine(targetDir, $"{finalName}_{counter}{ext}");
+                            counter++;
+                        }
+                    }
+
+                    try
+                    {
+                        File.Copy(selectedImagePath, destPath);
+                        ProcessNewImage(destPath);
+                        ShowInfoMessage($"Added to database: {Path.GetFileName(destPath)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowErrorMessage($"Error copying file: {ex.Message}");
+                    }
+                }
+            }
         }
 
         private async void btnSnip_Click(object sender, EventArgs e)
