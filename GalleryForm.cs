@@ -20,6 +20,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             _mainForm = mainForm;
             InitializeComponent();
+            this.Opacity = 0.85; // Set semi-transparency
             LoadGallerySettings();
             RefreshFolders();
             RefreshGallery();
@@ -303,6 +304,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                         _thumbSize = int.Parse(settings["ThumbSize"]);
                         trackBarThumbSize.Value = _thumbSize;
                     }
+                    if (settings.ContainsKey("LastSubfolder"))
+                    {
+                        _currentSubfolder = settings["LastSubfolder"];
+                    }
                 }
                 catch { }
             }
@@ -321,7 +326,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 { "Y", this.Location.Y.ToString() },
                 { "Width", this.Size.Width.ToString() },
                 { "Height", this.Size.Height.ToString() },
-                { "ThumbSize", _thumbSize.ToString() }
+                { "ThumbSize", _thumbSize.ToString() },
+                { "LastSubfolder", _currentSubfolder }
             };
 
             try

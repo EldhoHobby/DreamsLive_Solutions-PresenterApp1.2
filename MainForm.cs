@@ -3939,7 +3939,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 _galleryForm = new GalleryForm(this);
             }
-            _galleryForm.Show();
+            _galleryForm.Show(this); // Set MainForm as owner
             _galleryForm.BringToFront();
         }
 

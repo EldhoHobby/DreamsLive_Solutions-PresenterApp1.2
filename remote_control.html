@@ -855,7 +855,7 @@
                 const uploadSelect = document.getElementById('subfolder-select');
                 const gallerySelect = document.getElementById('gallery-subfolder-select');
 
-                const currentGalleryVal = gallerySelect.value;
+                const currentGalleryVal = gallerySelect.value || localStorage.getItem('lastGallerySubfolder');
                 const currentUploadVal = uploadSelect.value;
 
                 const optionsHtml = '<option value="">(Root)</option>' +
@@ -864,7 +864,7 @@
                 uploadSelect.innerHTML = optionsHtml;
                 gallerySelect.innerHTML = optionsHtml;
 
-                gallerySelect.value = currentGalleryVal;
+                if (currentGalleryVal) gallerySelect.value = currentGalleryVal;
                 uploadSelect.value = currentUploadVal;
                 updateSystemStatus('System Ready');
             } catch (err) {
@@ -877,7 +877,12 @@
             updateSystemStatus('Refreshing Gallery...', 'busy');
             console.log("refreshGallery() triggered");
             const gallery = document.getElementById('gallery');
-            const subfolder = document.getElementById('gallery-subfolder-select').value;
+            const subfolderSelect = document.getElementById('gallery-subfolder-select');
+            const subfolder = subfolderSelect.value;
+
+            // Save last subfolder to localStorage
+            localStorage.setItem('lastGallerySubfolder', subfolder);
+
             try {
                 gallery.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Loading...</p>';
                 const response = await fetch(`/database/gallery?subfolder=${encodeURIComponent(subfolder)}`);
