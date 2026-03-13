@@ -14,6 +14,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private readonly MainForm _mainForm;
         private string _settingsPath;
         private GallerySettings _settings;
+        private FileSystemWatcher _watcher;
 
         public GalleryForm(MainForm mainForm)
         {
@@ -36,7 +37,34 @@ namespace DreamsLive_Solutions_PresenterApp1
             ApplyTheme();
             RefreshSubfolders();
             RestoreWindowSettings();
+            SetupWatcher();
             RefreshGallery();
+        }
+
+        private void SetupWatcher()
+        {
+            if (_watcher != null)
+            {
+                _watcher.EnableRaisingEvents = false;
+                _watcher.Dispose();
+                _watcher = null;
+            }
+
+            if (string.IsNullOrEmpty(_mainForm.DatabaseFolderPath) || !Directory.Exists(_mainForm.DatabaseFolderPath))
+                return;
+
+            string subfolder = cmbSubfolders.SelectedItem?.ToString();
+            if (subfolder == "(Root)") subfolder = "";
+            string targetPath = string.IsNullOrEmpty(subfolder) ? _mainForm.DatabaseFolderPath : Path.Combine(_mainForm.DatabaseFolderPath, subfolder);
+
+            if (!Directory.Exists(targetPath)) return;
+
+            _watcher = new FileSystemWatcher(targetPath);
+            _watcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite;
+            _watcher.Created += (s, e) => this.Invoke((Action)(() => RefreshGallery()));
+            _watcher.Deleted += (s, e) => this.Invoke((Action)(() => RefreshGallery()));
+            _watcher.Renamed += (s, e) => this.Invoke((Action)(() => RefreshGallery()));
+            _watcher.EnableRaisingEvents = true;
         }
 
         private void LoadGallerySettings()
@@ -117,7 +145,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 var thumbContainer = new Panel
                 {
-                    Size = new Size(_settings.ThumbnailSize, _settings.ThumbnailSize + 20),
+                    Size = new Size(_settings.ThumbnailSize, _settings.ThumbnailSize + 40),
                     Margin = new Padding(5)
                 };
 
@@ -135,9 +163,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     Text = file.Name,
                     Dock = DockStyle.Bottom,
-                    TextAlign = ContentAlignment.MiddleCenter,
+                    TextAlign = ContentAlignment.TopCenter,
                     Font = new Font("Segoe UI", 8),
-                    Height = 20
+                    Height = 35,
+                    AutoEllipsis = true
                 };
 
                 thumbContainer.Controls.Add(pb);
@@ -208,14 +237,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        private void btnRefresh_Click(object sender, EventArgs e)
-        {
-            RefreshSubfolders();
-            RefreshGallery();
-        }
-
         private void cmbSubfolders_SelectedIndexChanged(object sender, EventArgs e)
         {
+            SetupWatcher();
             RefreshGallery();
         }
 
@@ -243,6 +267,11 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void GalleryForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (_watcher != null)
+            {
+                _watcher.EnableRaisingEvents = false;
+                _watcher.Dispose();
+            }
             SaveGallerySettings();
         }
 
@@ -261,8 +290,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             cmbSubfolders.BackColor = isDark ? Color.FromArgb(63, 63, 70) : SystemColors.Window;
             cmbSubfolders.ForeColor = isDark ? Color.White : SystemColors.WindowText;
 
-            btnRefresh.BackColor = isDark ? Color.FromArgb(63, 63, 70) : SystemColors.Control;
-            btnRefresh.ForeColor = isDark ? Color.White : SystemColors.ControlText;
         }
     }
 

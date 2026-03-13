@@ -21,7 +21,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.pnlTop = new System.Windows.Forms.Panel();
             this.lblThumbSize = new System.Windows.Forms.Label();
             this.trackThumbSize = new System.Windows.Forms.TrackBar();
-            this.btnRefresh = new System.Windows.Forms.Button();
             this.cmbSubfolders = new System.Windows.Forms.ComboBox();
             this.lblFolder = new System.Windows.Forms.Label();
             this.flowThumbs = new System.Windows.Forms.FlowLayoutPanel();
@@ -33,7 +32,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             //
             this.pnlTop.Controls.Add(this.lblThumbSize);
             this.pnlTop.Controls.Add(this.trackThumbSize);
-            this.pnlTop.Controls.Add(this.btnRefresh);
             this.pnlTop.Controls.Add(this.cmbSubfolders);
             this.pnlTop.Controls.Add(this.lblFolder);
             this.pnlTop.Dock = System.Windows.Forms.DockStyle.Top;
@@ -67,23 +65,13 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.trackThumbSize.Value = 150;
             this.trackThumbSize.Scroll += new System.EventHandler(this.trackThumbSize_Scroll);
             //
-            // btnRefresh
-            //
-            this.btnRefresh.Location = new System.Drawing.Point(267, 13);
-            this.btnRefresh.Name = "btnRefresh";
-            this.btnRefresh.Size = new System.Drawing.Size(75, 23);
-            this.btnRefresh.TabIndex = 2;
-            this.btnRefresh.Text = "Refresh";
-            this.btnRefresh.UseVisualStyleBackColor = true;
-            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
-            //
             // cmbSubfolders
             //
             this.cmbSubfolders.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbSubfolders.FormattingEnabled = true;
             this.cmbSubfolders.Location = new System.Drawing.Point(58, 14);
             this.cmbSubfolders.Name = "cmbSubfolders";
-            this.cmbSubfolders.Size = new System.Drawing.Size(203, 21);
+            this.cmbSubfolders.Size = new System.Drawing.Size(260, 21);
             this.cmbSubfolders.TabIndex = 1;
             this.cmbSubfolders.SelectedIndexChanged += new System.EventHandler(this.cmbSubfolders_SelectedIndexChanged);
             //
@@ -128,7 +116,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Panel pnlTop;
         private System.Windows.Forms.Label lblFolder;
         private System.Windows.Forms.ComboBox cmbSubfolders;
-        private System.Windows.Forms.Button btnRefresh;
         private System.Windows.Forms.TrackBar trackThumbSize;
         private System.Windows.Forms.Label lblThumbSize;
         private System.Windows.Forms.FlowLayoutPanel flowThumbs;
