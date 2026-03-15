@@ -44,6 +44,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         private PointF? laserPointNormalized = null; // Normalized laser position (0-1) relative to display area
         private List<List<PointF>> highlightsNormalized = new List<List<PointF>>();
         private Color currentHighlighterColor = Color.Yellow;
+        private float highlighterWidth = 20f;
+        private float laserRadius = 5f;
 
         public PresentationForm(
            string filePathOrPdfPath,
@@ -299,14 +301,14 @@ namespace DreamsLive_Solutions_PresenterApp1
                     {
                         if (stroke.Count < 1) continue;
                         PointF[] points = stroke.Select(p => MapDocToScreen(p)).ToArray();
-                        MainForm.DrawHighlightStroke(e.Graphics, points, 10f * effectiveScale, this.currentHighlighterColor);
+                        MainForm.DrawHighlightStroke(e.Graphics, points, this.highlighterWidth * effectiveScale, this.currentHighlighterColor);
                     }
                 }
 
                 if (this.laserPointNormalized != null)
                 {
                     PointF center = MapDocToScreen(this.laserPointNormalized.Value);
-                    MainForm.DrawLaserPointer(e.Graphics, center, 8f);
+                    MainForm.DrawLaserPointer(e.Graphics, center, this.laserRadius * effectiveScale);
                 }
             }
         }
@@ -483,10 +485,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        public void UpdateHighlights(List<List<PointF>> highlights, Color color)
+        public void UpdateHighlights(List<List<PointF>> highlights, Color color, float docWidth)
         {
             this.highlightsNormalized = highlights.Select(stroke => stroke.ToList()).ToList();
             this.currentHighlighterColor = color;
+            this.highlighterWidth = docWidth;
             if (this.displayPanel != null)
             {
                 this.displayPanel.Invalidate();
@@ -500,9 +503,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (this.IsHandleCreated) { SetupInitialView(); }
         }
 
-        public void UpdateLaserPointer(PointF? normalizedPoint)
+        public void UpdateLaserPointer(PointF? normalizedPoint, float docRadius)
         {
             this.laserPointNormalized = normalizedPoint;
+            this.laserRadius = docRadius;
             if (this.displayPanel != null)
             {
                 this.displayPanel.Invalidate();

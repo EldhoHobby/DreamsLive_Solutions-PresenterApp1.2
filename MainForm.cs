@@ -2993,6 +2993,13 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             _httpWebServer?.Stop();
 
+            if (_dbWatcher != null)
+            {
+                _dbWatcher.EnableRaisingEvents = false;
+                _dbWatcher.Dispose();
+                _dbWatcher = null;
+            }
+
             if (this.stagedStitchedImage != null)
             {
                 this.stagedStitchedImage.Dispose();
@@ -3847,7 +3854,16 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             if (this.activePresentationForm != null && !this.activePresentationForm.IsDisposed)
             {
-                this.activePresentationForm.UpdateLaserPointer(this.laserPointNormalized);
+                float docRadius = 5f;
+                RectangleF contentRect = GetSecondaryPreviewContentRect();
+                Image baseImage = (Image)this.stagedStitchedImage ?? this.stagedMasterImage;
+
+                if (contentRect.Width > 0 && baseImage != null)
+                {
+                    float previewToDocRatio = baseImage.Width / contentRect.Width;
+                    docRadius = 5f * previewToDocRatio;
+                }
+                this.activePresentationForm.UpdateLaserPointer(this.laserPointNormalized, docRadius);
             }
         }
 
@@ -3855,7 +3871,16 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             if (this.activePresentationForm != null && !this.activePresentationForm.IsDisposed)
             {
-                this.activePresentationForm.UpdateHighlights(this.highlightsNormalized, this.highlighterColor);
+                float docWidth = 20f;
+                RectangleF contentRect = GetSecondaryPreviewContentRect();
+                Image baseImage = (Image)this.stagedStitchedImage ?? this.stagedMasterImage;
+
+                if (contentRect.Width > 0 && baseImage != null)
+                {
+                    float previewToDocRatio = baseImage.Width / contentRect.Width;
+                    docWidth = 20f * previewToDocRatio;
+                }
+                this.activePresentationForm.UpdateHighlights(this.highlightsNormalized, this.highlighterColor, docWidth);
             }
         }
 
