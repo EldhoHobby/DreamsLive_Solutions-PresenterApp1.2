@@ -45,6 +45,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.cmbDisplayMode = new System.Windows.Forms.ComboBox();
             this.lblWebServerUrl = new System.Windows.Forms.Label();
             this.panelSecondaryPreviewBorder = new System.Windows.Forms.Panel();
+            this.picSecondaryPreview = new System.Windows.Forms.PictureBox();
             this.chkAlwaysOnTop = new System.Windows.Forms.CheckBox();
             this.lblMessage = new System.Windows.Forms.Label();
             this.btnUp = new System.Windows.Forms.Button();
@@ -65,7 +66,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.lblPreviewLabel = new System.Windows.Forms.Label();
             this.lblStagedLabel = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.picSecondaryPreview = new System.Windows.Forms.PictureBox();
             this.picPreview = new System.Windows.Forms.PictureBox();
             this.label1 = new System.Windows.Forms.Label();
             this.btnSetDatabaseFolder = new System.Windows.Forms.Button();
@@ -74,8 +74,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnOpenGallery = new System.Windows.Forms.Button();
             this.btnAddToDatabase = new System.Windows.Forms.Button();
             this.panelSecondaryPreviewBorder.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picPreview)).BeginInit();
             this.SuspendLayout();
             // 
@@ -89,36 +89,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.tnBrowse.UseVisualStyleBackColor = true;
             this.tnBrowse.Click += new System.EventHandler(this.tnBrowse_Click);
             // 
-            // btnSnip
-            //
-            this.btnSnip.Location = new System.Drawing.Point(673, 81);
-            this.btnSnip.Name = "btnSnip";
-            this.btnSnip.Size = new System.Drawing.Size(75, 23);
-            this.btnSnip.TabIndex = 52;
-            this.btnSnip.Text = "Snip";
-            this.btnSnip.UseVisualStyleBackColor = true;
-            this.btnSnip.Click += new System.EventHandler(this.btnSnip_Click);
-            //
-            // btnOpenGallery
-            //
-            this.btnOpenGallery.Location = new System.Drawing.Point(835, 55);
-            this.btnOpenGallery.Name = "btnOpenGallery";
-            this.btnOpenGallery.Size = new System.Drawing.Size(100, 23);
-            this.btnOpenGallery.TabIndex = 53;
-            this.btnOpenGallery.Text = "Open Gallery";
-            this.btnOpenGallery.UseVisualStyleBackColor = true;
-            this.btnOpenGallery.Click += new System.EventHandler(this.btnOpenGallery_Click);
-            //
-            // btnAddToDatabase
-            //
-            this.btnAddToDatabase.Location = new System.Drawing.Point(941, 55);
-            this.btnAddToDatabase.Name = "btnAddToDatabase";
-            this.btnAddToDatabase.Size = new System.Drawing.Size(120, 23);
-            this.btnAddToDatabase.TabIndex = 54;
-            this.btnAddToDatabase.Text = "Add to Database";
-            this.btnAddToDatabase.UseVisualStyleBackColor = true;
-            this.btnAddToDatabase.Click += new System.EventHandler(this.btnAddToDatabase_Click);
-            //
             // lblImagePath
             // 
             this.lblImagePath.AutoSize = true;
@@ -274,6 +244,17 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.panelSecondaryPreviewBorder.Size = new System.Drawing.Size(600, 425);
             this.panelSecondaryPreviewBorder.TabIndex = 9;
             // 
+            // picSecondaryPreview
+            // 
+            this.picSecondaryPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.picSecondaryPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.picSecondaryPreview.Location = new System.Drawing.Point(2, 2);
+            this.picSecondaryPreview.Name = "picSecondaryPreview";
+            this.picSecondaryPreview.Size = new System.Drawing.Size(596, 421);
+            this.picSecondaryPreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.picSecondaryPreview.TabIndex = 0;
+            this.picSecondaryPreview.TabStop = false;
+            // 
             // chkAlwaysOnTop
             // 
             this.chkAlwaysOnTop.AutoSize = true;
@@ -331,7 +312,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnRight.UseVisualStyleBackColor = true;
             // 
             // btnSettings
-            //
+            // 
             this.btnSettings.Location = new System.Drawing.Point(1044, 5);
             this.btnSettings.Name = "btnSettings";
             this.btnSettings.Size = new System.Drawing.Size(100, 23);
@@ -339,7 +320,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnSettings.Text = "Scroll Settings";
             this.btnSettings.UseVisualStyleBackColor = true;
             this.btnSettings.Click += new System.EventHandler(this.btnSettings_Click);
-            //
+            // 
             // lblMoveStep
             // 
             this.lblMoveStep.AutoSize = true;
@@ -372,7 +353,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.chkEnableScroll.AutoSize = true;
             this.chkEnableScroll.Location = new System.Drawing.Point(1264, 536);
             this.chkEnableScroll.Name = "chkEnableScroll";
-            this.chkEnableScroll.Size = new System.Drawing.Size(120, 17);
+            this.chkEnableScroll.Size = new System.Drawing.Size(113, 17);
             this.chkEnableScroll.TabIndex = 23;
             this.chkEnableScroll.Text = "Enable Auto Scroll";
             this.chkEnableScroll.UseVisualStyleBackColor = true;
@@ -417,36 +398,14 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnHighlighter.Click += new System.EventHandler(this.btnHighlighter_Click);
             // 
             // btnEditContent
-            //
+            // 
             this.btnEditContent.Location = new System.Drawing.Point(612, 290);
             this.btnEditContent.Name = "btnEditContent";
             this.btnEditContent.Size = new System.Drawing.Size(136, 36);
             this.btnEditContent.TabIndex = 38;
             this.btnEditContent.Text = "Edit / Crop Preview";
             this.btnEditContent.UseVisualStyleBackColor = true;
-            //
-            // lblPreviewLabel
-            //
-            this.lblPreviewLabel.AutoSize = true;
-            this.lblPreviewLabel.BackColor = System.Drawing.Color.Black;
-            this.lblPreviewLabel.ForeColor = System.Drawing.Color.White;
-            this.lblPreviewLabel.Location = new System.Drawing.Point(6, 110);
-            this.lblPreviewLabel.Name = "lblPreviewLabel";
-            this.lblPreviewLabel.Size = new System.Drawing.Size(45, 13);
-            this.lblPreviewLabel.TabIndex = 50;
-            this.lblPreviewLabel.Text = "Preview";
-            //
-            // lblStagedLabel
-            //
-            this.lblStagedLabel.AutoSize = true;
-            this.lblStagedLabel.BackColor = System.Drawing.Color.Black;
-            this.lblStagedLabel.ForeColor = System.Drawing.Color.White;
-            this.lblStagedLabel.Location = new System.Drawing.Point(756, 108);
-            this.lblStagedLabel.Name = "lblStagedLabel";
-            this.lblStagedLabel.Size = new System.Drawing.Size(41, 13);
-            this.lblStagedLabel.TabIndex = 51;
-            this.lblStagedLabel.Text = "Staged";
-            //
+            // 
             // btnMessageOkay
             // 
             this.btnMessageOkay.Location = new System.Drawing.Point(1277, 568);
@@ -455,6 +414,28 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnMessageOkay.TabIndex = 21;
             this.btnMessageOkay.Text = "Okay";
             this.btnMessageOkay.UseVisualStyleBackColor = true;
+            // 
+            // lblPreviewLabel
+            // 
+            this.lblPreviewLabel.AutoSize = true;
+            this.lblPreviewLabel.BackColor = System.Drawing.Color.Black;
+            this.lblPreviewLabel.ForeColor = System.Drawing.Color.White;
+            this.lblPreviewLabel.Location = new System.Drawing.Point(6, 110);
+            this.lblPreviewLabel.Name = "lblPreviewLabel";
+            this.lblPreviewLabel.Size = new System.Drawing.Size(45, 13);
+            this.lblPreviewLabel.TabIndex = 50;
+            this.lblPreviewLabel.Text = "Preview";
+            // 
+            // lblStagedLabel
+            // 
+            this.lblStagedLabel.AutoSize = true;
+            this.lblStagedLabel.BackColor = System.Drawing.Color.Black;
+            this.lblStagedLabel.ForeColor = System.Drawing.Color.White;
+            this.lblStagedLabel.Location = new System.Drawing.Point(756, 108);
+            this.lblStagedLabel.Name = "lblStagedLabel";
+            this.lblStagedLabel.Size = new System.Drawing.Size(41, 13);
+            this.lblStagedLabel.TabIndex = 51;
+            this.lblStagedLabel.Text = "Staged";
             // 
             // pictureBox1
             // 
@@ -467,17 +448,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.pictureBox1.TabIndex = 34;
             this.pictureBox1.TabStop = false;
             // 
-            // picSecondaryPreview
-            //
-            this.picSecondaryPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.picSecondaryPreview.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.picSecondaryPreview.Location = new System.Drawing.Point(2, 2);
-            this.picSecondaryPreview.Name = "picSecondaryPreview";
-            this.picSecondaryPreview.Size = new System.Drawing.Size(596, 421);
-            this.picSecondaryPreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.picSecondaryPreview.TabIndex = 0;
-            this.picSecondaryPreview.TabStop = false;
-            //
             // picPreview
             // 
             this.picPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -499,7 +469,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.label1.Text = "Where Ideas Go Live.";
             // 
             // btnSetDatabaseFolder
-            //
+            // 
             this.btnSetDatabaseFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnSetDatabaseFolder.Location = new System.Drawing.Point(250, 544);
             this.btnSetDatabaseFolder.Name = "btnSetDatabaseFolder";
@@ -508,17 +478,47 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnSetDatabaseFolder.Text = "Set Database Folder";
             this.btnSetDatabaseFolder.UseVisualStyleBackColor = true;
             this.btnSetDatabaseFolder.Click += new System.EventHandler(this.btnSetDatabaseFolder_Click);
-            //
+            // 
             // lblDatabaseFolderPath
-            //
+            // 
             this.lblDatabaseFolderPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lblDatabaseFolderPath.AutoSize = true;
             this.lblDatabaseFolderPath.Location = new System.Drawing.Point(376, 549);
             this.lblDatabaseFolderPath.Name = "lblDatabaseFolderPath";
-            this.lblDatabaseFolderPath.Size = new System.Drawing.Size(121, 13);
+            this.lblDatabaseFolderPath.Size = new System.Drawing.Size(127, 13);
             this.lblDatabaseFolderPath.TabIndex = 37;
             this.lblDatabaseFolderPath.Text = "Database Folder: Not Set";
-            //
+            // 
+            // btnSnip
+            // 
+            this.btnSnip.Location = new System.Drawing.Point(673, 81);
+            this.btnSnip.Name = "btnSnip";
+            this.btnSnip.Size = new System.Drawing.Size(75, 23);
+            this.btnSnip.TabIndex = 52;
+            this.btnSnip.Text = "Snip";
+            this.btnSnip.UseVisualStyleBackColor = true;
+            this.btnSnip.Click += new System.EventHandler(this.btnSnip_Click);
+            // 
+            // btnOpenGallery
+            // 
+            this.btnOpenGallery.Location = new System.Drawing.Point(835, 55);
+            this.btnOpenGallery.Name = "btnOpenGallery";
+            this.btnOpenGallery.Size = new System.Drawing.Size(100, 23);
+            this.btnOpenGallery.TabIndex = 53;
+            this.btnOpenGallery.Text = "Open Gallery";
+            this.btnOpenGallery.UseVisualStyleBackColor = true;
+            this.btnOpenGallery.Click += new System.EventHandler(this.btnOpenGallery_Click);
+            // 
+            // btnAddToDatabase
+            // 
+            this.btnAddToDatabase.Location = new System.Drawing.Point(942, 55);
+            this.btnAddToDatabase.Name = "btnAddToDatabase";
+            this.btnAddToDatabase.Size = new System.Drawing.Size(120, 23);
+            this.btnAddToDatabase.TabIndex = 54;
+            this.btnAddToDatabase.Text = "Add to Database";
+            this.btnAddToDatabase.UseVisualStyleBackColor = true;
+            this.btnAddToDatabase.Click += new System.EventHandler(this.btnAddToDatabase_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -572,8 +572,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.panelSecondaryPreviewBorder.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picPreview)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
