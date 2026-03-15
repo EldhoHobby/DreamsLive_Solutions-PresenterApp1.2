@@ -22,6 +22,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private CancellationTokenSource _cts;
 
         public string ServerUrl { get; private set; }
+        public bool IsRunning => _listener != null && _listener.IsListening;
 
         public HttpWebServer(MainForm mainForm)
         {
@@ -273,8 +274,13 @@ namespace DreamsLive_Solutions_PresenterApp1
                     string targetDir = "";
 
                     string dbPath = "";
-                    if (isDatabase && !string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
+                    if (isDatabase)
                     {
+                        if (string.IsNullOrEmpty(_mainForm.DatabaseFolderPath))
+                        {
+                            throw new Exception("Database folder not configured on host application.");
+                        }
+
                         dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
                         string combinedPath = Path.GetFullPath(Path.Combine(dbPath, targetSubfolder));
 

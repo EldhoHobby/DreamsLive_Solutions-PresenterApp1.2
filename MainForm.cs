@@ -117,7 +117,16 @@ namespace DreamsLive_Solutions_PresenterApp1
                 // Update the text of the designer-created lblWebServerUrl
                 if (this.lblWebServerUrl != null)
                 {
-                    this.lblWebServerUrl.Text = "Web Server: " + _httpWebServer.ServerUrl;
+                    if (_httpWebServer.IsRunning)
+                    {
+                        this.lblWebServerUrl.Text = "Web Server: " + _httpWebServer.ServerUrl;
+                        this.lblWebServerUrl.ForeColor = this.isDarkMode ? Color.White : SystemColors.ControlText;
+                    }
+                    else
+                    {
+                        this.lblWebServerUrl.Text = "Web Server: FAILED TO START";
+                        this.lblWebServerUrl.ForeColor = Color.Red;
+                    }
                 }
             }
 
@@ -3203,63 +3212,63 @@ namespace DreamsLive_Solutions_PresenterApp1
                     }
                 }
             }
-            else if (sender == this.picSecondaryPreview) // New: Painting for interactive picSecondaryPreview
+            else if (sender == this.picSecondaryPreview) // Unified Painting for interactive picSecondaryPreview
             {
-                if (this.picSecondaryPreview.Image == null)
+                if (this.picSecondaryPreview.Image == null && this.stagedMasterImage == null && this.stagedStitchedImage == null)
                 {
                     e.Graphics.Clear(this.picSecondaryPreview.BackColor);
                     return;
                 }
 
                 e.Graphics.Clear(this.picSecondaryPreview.BackColor);
-                e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear; // Performance: Faster interpolation
+
+                // --- 1. Draw Base Image ---
+                e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
                 e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
                 e.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
 
                 // Priority: Stitched Image > Master Image > Fitted Image
                 Image baseImage = this.stagedStitchedImage ?? this.stagedMasterImage ?? this.picSecondaryPreview.Image;
 
-                if (baseImage == this.picSecondaryPreview.Image)
+                if (baseImage != null)
                 {
-                    // Use legacy pan/zoom logic for the fitted image
-                    float viewWidthUnzoomed = this.picSecondaryPreview.ClientSize.Width / this.secondaryPreviewZoom;
-                    float viewHeightUnzoomed = this.picSecondaryPreview.ClientSize.Height / this.secondaryPreviewZoom;
-                    RectangleF srcRect = new RectangleF(this.secondaryPreviewPan.X, this.secondaryPreviewPan.Y, viewWidthUnzoomed, viewHeightUnzoomed);
-                    RectangleF destRect = new RectangleF(0, 0, this.picSecondaryPreview.ClientSize.Width, this.picSecondaryPreview.ClientSize.Height);
-                    if (viewWidthUnzoomed > 0 && viewHeightUnzoomed > 0)
-                        e.Graphics.DrawImage(baseImage, destRect, srcRect, GraphicsUnit.Pixel);
+                    if (baseImage == this.picSecondaryPreview.Image)
+                    {
+                        // Use legacy pan/zoom logic for the fitted image
+                        float viewWidthUnzoomed = this.picSecondaryPreview.ClientSize.Width / this.secondaryPreviewZoom;
+                        float viewHeightUnzoomed = this.picSecondaryPreview.ClientSize.Height / this.secondaryPreviewZoom;
+                        RectangleF srcRect = new RectangleF(this.secondaryPreviewPan.X, this.secondaryPreviewPan.Y, viewWidthUnzoomed, viewHeightUnzoomed);
+                        RectangleF destRect = new RectangleF(0, 0, this.picSecondaryPreview.ClientSize.Width, this.picSecondaryPreview.ClientSize.Height);
+                        if (viewWidthUnzoomed > 0 && viewHeightUnzoomed > 0)
+                            e.Graphics.DrawImage(baseImage, destRect, srcRect, GraphicsUnit.Pixel);
+                    }
+                    else
+                    {
+                        // Map control viewport to normalized doc coordinates to use high-res master/stitched image
+                        PointF topLeftNorm = MapControlToDocNormalized(new Point(0, 0));
+                        PointF bottomRightNorm = MapControlToDocNormalized(new Point(this.picSecondaryPreview.ClientSize.Width, this.picSecondaryPreview.ClientSize.Height));
+
+                        RectangleF srcRectNorm = new RectangleF(
+                            topLeftNorm.X, topLeftNorm.Y,
+                            bottomRightNorm.X - topLeftNorm.X,
+                            bottomRightNorm.Y - topLeftNorm.Y
+                        );
+
+                        RectangleF srcRectPixels = new RectangleF(
+                            srcRectNorm.X * baseImage.Width,
+                            srcRectNorm.Y * baseImage.Height,
+                            srcRectNorm.Width * baseImage.Width,
+                            srcRectNorm.Height * baseImage.Height
+                        );
+
+                        RectangleF destRect = new RectangleF(0, 0, this.picSecondaryPreview.ClientSize.Width, this.picSecondaryPreview.ClientSize.Height);
+                        e.Graphics.DrawImage(baseImage, destRect, srcRectPixels, GraphicsUnit.Pixel);
+                    }
                 }
-                else
-                {
-                    // Map control viewport to normalized doc coordinates to use high-res master/stitched image
-                    PointF topLeftNorm = MapControlToDocNormalized(new Point(0, 0));
-                    PointF bottomRightNorm = MapControlToDocNormalized(new Point(this.picSecondaryPreview.ClientSize.Width, this.picSecondaryPreview.ClientSize.Height));
 
-                    RectangleF srcRectNorm = new RectangleF(
-                        topLeftNorm.X, topLeftNorm.Y,
-                        bottomRightNorm.X - topLeftNorm.X,
-                        bottomRightNorm.Y - topLeftNorm.Y
-                    );
-
-                    RectangleF srcRectPixels = new RectangleF(
-                        srcRectNorm.X * baseImage.Width,
-                        srcRectNorm.Y * baseImage.Height,
-                        srcRectNorm.Width * baseImage.Width,
-                        srcRectNorm.Height * baseImage.Height
-                    );
-
-                    RectangleF destRect = new RectangleF(0, 0, this.picSecondaryPreview.ClientSize.Width, this.picSecondaryPreview.ClientSize.Height);
-                    e.Graphics.DrawImage(baseImage, destRect, srcRectPixels, GraphicsUnit.Pixel);
-                }
-
-            }
-
-            else if (sender == this.picSecondaryPreview && (this.picSecondaryPreview.Image != null || this.stagedMasterImage != null || this.stagedStitchedImage != null))
-            {
+                // --- 2. Draw Annotations (Highlighter & Laser) ---
                 e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
                 e.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-
-                RectangleF contentRect = GetSecondaryPreviewContentRect();
 
                 if (this.highlightsNormalized != null && this.highlightsNormalized.Count > 0)
                 {
@@ -3267,7 +3276,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     {
                         if (stroke.Count < 1) continue;
                         PointF[] points = stroke.Select(p => MapDocNormalizedToControl(p)).ToArray();
-                        DrawHighlightStroke(e.Graphics, points, 10f * this.secondaryPreviewZoom, this.highlighterColor);
+                        DrawHighlightStroke(e.Graphics, points, 20f * this.secondaryPreviewZoom, this.highlighterColor);
                     }
                 }
 
