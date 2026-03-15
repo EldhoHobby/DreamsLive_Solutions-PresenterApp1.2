@@ -349,7 +349,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // chkEnableScroll
             // 
             this.chkEnableScroll.AutoSize = true;
-            this.chkEnableScroll.Location = new System.Drawing.Point(1264, 536);
+            this.chkEnableScroll.Location = new System.Drawing.Point(1241, 544);
             this.chkEnableScroll.Name = "chkEnableScroll";
             this.chkEnableScroll.Size = new System.Drawing.Size(113, 17);
             this.chkEnableScroll.TabIndex = 23;
@@ -489,7 +489,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             // btnSnip
             // 
-            this.btnSnip.Location = new System.Drawing.Point(673, 81);
+            this.btnSnip.Location = new System.Drawing.Point(754, 23);
             this.btnSnip.Name = "btnSnip";
             this.btnSnip.Size = new System.Drawing.Size(75, 23);
             this.btnSnip.TabIndex = 52;
@@ -499,7 +499,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             // btnOpenGallery
             // 
-            this.btnOpenGallery.Location = new System.Drawing.Point(835, 55);
+            this.btnOpenGallery.Location = new System.Drawing.Point(754, 52);
             this.btnOpenGallery.Name = "btnOpenGallery";
             this.btnOpenGallery.Size = new System.Drawing.Size(100, 23);
             this.btnOpenGallery.TabIndex = 53;
@@ -509,7 +509,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             // btnAddToDatabase
             // 
-            this.btnAddToDatabase.Location = new System.Drawing.Point(942, 55);
+            this.btnAddToDatabase.Location = new System.Drawing.Point(860, 52);
             this.btnAddToDatabase.Name = "btnAddToDatabase";
             this.btnAddToDatabase.Size = new System.Drawing.Size(120, 23);
             this.btnAddToDatabase.TabIndex = 54;

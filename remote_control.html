@@ -522,7 +522,7 @@
                 <button id="btnPushToPresenter" class="big-button" onclick="performAction('push')">&nbsp;&nbsp;&nbsp;Go Live&nbsp;&nbsp;&nbsp;</button>
                 <label>
                     <input type="checkbox" id="chkLinkLocalPreviewToPresenter" onchange="updateAutoSend(this)">
-                    Auto Stage
+                    Auto Send
                 </label>
             </div>
             <div class="control-group">
@@ -710,7 +710,7 @@
                 <input type="checkbox" id="chkLiveSyncEditor" onchange="toggleLiveSync()"> Live Sync
             </label>
             <label id="lblAutoSendEditor" style="color: white;">
-                <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Stage
+                <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Send
             </label>
 
             <button id="btnPresentNow" onclick="presentNow()" style="background-color: var(--accent-blue); color: white; min-width: 100px;">Present Now</button>
@@ -826,7 +826,7 @@
             updateSystemStatus('Updating...', 'busy');
             try {
                 await fetch(`/action/auto-send?enable=${val}`);
-                updateSystemStatus('Auto Stage Updated');
+                updateSystemStatus('Auto Send Updated');
             } catch (e) {
                 updateSystemStatus('Update Failed', 'error');
             }
