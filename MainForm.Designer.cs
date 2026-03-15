@@ -258,8 +258,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             // chkAlwaysOnTop
             // 
             this.chkAlwaysOnTop.AutoSize = true;
-            this.chkAlwaysOnTop.Checked = true;
-            this.chkAlwaysOnTop.CheckState = System.Windows.Forms.CheckState.Checked;
             this.chkAlwaysOnTop.Location = new System.Drawing.Point(1255, 32);
             this.chkAlwaysOnTop.Name = "chkAlwaysOnTop";
             this.chkAlwaysOnTop.Size = new System.Drawing.Size(96, 17);

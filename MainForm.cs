@@ -61,6 +61,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool isSecondaryPreviewPopulated = false;   // True if secondary preview has content
         private bool isDarkMode = false; // Added for theme switching
         private bool isPresenterBlackedOut = false; // Added for blackout toggle
+        private bool hasAlwaysOnTopBeenAutoChecked = false;
 
         // New PDF Navigation Settings - Reset to false on startup
         private bool skipOnePage = false;
@@ -2640,6 +2641,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.activePresentationForm.Show();
                 this.isPresenterBlackedOut = false; // Reset blackout state
 
+                if (!hasAlwaysOnTopBeenAutoChecked)
+                {
+                    chkAlwaysOnTop.Checked = true;
+                }
             }
             else
             {
@@ -3586,6 +3591,10 @@ namespace DreamsLive_Solutions_PresenterApp1
         private void chkAlwaysOnTop_CheckedChanged(object sender, EventArgs e)
         {
             this.TopMost = chkAlwaysOnTop.Checked;
+            if (chkAlwaysOnTop.Checked)
+            {
+                hasAlwaysOnTopBeenAutoChecked = true;
+            }
             if (_galleryForm != null && !_galleryForm.IsDisposed)
             {
                 _galleryForm.TopMost = this.TopMost;
