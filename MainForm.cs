@@ -25,6 +25,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         private GalleryForm _galleryForm;
         private System.Windows.Forms.Timer _statusUpdateTimer;
         private System.Windows.Forms.Timer _autoStageDebounceTimer;
+        private FileSystemWatcher _dbWatcher;
+        private long _galleryVersion = 0;
 
         // Fields to track what's "live" on the presenter
         private string liveContentPath = null;
@@ -95,6 +97,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         public bool AutoStagePreview { get => chkAutoStagePreview.Checked; set => chkAutoStagePreview.Checked = value; }
         public string MoveStepText { get => txtMoveStep.Text; set => txtMoveStep.Text = value; }
         public bool IsDarkMode => isDarkMode;
+        public long GalleryVersion => _galleryVersion;
 
         public MainForm()
         {
@@ -582,6 +585,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                         {
                             DatabaseFolderPath = settings["DatabaseFolderPath"];
                             lblDatabaseFolderPath.Text = "Database Folder: " + DatabaseFolderPath;
+                            SetupDatabaseWatcher();
                         }
                     }
                 }
@@ -589,6 +593,34 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     Debug.WriteLine($"Error loading settings: {ex.Message}");
                 }
+            }
+        }
+
+        private void SetupDatabaseWatcher()
+        {
+            if (_dbWatcher != null)
+            {
+                _dbWatcher.EnableRaisingEvents = false;
+                _dbWatcher.Dispose();
+                _dbWatcher = null;
+            }
+
+            if (!string.IsNullOrEmpty(DatabaseFolderPath) && Directory.Exists(DatabaseFolderPath))
+            {
+                _dbWatcher = new FileSystemWatcher(DatabaseFolderPath);
+                _dbWatcher.IncludeSubdirectories = true;
+                _dbWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite;
+
+                FileSystemEventHandler handler = (s, e) => {
+                    Interlocked.Increment(ref _galleryVersion);
+                };
+
+                _dbWatcher.Created += handler;
+                _dbWatcher.Deleted += handler;
+                _dbWatcher.Renamed += (s, e) => Interlocked.Increment(ref _galleryVersion);
+
+                _dbWatcher.EnableRaisingEvents = true;
+                _galleryVersion++; // Trigger initial load
             }
         }
 
@@ -621,6 +653,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     DatabaseFolderPath = fbd.SelectedPath;
                     lblDatabaseFolderPath.Text = "Database Folder: " + DatabaseFolderPath;
+                    SetupDatabaseWatcher();
                     SaveSettings();
                 }
             }

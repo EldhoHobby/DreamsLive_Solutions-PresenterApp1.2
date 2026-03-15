@@ -743,6 +743,7 @@
         let initialTouchAngle = 0;
         let lastRotationValue = 0;
         let isPinching = false;
+        let lastGalleryVersion = -1;
 
 
         let secondaryPan = { x: 0, y: 0 };
@@ -883,41 +884,42 @@
         }
 
         async function refreshGallery() {
-            updateSystemStatus('Refreshing Gallery...', 'busy');
             console.log("refreshGallery() triggered");
             const gallery = document.getElementById('gallery');
             const subfolderSelect = document.getElementById('gallery-subfolder-select');
             const subfolder = subfolderSelect.value;
             localStorage.setItem('lastGallerySubfolder', subfolder);
             try {
-                gallery.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Loading...</p>';
                 const response = await fetch(`/database/gallery?subfolder=${encodeURIComponent(subfolder)}`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const files = await response.json();
-                gallery.innerHTML = '';
+
+                const container = document.createElement('div');
                 if (files.length === 0) {
-                    gallery.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No media found in database folder.</p>';
-                    return;
+                    container.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No media found in database folder.</p>';
+                } else {
+                    files.forEach(f => {
+                        const item = document.createElement('div');
+                        item.className = 'gallery-item';
+                        item.onclick = async () => {
+                            await performAction(`open?path=${encodeURIComponent(f.RelativePath)}&edit=true`);
+                            await updateStatus();
+                        };
+                        const img = document.createElement('img');
+                        if (f.Extension === '.pdf') {
+                            img.src = 'splash.png';
+                        } else {
+                            img.src = `/database/file?path=${encodeURIComponent(f.RelativePath)}`;
+                        }
+                        const span = document.createElement('span');
+                        span.textContent = f.Name;
+                        item.appendChild(img);
+                        item.appendChild(span);
+                        container.appendChild(item);
+                    });
                 }
-                files.forEach(f => {
-                    const item = document.createElement('div');
-                    item.className = 'gallery-item';
-                    item.onclick = async () => {
-                        await performAction(`open?path=${encodeURIComponent(f.RelativePath)}&edit=true`);
-                        await updateStatus();
-                    };
-                    const img = document.createElement('img');
-                    if (f.Extension === '.pdf') {
-                        img.src = 'splash.png';
-                    } else {
-                        img.src = `/database/file?path=${encodeURIComponent(f.RelativePath)}&t=${new Date().getTime()}`;
-                    }
-                    const span = document.createElement('span');
-                    span.textContent = f.Name;
-                    item.appendChild(img);
-                    item.appendChild(span);
-                    gallery.appendChild(item);
-                });
+
+                gallery.innerHTML = container.innerHTML;
                 updateSystemStatus('Gallery Ready');
             } catch (err) {
                 updateSystemStatus('Gallery Error', 'error');
@@ -1584,6 +1586,13 @@
                 const chkTwo = document.getElementById('chkTwoPagePdf');
                 if (chkTwo) chkTwo.checked = status.twoPagePdf;
 
+                if (status.galleryVersion !== lastGalleryVersion) {
+                    lastGalleryVersion = status.galleryVersion;
+                    if (!isInitialStatusLoad) {
+                        refreshGallery();
+                    }
+                }
+
                 isInitialStatusLoad = false;
             } catch (error) {
                 console.error('Error fetching status:', error);
@@ -1632,7 +1641,7 @@
         });
 
         setInterval(updateStatus, 1000);
-        setInterval(refreshGallery, 5000);
+        // Aggressive interval refresh removed in favor of version-based refresh in updateStatus
         updateStatus();
         populateFolderDropdowns().then(() => {
             const lastSubfolder = localStorage.getItem('lastGallerySubfolder');

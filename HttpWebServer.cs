@@ -592,6 +592,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             int selectionWidth = 0;
             int selectionHeight = 0;
             bool isLicenseExpired = false;
+            long galleryVersion = 0;
 
             _mainForm.Invoke((Action)(() =>
             {
@@ -651,6 +652,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 selectionWidth = _mainForm.SelectionWidth;
                 selectionHeight = _mainForm.SelectionHeight;
                 isLicenseExpired = new UsageManager().IsLicenseExpired();
+                galleryVersion = _mainForm.GalleryVersion;
             }));
 
             var statusObject = new
@@ -686,7 +688,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 isBlackout,
                 selectionWidth,
                 selectionHeight,
-                isLicenseExpired
+                isLicenseExpired,
+                galleryVersion
             };
 
             return JsonConvert.SerializeObject(statusObject);
