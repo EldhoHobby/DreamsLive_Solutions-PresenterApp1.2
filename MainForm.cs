@@ -100,10 +100,6 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             InitializeComponent();
             this.picSecondaryPreview.SizeMode = PictureBoxSizeMode.Normal;
-            this.FormClosing += (s, e) => {
-                if (stagedStitchedImage != null) stagedStitchedImage.Dispose();
-                if (stagedMasterImage != null) stagedMasterImage.Dispose();
-            };
 
             this.Text = $"Presenter App V{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version} {GetActivationStatus()}";
 
@@ -2924,12 +2920,29 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                DialogResult result = MessageBox.Show(this, "Are you sure you want to close the application?", "Confirm Exit", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result == DialogResult.No)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
             _httpWebServer?.Stop();
+
             if (this.stagedStitchedImage != null)
             {
                 this.stagedStitchedImage.Dispose();
                 this.stagedStitchedImage = null;
             }
+            if (this.stagedMasterImage != null)
+            {
+                this.stagedMasterImage.Dispose();
+                this.stagedMasterImage = null;
+            }
+
             base.OnFormClosing(e);
         }
 
