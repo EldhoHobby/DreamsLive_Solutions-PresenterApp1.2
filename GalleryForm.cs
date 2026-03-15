@@ -21,6 +21,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             InitializeComponent();
             _mainForm = mainForm;
             this.Opacity = 0.85;
+
+            // Enable double buffering for FlowLayoutPanel using reflection to reduce flickering
+            var property = typeof(Control).GetProperty("DoubleBuffered", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            property?.SetValue(flowThumbs, true, null);
+
             _settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DreamsLivePresenterApp", "gallery_settings.json");
             LoadGallerySettings();
 
@@ -132,6 +137,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void RefreshGallery()
         {
+            flowThumbs.SuspendLayout();
             // Dispose old controls and images
             DisposeControlsRecursive(flowThumbs);
             flowThumbs.Controls.Clear();
@@ -176,6 +182,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 // Load thumb async
                 _ = Task.Run(() => LoadThumbnailAsync(pb, file));
             }
+            flowThumbs.ResumeLayout();
         }
 
         private async Task LoadThumbnailAsync(PictureBox pb, DatabaseFileInfo file)
@@ -286,6 +293,9 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             pnlTop.BackColor = isDark ? Color.FromArgb(30, 30, 30) : SystemColors.Control;
             pnlTop.ForeColor = foreColor;
+
+            pnlBottom.BackColor = isDark ? Color.FromArgb(30, 30, 30) : SystemColors.Control;
+            pnlBottom.ForeColor = foreColor;
 
             cmbSubfolders.BackColor = isDark ? Color.FromArgb(63, 63, 70) : SystemColors.Window;
             cmbSubfolders.ForeColor = isDark ? Color.White : SystemColors.WindowText;
