@@ -3208,7 +3208,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             }
 
-            if (sender == this.picSecondaryPreview && this.picSecondaryPreview.Image != null)
+            else if (sender == this.picSecondaryPreview && (this.picSecondaryPreview.Image != null || this.stagedMasterImage != null || this.stagedStitchedImage != null))
             {
                 e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
                 e.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
@@ -3313,7 +3313,12 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             try
             {
-                if (isPdf && stagedContentPageNum >= 0)
+                if (this.stagedMasterImage != null)
+                {
+                    actualOriginalFileWidth = this.stagedMasterImage.Width;
+                    actualOriginalFileHeight = this.stagedMasterImage.Height;
+                }
+                else if (isPdf && stagedContentPageNum >= 0)
                 {
                     // For the 'else' block (full page view), we MUST use the actual rendered dimensions
                     // as the basis for fitScale_full and subsequent clamping, because RenderContentToPictureBox
@@ -3671,8 +3676,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
                 else
                 {
-                    float fullWidth = this.picPreview.Image?.Width ?? 1;
-                    float fullHeight = this.picPreview.Image?.Height ?? 1;
+                    float fullWidth = this.stagedMasterImage?.Width ?? 1;
+                    float fullHeight = this.stagedMasterImage?.Height ?? 1;
                     return new PointF(
                         (region.X + relX * region.Width) / fullWidth,
                         (region.Y + relY * region.Height) / fullHeight
@@ -3698,8 +3703,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
                 else
                 {
-                    float fullWidth = this.picPreview.Image?.Width ?? 1;
-                    float fullHeight = this.picPreview.Image?.Height ?? 1;
+                    float fullWidth = this.stagedMasterImage?.Width ?? 1;
+                    float fullHeight = this.stagedMasterImage?.Height ?? 1;
                     relX = (normDocPoint.X * fullWidth - region.X) / (region.Width != 0 ? region.Width : 1);
                     relY = (normDocPoint.Y * fullHeight - region.Y) / (region.Height != 0 ? region.Height : 1);
                 }
@@ -3736,8 +3741,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 RectangleF region = this.stagedContentRegion.Value;
                 if (this.stagedContentIsNormalized)
                 {
-                    float baseW = this.picPreview.Image?.Width ?? 1;
-                    float baseH = this.picPreview.Image?.Height ?? 1;
+                    float baseW = this.stagedMasterImage?.Width ?? 1;
+                    float baseH = this.stagedMasterImage?.Height ?? 1;
                     contentWidth = region.Width * baseW;
                     contentHeight = region.Height * baseH;
                 }
@@ -3749,8 +3754,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
             else
             {
-                contentWidth = this.picPreview.Image?.Width ?? 1;
-                contentHeight = this.picPreview.Image?.Height ?? 1;
+                contentWidth = this.stagedMasterImage?.Width ?? 1;
+                contentHeight = this.stagedMasterImage?.Height ?? 1;
             }
 
             if (contentWidth <= 0 || contentHeight <= 0) return RectangleF.Empty;
