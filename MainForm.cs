@@ -60,6 +60,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool isSecondaryPreviewPopulated = false;   // True if secondary preview has content
         private bool isDarkMode = false; // Added for theme switching
         private bool isPresenterBlackedOut = false; // Added for blackout toggle
+        private bool alwaysOnTopAutoChecked = false; // Track if Always on Top has been auto-checked or manually set
 
         // New PDF Navigation Settings - Reset to false on startup
         private bool skipOnePage = false;
@@ -2619,6 +2620,13 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             if (this.activePresentationForm == null) // Only check for null now
             {
+                // Auto-check Always on Top for the first time a presenter is opened in this session
+                if (!alwaysOnTopAutoChecked)
+                {
+                    chkAlwaysOnTop.Checked = true;
+                    // alwaysOnTopAutoChecked is set to true via the CheckedChanged event
+                }
+
                 // Path, pageNum, region, isNormalized will be set by the caller via UpdateImage
                 this.activePresentationForm = new PresentationForm(null, -1, targetScreen, null, false, 0);
                 this.activePresentationForm.FormClosed += (s, args) =>
@@ -3585,6 +3593,10 @@ namespace DreamsLive_Solutions_PresenterApp1
         private void chkAlwaysOnTop_CheckedChanged(object sender, EventArgs e)
         {
             this.TopMost = chkAlwaysOnTop.Checked;
+            if (chkAlwaysOnTop.Checked)
+            {
+                alwaysOnTopAutoChecked = true;
+            }
         }
 
         public void ShowMessage(string message, string type)
