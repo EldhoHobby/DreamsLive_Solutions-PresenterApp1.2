@@ -593,8 +593,15 @@ namespace DreamsLive_Solutions_PresenterApp1
                         if (settings.ContainsKey("DatabaseFolderPath"))
                         {
                             DatabaseFolderPath = settings["DatabaseFolderPath"];
-                            lblDatabaseFolderPath.Text = "Database Folder: " + DatabaseFolderPath;
-                            SetupDatabaseWatcher();
+                            if (!string.IsNullOrEmpty(DatabaseFolderPath))
+                            {
+                                lblDatabaseFolderPath.Text = "Database Folder: " + DatabaseFolderPath;
+                                SetupDatabaseWatcher();
+                            }
+                            else
+                            {
+                                lblDatabaseFolderPath.Text = "Database Folder: Not Selected";
+                            }
                         }
                     }
                 }
@@ -602,6 +609,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     Debug.WriteLine($"Error loading settings: {ex.Message}");
                 }
+            }
+            else
+            {
+                lblDatabaseFolderPath.Text = "Database Folder: Not Selected";
             }
         }
 
@@ -2862,8 +2873,16 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void ApplyThemeToControl(Control control, Color backColor, Color foreColor, Color buttonBackColor, Color buttonForeColor, Color textBoxBackColor, Color textBoxForeColor)
         {
-            control.BackColor = backColor;
-            control.ForeColor = foreColor;
+            if (control == this.lblWebServerUrl && _httpWebServer != null && !_httpWebServer.IsRunning)
+            {
+                control.BackColor = backColor;
+                control.ForeColor = Color.Red;
+            }
+            else
+            {
+                control.BackColor = backColor;
+                control.ForeColor = foreColor;
+            }
 
             if (control is Button button) // Use pattern matching
             {

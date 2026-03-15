@@ -919,7 +919,14 @@
                     });
                 }
 
-                gallery.innerHTML = container.innerHTML;
+                gallery.innerHTML = '';
+                if (files.length === 0) {
+                    gallery.innerHTML = container.innerHTML;
+                } else {
+                    while (container.firstChild) {
+                        gallery.appendChild(container.firstChild);
+                    }
+                }
                 updateSystemStatus('Gallery Ready');
             } catch (err) {
                 updateSystemStatus('Gallery Error', 'error');
