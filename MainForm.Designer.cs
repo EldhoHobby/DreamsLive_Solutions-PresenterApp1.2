@@ -349,7 +349,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // chkEnableScroll
             // 
             this.chkEnableScroll.AutoSize = true;
-            this.chkEnableScroll.Location = new System.Drawing.Point(1234, 542);
+            this.chkEnableScroll.Location = new System.Drawing.Point(1264, 536);
             this.chkEnableScroll.Name = "chkEnableScroll";
             this.chkEnableScroll.Size = new System.Drawing.Size(113, 17);
             this.chkEnableScroll.TabIndex = 23;

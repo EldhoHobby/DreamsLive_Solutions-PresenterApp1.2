@@ -1341,13 +1341,6 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (updateStaging)
             {
                 this.stagedSelectionRectangle = Rectangle.Empty;
-                // Reset secondary preview to prevent auto-syncing old selection to new image
-                this.isSecondaryPreviewPopulated = false;
-                if (this.picSecondaryPreview.Image != null)
-                {
-                    this.picSecondaryPreview.Image.Dispose();
-                    this.picSecondaryPreview.Image = null;
-                }
             }
 
             if (this.picPreview.Image != null)
