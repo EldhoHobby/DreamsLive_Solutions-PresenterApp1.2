@@ -145,10 +145,18 @@ namespace DreamsLive_Solutions_PresenterApp1
                         await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
                         break;
                     case "/preview/main":
-                        await WriteImageResponse(response, _mainForm.GetPreviewImage());
+                        {
+                            Image img = null;
+                            _mainForm.Invoke((Action)(() => img = _mainForm.GetPreviewImage()));
+                            await WriteImageResponse(response, img);
+                        }
                         break;
                     case "/preview/secondary":
-                        await WriteImageResponse(response, _mainForm.GetSecondaryPreviewImage());
+                        {
+                            Image img = null;
+                            _mainForm.Invoke((Action)(() => img = _mainForm.GetSecondaryPreviewImage()));
+                            await WriteImageResponse(response, img);
+                        }
                         break;
                     case "/splash.png":
                         await WriteFileResponse(response, "splash.png", "image/png");
@@ -703,6 +711,10 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private async Task WriteImageResponse(HttpListenerResponse response, Image image)
         {
+            // Note: image is passed as a reference but could be disposed if we don't handle retrieval carefully.
+            // However, this specific method is called by endpoints that often need to retrieve the image
+            // inside the same Invoke block to be safe.
+
             if (image == null)
             {
                 response.StatusCode = (int)HttpStatusCode.NotFound;
@@ -719,6 +731,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 try
                 {
+                    // Accessing image properties like Width/Height must happen on UI thread if image is a control property
                     if (image.Width > maxRemoteDim || image.Height > maxRemoteDim)
                     {
                         float scale = (float)maxRemoteDim / Math.Max(image.Width, image.Height);
