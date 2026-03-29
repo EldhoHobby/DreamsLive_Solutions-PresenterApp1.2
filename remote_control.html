@@ -537,11 +537,11 @@
             <button id="btnCloseLivePresenter" onclick="performAction('close')" style="display: none;">Close Live</button>
         </div>
 
-        <div class="pdf-controls" style="display: none;">
+        <div id="dashboard-pdf-controls" class="pdf-controls" style="display: none;">
             <button id="btnPdfPrev" onclick="performAction('pdf-prev')">Prev</button>
             <div class="pdf-page-selector">
-                <input type="text" id="txtRemoteCurrentPage" />
-                <span id="lblRemoteTotalPages"></span>
+                <input type="text" id="txtRemoteCurrentPage" class="remote-page-input" />
+                <span id="lblRemoteTotalPages" class="remote-total-pages"></span>
             </div>
             <button id="btnPdfNext" onclick="performAction('pdf-next')">Next</button>
         </div>
@@ -701,6 +701,16 @@
                 W: <span id="editor-w">0</span> H: <span id="editor-h">0</span>
             </div>
 
+            <!-- PDF Page Navigation in Editor -->
+            <div id="editor-pdf-controls" class="pdf-controls" style="display: none; width: 100%; justify-content: center; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
+                <button id="btnEditorPdfPrev" onclick="performAction('pdf-prev')">Prev</button>
+                <div class="pdf-page-selector">
+                    <input type="text" id="editor-txtRemoteCurrentPage" class="remote-page-input" style="width: 50px; text-align: center;" />
+                    <span id="editor-lblRemoteTotalPages" class="remote-total-pages" style="color: white;"></span>
+                </div>
+                <button id="btnEditorPdfNext" onclick="performAction('pdf-next')">Next</button>
+            </div>
+
             <div id="editor-rotate-buttons" style="display: flex; gap: 10px;">
                 <button onclick="rotateInEditor(-1)" style="font-size: 1.2em;">&#8634;</button>
                 <button onclick="rotateInEditor(1)" style="font-size: 1.2em;">&#8635;</button>
@@ -734,6 +744,7 @@
         let stagedNormalizedSelection = null;
         let initialCropData = null;
         let lastStatusFilePath = null;
+        let lastStatusPageNum = -1;
         let isCropperReady = false;
         let isInitialStatusLoad = true;
         let isUserInteractingWithCropper = false;
@@ -1142,9 +1153,16 @@
             document.getElementById('rotation-val').textContent = '0';
 
             img.onload = () => {
+                // Clear onload handler immediately to prevent re-initialization during cropper.replace
+                img.onload = null;
+
                 // Wait for layout to settle
                 setTimeout(() => {
-                    if (cropper) cropper.destroy();
+                    if (cropper && !isEditing) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
+                    if (cropper) return; // Already initialized or replaced
 
                     // If we have a normalized selection from host status, convert it to natural pixels for Cropper
                     if (!isUpload && lastNormalizedSelection) {
@@ -1448,14 +1466,44 @@
                 if (status.currentFilePath) {
                     btnEdit.style.display = 'inline-block';
 
-                    // Track new file to clear last crop data, but DON'T auto-open the editor
-                    if (status.currentFilePath !== lastStatusFilePath) {
+                    // Track file/page changes to update editor
+                    if (status.currentFilePath !== lastStatusFilePath || status.pdfCurrentPage !== lastStatusPageNum) {
+                        if (isEditing && cropper && !isUploadEditing) {
+                            console.log("File or page change detected in editor, reloading content...");
+                            const currentData = cropper.getData();
+
+                            // Use ready event for smoother data restoration after replace
+                            const imgEl = document.getElementById('editor-image');
+                            const onReady = () => {
+                                if (cropper && isEditing) {
+                                    // If it's a new file, we might want to reset crop, but for PDF pages we maintain it
+                                    if (status.currentFilePath === lastStatusFilePath) {
+                                        cropper.setData(currentData);
+                                    }
+                                    if (document.getElementById('chkLiveSyncEditor').checked) {
+                                        const imageData = cropper.getImageData();
+                                        syncCrop(cropper.getData(), imageData.naturalWidth, imageData.naturalHeight, true);
+                                    }
+                                }
+                                imgEl.removeEventListener('ready', onReady);
+                            };
+                            // Remove any old ready listener first
+                            imgEl.removeEventListener('ready', onReady);
+                            imgEl.addEventListener('ready', onReady);
+
+                            cropper.replace(`/database/current?t=${new Date().getTime()}`);
+                        }
+
+                        if (status.currentFilePath !== lastStatusFilePath) {
+                            lastCropData = null; // Clear crop data for new file
+                        }
                         lastStatusFilePath = status.currentFilePath;
-                        lastCropData = null; // Clear crop data for new file
+                        lastStatusPageNum = status.pdfCurrentPage;
                     }
                 } else {
                     btnEdit.style.display = 'none';
                     lastStatusFilePath = null;
+                    lastStatusPageNum = -1;
                     lastCropData = null;
                 }
 
@@ -1537,16 +1585,22 @@
                 }
 
 
-                const pdfControls = document.querySelector('.pdf-controls');
+                // PDF Navigation Controls
+                const dashboardPdf = document.getElementById('dashboard-pdf-controls');
+                const editorPdf = document.getElementById('editor-pdf-controls');
                 if (status.pdfTotalPages > 0) {
-                    pdfControls.style.display = 'grid';
-                    const currentPageInput = document.getElementById('txtRemoteCurrentPage');
+                    dashboardPdf.style.display = 'grid';
+                    editorPdf.style.display = isUploadEditing ? 'none' : 'grid';
+
                     if (!isPageInputFocused) {
-                        currentPageInput.value = status.pdfCurrentPage + 1;
+                        document.getElementById('txtRemoteCurrentPage').value = status.pdfCurrentPage + 1;
+                        document.getElementById('editor-txtRemoteCurrentPage').value = status.pdfCurrentPage + 1;
                     }
                     document.getElementById('lblRemoteTotalPages').textContent = `/ ${status.pdfTotalPages}`;
+                    document.getElementById('editor-lblRemoteTotalPages').textContent = `/ ${status.pdfTotalPages}`;
                 } else {
-                    pdfControls.style.display = 'none';
+                    dashboardPdf.style.display = 'none';
+                    editorPdf.style.display = 'none';
                 }
 
                 const autoSendDashboard = document.getElementById('chkLinkLocalPreviewToPresenter');
@@ -1575,13 +1629,21 @@
                 }
 
                 const pdfPrevButton = document.getElementById('btnPdfPrev');
+                const editorPdfPrevButton = document.getElementById('btnEditorPdfPrev');
                 if (pdfPrevButton) {
                     pdfPrevButton.classList.toggle('button-disabled', status.pdfPrevButtonEnabled !== true);
                 }
+                if (editorPdfPrevButton) {
+                    editorPdfPrevButton.classList.toggle('button-disabled', status.pdfPrevButtonEnabled !== true);
+                }
 
                 const pdfNextButton = document.getElementById('btnPdfNext');
+                const editorPdfNextButton = document.getElementById('btnEditorPdfNext');
                 if (pdfNextButton) {
                     pdfNextButton.classList.toggle('button-disabled', status.pdfNextButtonEnabled !== true);
+                }
+                if (editorPdfNextButton) {
+                    editorPdfNextButton.classList.toggle('button-disabled', status.pdfNextButtonEnabled !== true);
                 }
 
                 const chkScroll = document.getElementById('chkEnableScroll');
@@ -1612,22 +1674,23 @@
         }
 
 
-        const pageInput = document.getElementById('txtRemoteCurrentPage');
-        pageInput.addEventListener('focus', () => {
-            isPageInputFocused = true;
-        });
-        pageInput.addEventListener('blur', () => {
-            isPageInputFocused = false;
-        });
-        pageInput.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // Stop default form submission
-                const pageNum = parseInt(this.value, 10);
-                if (!isNaN(pageNum)) {
-                    performAction(`pdf-goto?page=${pageNum}`);
-                    this.blur(); // Remove focus from the input
+        document.querySelectorAll('.remote-page-input').forEach(input => {
+            input.addEventListener('focus', () => {
+                isPageInputFocused = true;
+            });
+            input.addEventListener('blur', () => {
+                isPageInputFocused = false;
+            });
+            input.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const pageNum = parseInt(this.value, 10);
+                    if (!isNaN(pageNum)) {
+                        performAction(`pdf-goto?page=${pageNum}`);
+                        this.blur();
+                    }
                 }
-            }
+            });
         });
 
         document.addEventListener('keydown', function (event) {
