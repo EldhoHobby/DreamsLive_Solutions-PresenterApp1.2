@@ -2312,22 +2312,22 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void btnPrevPage_Click(object sender, EventArgs e)
         {
-            GoToPage(this.currentPageNumber - 1, false);
+            GoToPage(this.currentPageNumber - 1, true);
         }
 
         private void btnNextPage_Click(object sender, EventArgs e)
         {
-            GoToPage(this.currentPageNumber + 1, false);
+            GoToPage(this.currentPageNumber + 1, true);
         }
 
         public void NextPage()
         {
-            GoToPage(this.currentPageNumber + 1, false);
+            GoToPage(this.currentPageNumber + 1, true);
         }
 
         public void PreviousPage()
         {
-            GoToPage(this.currentPageNumber - 1, false);
+            GoToPage(this.currentPageNumber - 1, true);
         }
 
         private void txtCurrentPageNum_KeyDown(object sender, KeyEventArgs e)
@@ -2343,7 +2343,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     {
                         if (desiredPageIndex != this.currentPageNumber)
                         {
-                            GoToPage(desiredPageIndex, false);
+                            GoToPage(desiredPageIndex, true);
                         }
                     }
                     else
@@ -4307,8 +4307,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 if (desiredPageIndex != this.currentPageNumber)
                 {
-                    this.currentPageNumber = desiredPageIndex;
-                    RenderPdfPageToPreview(this.currentPageNumber);
+                    GoToPage(desiredPageIndex, true);
                 }
             }
             else
