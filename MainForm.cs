@@ -394,13 +394,15 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 if (this.currentPdfPageImage != null)
                 {
-                    this.currentPdfPageImage.Dispose();
+                    Image temp = this.currentPdfPageImage;
                     this.currentPdfPageImage = null;
+                    temp.Dispose();
                 }
                 if (this.picPreview.Image != null)
                 {
-                    this.picPreview.Image.Dispose();
+                    Image temp = this.picPreview.Image;
                     this.picPreview.Image = null;
+                    temp.Dispose();
                 }
                 this.lblImagePath.Text = "No PDF loaded or PDF is empty.";
                 // Ensure PDF controls are correctly disabled/hidden if this state is reached unexpectedly
@@ -436,7 +438,9 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                 if (this.currentPdfPageImage != null)
                 {
-                    this.currentPdfPageImage.Dispose();
+                    Image temp = this.currentPdfPageImage;
+                    this.currentPdfPageImage = null;
+                    temp.Dispose();
                 }
                 this.currentPdfPageImage = renderedPageImage;
 
@@ -444,7 +448,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     if (this.picPreview.Image != null && this.picPreview.Image != this.currentPdfPageImage)
                     {
-                        this.picPreview.Image.Dispose();
+                        Image temp = this.picPreview.Image;
+                        this.picPreview.Image = null;
+                        temp.Dispose();
                     }
                     this.picPreview.Image = this.currentPdfPageImage; // Display the rendered page
                 }
@@ -1175,6 +1181,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void HandlePageStitching(Point newLocation, bool isMovingDown)
         {
+            if (this.currentPdfDocument == null) return;
             ClearHighlights();
             Rectangle proposedRect = new Rectangle(newLocation, selectionRectangle.Size);
             RectangleF? normalizedRegion = GetSelectedRegionNormalized(proposedRect);
@@ -1274,13 +1281,16 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                 if (this.stagedStitchedImage != null)
                 {
-                    this.stagedStitchedImage.Dispose();
+                    Image temp = this.stagedStitchedImage;
+                    this.stagedStitchedImage = null;
+                    temp.Dispose();
                 }
                 this.stagedStitchedImage = stitched;
                 if (this.stagedMasterImage != null)
                 {
-                    this.stagedMasterImage.Dispose();
+                    Image temp = this.stagedMasterImage;
                     this.stagedMasterImage = null;
+                    temp.Dispose();
                 }
 
                 Bitmap fitted = CreateFittedBitmap(this.stagedStitchedImage, picSecondaryPreview.ClientSize, picSecondaryPreview.BackColor);
@@ -1290,7 +1300,13 @@ namespace DreamsLive_Solutions_PresenterApp1
                 isSecondaryPreviewPopulated = true;
 
                 // Requirement 3: Show stitched view in Main Preview too
-                if (picPreview.Image != null) picPreview.Image.Dispose();
+                if (picPreview.Image != null && picPreview.Image != currentPdfPageImage)
+                {
+                    Image temp = picPreview.Image;
+                    picPreview.Image = null;
+                    temp.Dispose();
+                }
+
                 picPreview.Image = (Image)stitched.Clone();
                 isDisplayingStitchInMainPreview = true;
 
@@ -1482,8 +1498,9 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             if (this.picPreview.Image != null)
             {
-                this.picPreview.Image.Dispose();
+                Image temp = this.picPreview.Image;
                 this.picPreview.Image = null;
+                if (temp != this.currentPdfPageImage) temp.Dispose();
             }
 
             // Determine the file type and delegate to the appropriate handler.
@@ -1510,16 +1527,18 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     if (this.currentPdfDocument != null)
                     {
-                        this.currentPdfDocument.Dispose();
+                        PdfDocument temp = this.currentPdfDocument;
                         this.currentPdfDocument = null;
+                        temp.Dispose();
                     }
                     this.currentPdfDocument = PdfDocument.Load(pdfPath);
                 }
 
                 if (this.currentPdfPageImage != null)
                 {
-                    this.currentPdfPageImage.Dispose();
+                    Image temp = this.currentPdfPageImage;
                     this.currentPdfPageImage = null;
+                    temp.Dispose();
                 }
                 this.isDisplayingStitchInMainPreview = false;
                 this.selectedImagePath = pdfPath;
@@ -1599,15 +1618,17 @@ namespace DreamsLive_Solutions_PresenterApp1
             // If a PDF was previously loaded, clean up its resources.
             if (this.currentPdfDocument != null)
             {
-                this.currentPdfDocument.Dispose();
+                PdfDocument temp = this.currentPdfDocument;
                 this.currentPdfDocument = null;
+                temp.Dispose();
                 this.totalPdfPages = 0;
                 this.currentPageNumber = 0;
             }
             if (this.currentPdfPageImage != null)
             {
-                this.currentPdfPageImage.Dispose();
+                Image temp = this.currentPdfPageImage;
                 this.currentPdfPageImage = null;
+                temp.Dispose();
             }
             this.isDisplayingStitchInMainPreview = false;
             SetPdfControlsVisibility(false);
@@ -2066,6 +2087,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                 return;
             }
 
+            if (string.IsNullOrEmpty(this.selectedImagePath))
+            {
+                ShowInfoMessage("Please load an image or PDF first.");
+                return;
+            }
+
             ClearHighlights();
             this.previousSelectionRectangle = Rectangle.Empty;
             this.stagedSelectionRectangle = Rectangle.Empty;
@@ -2076,11 +2103,6 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.stagedStitchedImage = null;
             }
 
-            if (string.IsNullOrEmpty(this.selectedImagePath))
-            {
-                ShowInfoMessage("Please load an image or PDF first.");
-                return;
-            }
             // picPreview.Image should be loaded if selectedImagePath is valid, via ProcessNewImage
             if (this.picPreview.Image == null)
             {
@@ -2617,15 +2639,17 @@ namespace DreamsLive_Solutions_PresenterApp1
         }
         private RectangleF? GetSelectedRegionInImageCoordinates(Rectangle rect)
         {
-            Image img = (isDisplayingStitchInMainPreview && currentPdfPageImage != null) ? currentPdfPageImage : picPreview.Image;
-            if (img == null || rect.IsEmpty || rect.Width <= 0 || rect.Height <= 0)
+            try
             {
-                return null; // No image or no valid selection
-            }
+                Image img = (isDisplayingStitchInMainPreview && currentPdfPageImage != null) ? currentPdfPageImage : picPreview.Image;
+                if (img == null || rect.IsEmpty || rect.Width <= 0 || rect.Height <= 0)
+                {
+                    return null; // No image or no valid selection
+                }
 
-            // Original image dimensions
-            float originalImageWidth = img.Width;
-            float originalImageHeight = img.Height;
+                // Original image dimensions
+                float originalImageWidth = img.Width;
+                float originalImageHeight = img.Height;
 
             // PictureBox client dimensions
             float picBoxWidth = this.picPreview.ClientSize.Width;
@@ -2666,9 +2690,15 @@ namespace DreamsLive_Solutions_PresenterApp1
             float finalX = selectedX_relativeToDisplayedImage * scaleToOriginalX;
             float finalY = selectedY_relativeToDisplayedImage * scaleToOriginalY;
             float finalWidth = rect.Width * scaleToOriginalX;
-            float finalHeight = rect.Height * scaleToOriginalY;
+                float finalHeight = rect.Height * scaleToOriginalY;
 
-            return new RectangleF(finalX, finalY, finalWidth, finalHeight);
+                return new RectangleF(finalX, finalY, finalWidth, finalHeight);
+            }
+            catch (ArgumentException)
+            {
+                // Image might have been disposed or is otherwise invalid (e.g. during a fast transition)
+                return null;
+            }
         }
 
         private RectangleF? GetSelectedRegionNormalized(Rectangle rect)
@@ -3127,18 +3157,21 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             if (this.stagedStitchedImage != null)
             {
-                this.stagedStitchedImage.Dispose();
+                Image temp = this.stagedStitchedImage;
                 this.stagedStitchedImage = null;
+                temp.Dispose();
             }
             if (this.currentPdfPageImage != null)
             {
-                this.currentPdfPageImage.Dispose();
+                Image temp = this.currentPdfPageImage;
                 this.currentPdfPageImage = null;
+                temp.Dispose();
             }
             if (this.stagedMasterImage != null)
             {
-                this.stagedMasterImage.Dispose();
+                Image temp = this.stagedMasterImage;
                 this.stagedMasterImage = null;
+                temp.Dispose();
             }
 
             base.OnFormClosing(e);
