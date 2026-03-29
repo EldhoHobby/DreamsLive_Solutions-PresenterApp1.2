@@ -1254,7 +1254,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 // Handle PDF page transitions
                 if (currentPdfDocument != null)
                 {
-                    if (yDirection > 0 && (newLocation.Y + selectionRectangle.Height > displayedImageRect.Bottom + 10) && alreadyAtBottom)
+                    if (yDirection > 0 && (newLocation.Y + selectionRectangle.Height > displayedImageRect.Bottom + 2))
                     {
                         // Use a more reliable side detection based on current selection's horizontal center
                         float hCenter = selectionRectangle.X + (selectionRectangle.Width / 2f);
@@ -1263,10 +1263,13 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                         if (twoPagePdf && isLeftSide)
                         {
-                            // Move from left half to right half of same page
-                            newLocation.X = (int)displayedImageRect.Right - selectionRectangle.Width;
-                            newLocation.Y = (int)displayedImageRect.Top;
-                            pageChanged = true;
+                            if (alreadyAtBottom)
+                            {
+                                // Move from left half to right half of same page
+                                newLocation.X = (int)displayedImageRect.Right - selectionRectangle.Width;
+                                newLocation.Y = (int)displayedImageRect.Top;
+                                pageChanged = true;
+                            }
                         }
                         else if (currentPageNumber < totalPdfPages - 1)
                         {
@@ -1285,7 +1288,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                             pageChanged = true;
                         }
                     }
-                    else if (yDirection < 0 && (newLocation.Y < displayedImageRect.Top - 10) && alreadyAtTop)
+                    else if (yDirection < 0 && (newLocation.Y < displayedImageRect.Top - 2))
                     {
                         float hCenter = selectionRectangle.X + (selectionRectangle.Width / 2f);
                         float pageHCenter = displayedImageRect.Left + (displayedImageRect.Width / 2f);
@@ -1293,10 +1296,13 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                         if (twoPagePdf && isRightSide)
                         {
-                            // Move from right half to left half of same page
-                            newLocation.X = (int)displayedImageRect.Left;
-                            newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
-                            pageChanged = true;
+                            if (alreadyAtTop)
+                            {
+                                // Move from right half to left half of same page
+                                newLocation.X = (int)displayedImageRect.Left;
+                                newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
+                                pageChanged = true;
+                            }
                         }
                         else if (currentPageNumber > 0)
                         {
