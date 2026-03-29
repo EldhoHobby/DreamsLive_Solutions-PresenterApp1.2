@@ -1254,7 +1254,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 // Handle PDF page transitions
                 if (currentPdfDocument != null)
                 {
-                    if (yDirection > 0 && (newLocation.Y + selectionRectangle.Height > displayedImageRect.Bottom + 2))
+                    if (yDirection > 0 && (newLocation.Y + selectionRectangle.Height > (int)displayedImageRect.Bottom))
                     {
                         // Use a more reliable side detection based on current selection's horizontal center
                         float hCenter = selectionRectangle.X + (selectionRectangle.Width / 2f);
@@ -1273,22 +1273,25 @@ namespace DreamsLive_Solutions_PresenterApp1
                         }
                         else if (currentPageNumber < totalPdfPages - 1)
                         {
-                            int skip = (skipOnePage && currentPageNumber < totalPdfPages - 2) ? 2 : 1;
-                            int nextPageIndex = Math.Min(totalPdfPages - 1, currentPageNumber + skip);
-
-                            if (chkAutoStagePreview.Checked && nextPageIndex == currentPageNumber + 1)
+                            if (alreadyAtBottom)
                             {
-                                HandlePageStitching(newLocation, isMovingDown: true);
-                            }
+                                int skip = (skipOnePage && currentPageNumber < totalPdfPages - 2) ? 2 : 1;
+                                int nextPageIndex = Math.Min(totalPdfPages - 1, currentPageNumber + skip);
 
-                            GoToPage(nextPageIndex, true);
-                            displayedImageRect = GetDisplayedImageRect();
-                            newLocation.Y = (int)displayedImageRect.Top;
-                            if (twoPagePdf) newLocation.X = (int)displayedImageRect.Left;
-                            pageChanged = true;
+                                if (chkAutoStagePreview.Checked && nextPageIndex == currentPageNumber + 1)
+                                {
+                                    HandlePageStitching(newLocation, isMovingDown: true);
+                                }
+
+                                GoToPage(nextPageIndex, true);
+                                displayedImageRect = GetDisplayedImageRect();
+                                newLocation.Y = (int)displayedImageRect.Top;
+                                if (twoPagePdf) newLocation.X = (int)displayedImageRect.Left;
+                                pageChanged = true;
+                            }
                         }
                     }
-                    else if (yDirection < 0 && (newLocation.Y < displayedImageRect.Top - 2))
+                    else if (yDirection < 0 && (newLocation.Y < (int)displayedImageRect.Top))
                     {
                         float hCenter = selectionRectangle.X + (selectionRectangle.Width / 2f);
                         float pageHCenter = displayedImageRect.Left + (displayedImageRect.Width / 2f);
@@ -1306,19 +1309,22 @@ namespace DreamsLive_Solutions_PresenterApp1
                         }
                         else if (currentPageNumber > 0)
                         {
-                            int skip = (skipOnePage && currentPageNumber > 1) ? 2 : 1;
-                            int prevPageIndex = Math.Max(0, currentPageNumber - skip);
-
-                            if (chkAutoStagePreview.Checked && prevPageIndex == currentPageNumber - 1)
+                            if (alreadyAtTop)
                             {
-                                HandlePageStitching(newLocation, isMovingDown: false);
-                            }
+                                int skip = (skipOnePage && currentPageNumber > 1) ? 2 : 1;
+                                int prevPageIndex = Math.Max(0, currentPageNumber - skip);
 
-                            GoToPage(prevPageIndex, true);
-                            displayedImageRect = GetDisplayedImageRect();
-                            newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
-                            if (twoPagePdf) newLocation.X = (int)displayedImageRect.Right - selectionRectangle.Width;
-                            pageChanged = true;
+                                if (chkAutoStagePreview.Checked && prevPageIndex == currentPageNumber - 1)
+                                {
+                                    HandlePageStitching(newLocation, isMovingDown: false);
+                                }
+
+                                GoToPage(prevPageIndex, true);
+                                displayedImageRect = GetDisplayedImageRect();
+                                newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
+                                if (twoPagePdf) newLocation.X = (int)displayedImageRect.Right - selectionRectangle.Width;
+                                pageChanged = true;
+                            }
                         }
                     }
                 }
