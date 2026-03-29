@@ -40,6 +40,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private string selectedImagePath = null;
         private PresentationForm activePresentationForm = null;
         private Rectangle selectionRectangle = Rectangle.Empty;
+        private RectangleF logicalSelectionNormalized = RectangleF.Empty; // Always document-relative (0-1)
         private Rectangle stagedSelectionRectangle = Rectangle.Empty;
         private Rectangle previousSelectionRectangle = Rectangle.Empty;
         private Point selectionStartPoint = Point.Empty;
@@ -65,6 +66,8 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool isPresenterBlackedOut = false; // Added for blackout toggle
         private bool hasAlwaysOnTopBeenAutoChecked = false;
         private bool isDisplayingStitchInMainPreview = false;
+        private RectangleF stitchingWindowRect1 = RectangleF.Empty; // Normalized relative to page 1 of stitch
+        private RectangleF stitchingWindowRect2 = RectangleF.Empty; // Normalized relative to page 2 of stitch
         private Image currentPdfPageImage = null;
         private Image stitchCachePage1 = null;
         private int stitchCachePage1Index = -1;
@@ -516,20 +519,41 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
 
             // Check if there is a selection rectangle to draw
-            if (!isDisplayingStitchInMainPreview && this.selectionRectangle.Width > 0 && this.selectionRectangle.Height > 0)
+            if (this.selectionRectangle.Width > 0 && this.selectionRectangle.Height > 0)
             {
-                // Draw the selection rectangle using a red pen
-                // You can choose a different color or style for the pen
-                using (Pen selectionPen = new Pen(Color.Red, 2)) // Using a pen of width 2 for better visibility
+                Rectangle rectToDraw = this.selectionRectangle;
+
+                // If stitching, the logical selection might be partially outside the displayed window
+                // We clamp it to ensure the red box stays visible at the seam
+                if (isDisplayingStitchInMainPreview)
                 {
-                    e.Graphics.DrawRectangle(selectionPen, this.selectionRectangle);
+                    RectangleF displayedRect = GetDisplayedImageRect();
+                    int left = Math.Max(rectToDraw.Left, (int)displayedRect.Left);
+                    int top = Math.Max(rectToDraw.Top, (int)displayedRect.Top);
+                    int right = Math.Min(rectToDraw.Right, (int)displayedRect.Right);
+                    int bottom = Math.Min(rectToDraw.Bottom, (int)displayedRect.Bottom);
+
+                    if (right > left && bottom > top)
+                    {
+                        rectToDraw = new Rectangle(left, top, right - left, bottom - top);
+                    }
+                    else
+                    {
+                        return; // Nothing to draw
+                    }
+                }
+
+                // Draw the selection rectangle using a red pen
+                using (Pen selectionPen = new Pen(Color.Red, 2))
+                {
+                    e.Graphics.DrawRectangle(selectionPen, rectToDraw);
                 }
             }
         }
 
         private RectangleF GetDisplayedImageRect()
         {
-            Image img = (isDisplayingStitchInMainPreview && currentPdfPageImage != null) ? currentPdfPageImage : picPreview.Image;
+            Image img = picPreview.Image;
             if (img == null)
                 return RectangleF.Empty;
 
@@ -799,7 +823,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         // In MainForm.cs
         private Rectangle ConvertOriginalImageRectToPreviewRect(RectangleF originalImageRect)
         {
-            Image img = (isDisplayingStitchInMainPreview && currentPdfPageImage != null) ? currentPdfPageImage : picPreview.Image;
+            Image img = picPreview.Image;
             if (this.picPreview == null || img == null || originalImageRect.IsEmpty ||
                 this.picPreview.ClientSize.Width <= 0 || this.picPreview.ClientSize.Height <= 0)
             {
@@ -970,6 +994,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void SaveCurrentSelection()
         {
+            if (isDisplayingStitchInMainPreview) return; // Don't save transient stitch selections
             if (!this.selectionRectangle.IsEmpty && this.selectedImagePath != null)
             {
                 RectangleF? imageCoordsSelection = GetSelectedRegionInImageCoordinates();
@@ -1102,6 +1127,13 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     isDisplayingStitchInMainPreview = false;
                     RenderPdfPageToPreview(currentPageNumber);
+                    // Restore selection to page-relative pixels
+                    this.selectionRectangle = ConvertOriginalImageRectToPreviewRect(new RectangleF(
+                        logicalSelectionNormalized.X * currentPdfPageImage.Width,
+                        logicalSelectionNormalized.Y * currentPdfPageImage.Height,
+                        logicalSelectionNormalized.Width * currentPdfPageImage.Width,
+                        logicalSelectionNormalized.Height * currentPdfPageImage.Height
+                    ));
                 }
 
                 // Allow picPreview to receive keyboard events
@@ -1183,181 +1215,119 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        private void HandlePageStitching(Point newLocation, bool isMovingDown)
+        private void HandlePageStitching(RectangleF currentRect, bool isMovingDown, Point logicalLocationForH)
         {
             if (this.currentPdfDocument == null) return;
             ClearHighlights();
-            Rectangle proposedRect = new Rectangle(newLocation, selectionRectangle.Size);
-            RectangleF? normalizedRegion = GetSelectedRegionNormalized(proposedRect);
 
-            if (!normalizedRegion.HasValue) return;
-
-            RectangleF currentRect = normalizedRegion.Value;
-            Bitmap stitched = null;
+            int p1Idx = currentPageNumber;
+            int p2Idx = currentPageNumber;
+            bool isColToCol = false;
+            float hCenter = logicalLocationForH.X + (selectionRectangle.Width / 2f);
+            RectangleF dRect = GetDisplayedImageRect();
+            float pageHCenter = dRect.Left + (dRect.Width / 2f);
+            bool isLeftSide = hCenter < pageHCenter;
+            logicalSelectionNormalized = currentRect;
 
             if (isMovingDown)
             {
-                // Check if we are stitching between columns or between pages
-                float hCenter = selectionRectangle.X + (selectionRectangle.Width / 2f);
-                RectangleF displayedImageRect = GetDisplayedImageRect();
-                float pageHCenter = displayedImageRect.Left + (displayedImageRect.Width / 2f);
-                bool isLeftSide = hCenter < pageHCenter;
-
-                if (twoPagePdf && isLeftSide)
-                {
-                    // Stitching Left Column to Right Column
-                    // Normalize horizontal coordinates relative to left/right halves
-                    float leftHalfXStart = 0f;
-                    float leftHalfXEnd = 0.5f;
-                    float rightHalfXStart = 0.5f;
-
-                    float visibleHeightOnLeft = Math.Max(0, 1.0f - currentRect.Top);
-                    float overflowHeight = currentRect.Height - visibleHeightOnLeft;
-
-                    if (overflowHeight > 0)
-                    {
-                        RectangleF leftSelection = new RectangleF(currentRect.X, currentRect.Y, currentRect.Width, visibleHeightOnLeft);
-                        RectangleF rightSelection = new RectangleF(currentRect.X + 0.5f, 0, currentRect.Width, overflowHeight);
-                        stitched = RenderStitchedPdfPages(currentPageNumber, currentPageNumber, leftSelection, rightSelection);
-                    }
-                }
-                else
-                {
-                    // Stitching between pages
-                    int skip = (skipOnePage && currentPageNumber < totalPdfPages - 2) ? 2 : 1;
-                    float sourceX = currentRect.X;
-                    if (twoPagePdf) sourceX = currentRect.X - 0.5f; // Selection was on right side, so it should be on left side of next page
-
-                    float visibleHeightOnPage1 = Math.Max(0, 1.0f - currentRect.Top);
-                    float overflowHeight = currentRect.Height - visibleHeightOnPage1;
-
-                    if (overflowHeight > 0)
-                    {
-                        RectangleF page1Selection = new RectangleF(currentRect.X, currentRect.Y, currentRect.Width, visibleHeightOnPage1);
-                        RectangleF page2Selection = new RectangleF(sourceX, 0, currentRect.Width, overflowHeight);
-                        stitched = RenderStitchedPdfPages(currentPageNumber, currentPageNumber + skip, page1Selection, page2Selection);
-                    }
-                }
+                if (twoPagePdf && isLeftSide) { p1Idx = currentPageNumber; p2Idx = currentPageNumber; isColToCol = true; }
+                else { p1Idx = currentPageNumber; p2Idx = currentPageNumber + ((skipOnePage && currentPageNumber < totalPdfPages - 2) ? 2 : 1); }
             }
-            else // Moving Up
+            else
             {
-                float hCenter = selectionRectangle.X + (selectionRectangle.Width / 2f);
-                RectangleF displayedImageRect = GetDisplayedImageRect();
-                float pageHCenter = displayedImageRect.Left + (displayedImageRect.Width / 2f);
-                bool isRightSide = hCenter >= pageHCenter;
-
-                if (twoPagePdf && isRightSide)
-                {
-                    // Stitching Right Column to Left Column
-                    float visibleHeightOnRight = Math.Max(0, currentRect.Bottom);
-                    float overflowHeight = currentRect.Height - visibleHeightOnRight;
-
-                    if (overflowHeight > 0)
-                    {
-                        RectangleF leftSelection = new RectangleF(currentRect.X - 0.5f, 1.0f - overflowHeight, currentRect.Width, overflowHeight);
-                        RectangleF rightSelection = new RectangleF(currentRect.X, 0, currentRect.Width, visibleHeightOnRight);
-                        stitched = RenderStitchedPdfPages(currentPageNumber, currentPageNumber, leftSelection, rightSelection);
-                    }
-                }
-                else
-                {
-                    // Stitching between pages
-                    int skip = (skipOnePage && currentPageNumber > 1) ? 2 : 1;
-                    float sourceX = currentRect.X;
-                    if (twoPagePdf) sourceX = currentRect.X + 0.5f; // Selection was on left side, so it should be on right side of prev page
-
-                    float overflowHeight = Math.Max(0, -currentRect.Top);
-                    float visibleHeightOnPage2 = currentRect.Height - overflowHeight;
-
-                    if (overflowHeight > 0)
-                    {
-                        RectangleF page1Selection = new RectangleF(sourceX, 1.0f - overflowHeight, currentRect.Width, overflowHeight);
-                        RectangleF page2Selection = new RectangleF(currentRect.X, 0, currentRect.Width, visibleHeightOnPage2);
-                        stitched = RenderStitchedPdfPages(currentPageNumber - skip, currentPageNumber, page1Selection, page2Selection);
-                    }
-                }
+                if (twoPagePdf && !isLeftSide) { p1Idx = currentPageNumber; p2Idx = currentPageNumber; isColToCol = true; }
+                else { p1Idx = currentPageNumber - ((skipOnePage && currentPageNumber > 1) ? 2 : 1); p2Idx = currentPageNumber; }
             }
 
+            // 1. High-res stitch for projector
+            RectangleF page1StitchSel, page2StitchSel;
+            if (isMovingDown)
+            {
+                float visibleH = Math.Max(0, 1.0f - currentRect.Top);
+                float overflowH = currentRect.Height - visibleH;
+                float targetX;
+                if (isColToCol) targetX = currentRect.X + 0.5f; // From Left col to Right col
+                else if (twoPagePdf) targetX = currentRect.X - 0.5f; // From Right col of p1 to Left col of p2
+                else targetX = currentRect.X; // Normal page to page
+
+                page1StitchSel = new RectangleF(currentRect.X, currentRect.Y, currentRect.Width, visibleH);
+                page2StitchSel = new RectangleF(targetX, 0, currentRect.Width, overflowH);
+            }
+            else
+            {
+                float overflowH = Math.Max(0, -currentRect.Top);
+                float visibleH = currentRect.Height - overflowH;
+                float sourceX;
+                if (isColToCol) sourceX = currentRect.X - 0.5f; // From Right col to Left col
+                else if (twoPagePdf) sourceX = currentRect.X + 0.5f; // From Left col of p2 to Right col of p1
+                else sourceX = currentRect.X; // Normal page to page
+
+                page1StitchSel = new RectangleF(sourceX, 1.0f - overflowH, currentRect.Width, overflowH);
+                page2StitchSel = new RectangleF(currentRect.X, 0, currentRect.Width, visibleH);
+            }
+
+            Bitmap stitched = RenderStitchedPdfPages(p1Idx, p2Idx, page1StitchSel, page2StitchSel);
             if (stitched != null)
             {
-                // Requirement 3: Show full-width stitched view in Main Preview
-                // and original selection stitch in Secondary Preview
-
-                // 1. Handle Secondary Preview (Staged area)
                 if (chkAutoStagePreview.Checked)
                 {
-                    this.secondaryPreviewPan = PointF.Empty;
-                    this.secondaryPreviewZoom = 1.0f;
-
-                    if (this.stagedStitchedImage != null)
-                    {
-                        Image temp = this.stagedStitchedImage;
-                        this.stagedStitchedImage = null;
-                        temp.Dispose();
-                    }
+                    if (this.stagedStitchedImage != null) this.stagedStitchedImage.Dispose();
                     this.stagedStitchedImage = stitched;
-                    if (this.stagedMasterImage != null)
-                    {
-                        Image temp = this.stagedMasterImage;
-                        this.stagedMasterImage = null;
-                        temp.Dispose();
-                    }
+                    if (this.stagedMasterImage != null) this.stagedMasterImage.Dispose();
+                    this.stagedMasterImage = null;
 
                     Bitmap fitted = CreateFittedBitmap(this.stagedStitchedImage, picSecondaryPreview.ClientSize, picSecondaryPreview.BackColor);
-
                     if (picSecondaryPreview.Image != null) picSecondaryPreview.Image.Dispose();
                     picSecondaryPreview.Image = fitted;
                     isSecondaryPreviewPopulated = true;
 
                     if (chkLinkLocalPreviewToPresenter.Checked)
-                    {
                         UpdateMainPresentation(null, -1, null, false, this.stagedStitchedImage, 0);
-                    }
+                }
+
+                // 2. Main Preview - Sliding Window Centered on Selection
+                // Combined space height is 2.0 (Page 1 top + Page 2 bottom). selCenter in [0, 2.0]
+                float selCenter = (isMovingDown) ? (currentRect.Y + currentRect.Height / 2f) : (1.0f + currentRect.Y + currentRect.Height / 2f);
+                float windowTop = selCenter - 0.5f;
+                windowTop = Math.Max(0, Math.Min(windowTop, 1.0f)); // Clamp window to combined area
+
+                float p1H_m = 1.0f - windowTop;
+                float p2H_m = windowTop;
+
+                if (isColToCol)
+                {
+                    // Column-to-column on the same page. Top segment is Left column (X=0), bottom is Right (X=0.5).
+                    stitchingWindowRect1 = new RectangleF(0, windowTop, 0.5f, p1H_m);
+                    stitchingWindowRect2 = new RectangleF(0.5f, 0, 0.5f, p2H_m);
                 }
                 else
                 {
-                    // If not auto-staging, we still need to keep the stitched image for the main preview
-                    // but we don't update staged fields yet.
+                    stitchingWindowRect1 = new RectangleF(0, windowTop, 1.0f, p1H_m);
+                    stitchingWindowRect2 = new RectangleF(0, 0, 1.0f, p2H_m);
                 }
 
-                // 2. Handle Main Preview (picPreview)
-                // Use full-width render to prevent zooming effect, and lower DPI for computer screen performance
-                int p1Idx = isMovingDown ? currentPageNumber : currentPageNumber - 1;
-                int p2Idx = isMovingDown ? currentPageNumber + 1 : currentPageNumber;
-
-                if (twoPagePdf)
-                {
-                    float hCenter = selectionRectangle.X + (selectionRectangle.Width / 2f);
-                    RectangleF dRect = GetDisplayedImageRect();
-                    float pHCenter = dRect.Left + (dRect.Width / 2f);
-                    bool isLeft = hCenter < pHCenter;
-
-                    if (isMovingDown && isLeft) { p1Idx = currentPageNumber; p2Idx = currentPageNumber; }
-                    else if (!isMovingDown && !isLeft) { p1Idx = currentPageNumber; p2Idx = currentPageNumber; }
-                    else if (isMovingDown && !isLeft) { p1Idx = currentPageNumber; p2Idx = currentPageNumber + ((skipOnePage && currentPageNumber < totalPdfPages - 2) ? 2 : 1); }
-                    else if (!isMovingDown && isLeft) { p1Idx = currentPageNumber - ((skipOnePage && currentPageNumber > 1) ? 2 : 1); p2Idx = currentPageNumber; }
-                }
-
-                Bitmap mainStitched = RenderStitchedPdfPages(
-                    p1Idx,
-                    p2Idx,
-                    isMovingDown ? new RectangleF(0, currentRect.Y, 1.0f, currentRect.Height - (currentRect.Height - Math.Max(0, 1.0f - currentRect.Top))) : new RectangleF(0, 1.0f - Math.Max(0, -currentRect.Top), 1.0f, Math.Max(0, -currentRect.Top)),
-                    isMovingDown ? new RectangleF(0, 0, 1.0f, currentRect.Height - Math.Max(0, 1.0f - currentRect.Top)) : new RectangleF(0, 0, 1.0f, currentRect.Height - Math.Max(0, -currentRect.Top)),
-                    fullWidth: true,
-                    renderDpi: 150f
-                );
-
+                Bitmap mainStitched = RenderStitchedPdfPages(p1Idx, p2Idx, stitchingWindowRect1, stitchingWindowRect2, fullWidth: !isColToCol, renderDpi: 150f);
                 if (mainStitched != null)
                 {
-                    if (picPreview.Image != null && picPreview.Image != currentPdfPageImage)
-                    {
-                        Image temp = picPreview.Image;
-                        picPreview.Image = null;
-                        temp.Dispose();
-                    }
-
+                    if (picPreview.Image != null && picPreview.Image != currentPdfPageImage) picPreview.Image.Dispose();
                     picPreview.Image = mainStitched;
                     isDisplayingStitchInMainPreview = true;
+
+                    // Update selectionRectangle to window-relative pixels for picPreview_Paint
+                    float selTopAbs = (isMovingDown) ? currentRect.Y : (1.0f + currentRect.Y);
+                    float selY_inWin = selTopAbs - windowTop;
+
+                    float selX_inWin = isColToCol ? (currentRect.X % 0.5f) / 0.5f : currentRect.X;
+                    float selW_inWin = isColToCol ? currentRect.Width / 0.5f : currentRect.Width;
+
+                    RectangleF selRectInWin = new RectangleF(
+                        selX_inWin * mainStitched.Width,
+                        selY_inWin * mainStitched.Height,
+                        selW_inWin * mainStitched.Width,
+                        currentRect.Height * mainStitched.Height
+                    );
+                    this.selectionRectangle = ConvertOriginalImageRectToPreviewRect(selRectInWin);
                 }
 
                 if (chkAutoStagePreview.Checked)
@@ -1448,22 +1418,42 @@ namespace DreamsLive_Solutions_PresenterApp1
                             if (twoPagePdf) newLocation.X = (int)displayedImageRect.Right - selectionRectangle.Width;
                         }
                     }
-                    else if (startStitchingDown || startStitchingUp)
+                    else if (startStitchingDown)
                     {
-                        // Check if transition is possible
-                        bool canTransition = false;
-                        if (yDirection > 0)
-                        {
-                            canTransition = (twoPagePdf && isLeftSide) || (currentPageNumber < totalPdfPages - 1);
-                        }
-                        else
-                        {
-                            canTransition = (twoPagePdf && !isLeftSide) || (currentPageNumber > 0);
-                        }
-
+                        bool canTransition = (twoPagePdf && isLeftSide) || (currentPageNumber < totalPdfPages - 1);
                         if (canTransition)
                         {
-                            HandlePageStitching(newLocation, yDirection > 0);
+                            // Calculate logical rect relative to current page (allowing overflow > 1.0)
+                            float imgW = currentPdfPageImage.Width;
+                            float imgH = currentPdfPageImage.Height;
+                            RectangleF currentRect = new RectangleF(
+                                (newLocation.X - displayedImageRect.Left) / displayedImageRect.Width,
+                                (newLocation.Y - displayedImageRect.Top) / displayedImageRect.Height,
+                                selectionRectangle.Width / displayedImageRect.Width,
+                                selectionRectangle.Height / displayedImageRect.Height
+                            );
+                            HandlePageStitching(currentRect, true, newLocation);
+                            // Keep selection at the bottom edge visually during stitching
+                            newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
+                        }
+                    }
+                    else if (startStitchingUp)
+                    {
+                        bool canTransition = (twoPagePdf && !isLeftSide) || (currentPageNumber > 0);
+                        if (canTransition)
+                        {
+                            // Calculate logical rect relative to current page (allowing overflow < 0)
+                            float imgW = currentPdfPageImage.Width;
+                            float imgH = currentPdfPageImage.Height;
+                            RectangleF currentRect = new RectangleF(
+                                (newLocation.X - displayedImageRect.Left) / displayedImageRect.Width,
+                                (newLocation.Y - displayedImageRect.Top) / displayedImageRect.Height,
+                                selectionRectangle.Width / displayedImageRect.Width,
+                                selectionRectangle.Height / displayedImageRect.Height
+                            );
+                            HandlePageStitching(currentRect, false, newLocation);
+                            // Keep selection at the top edge visually during stitching
+                            newLocation.Y = (int)displayedImageRect.Top;
                         }
                     }
                     else if (isDisplayingStitchInMainPreview)
@@ -1472,6 +1462,14 @@ namespace DreamsLive_Solutions_PresenterApp1
                         ClearStitchCache();
                         isDisplayingStitchInMainPreview = false;
                         RenderPdfPageToPreview(currentPageNumber);
+
+                        // Restore selection to page-relative pixels
+                        this.selectionRectangle = ConvertOriginalImageRectToPreviewRect(new RectangleF(
+                            logicalSelectionNormalized.X * currentPdfPageImage.Width,
+                            logicalSelectionNormalized.Y * currentPdfPageImage.Height,
+                            logicalSelectionNormalized.Width * currentPdfPageImage.Width,
+                            logicalSelectionNormalized.Height * currentPdfPageImage.Height
+                        ));
                     }
                 }
 
@@ -1481,9 +1479,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                     if (newLocation.Y < (int)displayedImageRect.Top) newLocation.Y = (int)displayedImageRect.Top;
                     if (newLocation.X + selectionRectangle.Width > (int)displayedImageRect.Right) newLocation.X = (int)displayedImageRect.Right - selectionRectangle.Width;
                     if (newLocation.Y + selectionRectangle.Height > (int)displayedImageRect.Bottom) newLocation.Y = (int)displayedImageRect.Bottom - selectionRectangle.Height;
-                }
 
-                selectionRectangle.Location = newLocation;
+                    selectionRectangle.Location = newLocation;
+                    var norm = GetSelectedRegionNormalized(selectionRectangle);
+                    if (norm.HasValue) logicalSelectionNormalized = norm.Value;
+                }
+                // If stitching, selectionRectangle was already updated by HandlePageStitching
                 UpdateSelectionSizeLabel();
                 picPreview.Invalidate();
 
@@ -1540,6 +1541,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
             // Reset the main preview area before loading new content.
             this.selectionRectangle = Rectangle.Empty;
+            this.logicalSelectionNormalized = RectangleF.Empty;
             this.previousSelectionRectangle = Rectangle.Empty;
             UpdateSelectionSizeLabel();
             this.isSelecting = false;
@@ -1596,6 +1598,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     temp.Dispose();
                 }
                 this.isDisplayingStitchInMainPreview = false;
+            this.logicalSelectionNormalized = RectangleF.Empty;
                 this.selectedImagePath = pdfPath;
                 this.lblImagePath.Text = "Selected PDF: " + Path.GetFileName(this.selectedImagePath);
 
@@ -1699,6 +1702,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                 // Restore any saved selection for this image.
                 this.selectionRectangle = Rectangle.Empty;
+                this.logicalSelectionNormalized = RectangleF.Empty;
                 var selections = LoadSelections();
                 var foundSelection = selections.FirstOrDefault(s => s.ImagePath.Equals(this.selectedImagePath, StringComparison.OrdinalIgnoreCase));
 
@@ -1862,6 +1866,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 isDisplayingStitchInMainPreview = false;
                 RenderPdfPageToPreview(currentPageNumber);
+                // logic for restoring selection removed here as it's updated below anyway
             }
 
             if (string.IsNullOrEmpty(selectedImagePath)) return;
@@ -2131,6 +2136,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         public RectangleF? GetCurrentSelectionNormalized()
         {
             if (selectionRectangle.IsEmpty) return null;
+            if (isDisplayingStitchInMainPreview) return logicalSelectionNormalized;
             return GetSelectedRegionNormalized(selectionRectangle);
         }
 
@@ -2697,7 +2703,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             try
             {
-                Image img = (isDisplayingStitchInMainPreview && currentPdfPageImage != null) ? currentPdfPageImage : picPreview.Image;
+                Image img = picPreview.Image;
                 if (img == null || rect.IsEmpty || rect.Width <= 0 || rect.Height <= 0)
                 {
                     return null; // No image or no valid selection
@@ -2760,7 +2766,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private RectangleF? GetSelectedRegionNormalized(Rectangle rect)
         {
             RectangleF? pixelRegion = GetSelectedRegionInImageCoordinates(rect);
-            Image img = (isDisplayingStitchInMainPreview && currentPdfPageImage != null) ? currentPdfPageImage : picPreview.Image;
+            Image img = picPreview.Image;
             if (!pixelRegion.HasValue || img == null)
             {
                 return null;
@@ -2807,33 +2813,24 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 PdfRenderFlags flags = PdfRenderFlags.Annotations | PdfRenderFlags.LcdText | PdfRenderFlags.CorrectFromDpi;
 
-                Image page1Image;
-                Image page2Image;
-
-                if (renderDpi == 600f)
+                // Always use 600 DPI cache if available and relevant, scaling down if requested renderDpi is lower.
+                // This is much faster than re-rendering from PDF.
+                if (stitchCachePage1Index != page1Index || stitchCachePage1 == null)
                 {
-                    if (stitchCachePage1Index != page1Index || stitchCachePage1 == null)
-                    {
-                        if (stitchCachePage1 != null) stitchCachePage1.Dispose();
-                        stitchCachePage1 = currentPdfDocument.Render(page1Index, 600f, 600f, flags);
-                        stitchCachePage1Index = page1Index;
-                    }
+                    if (stitchCachePage1 != null) stitchCachePage1.Dispose();
+                    stitchCachePage1 = currentPdfDocument.Render(page1Index, 600f, 600f, flags);
+                    stitchCachePage1Index = page1Index;
+                }
 
-                    if (stitchCachePage2Index != page2Index || stitchCachePage2 == null)
-                    {
-                        if (stitchCachePage2 != null) stitchCachePage2.Dispose();
-                        stitchCachePage2 = (page1Index == page2Index) ? stitchCachePage1 : currentPdfDocument.Render(page2Index, 600f, 600f, flags);
-                        stitchCachePage2Index = page2Index;
-                    }
-                    page1Image = stitchCachePage1;
-                    page2Image = stitchCachePage2;
-                }
-                else
+                if (stitchCachePage2Index != page2Index || stitchCachePage2 == null)
                 {
-                    // Direct render for non-cached (lower DPI)
-                    page1Image = currentPdfDocument.Render(page1Index, renderDpi, renderDpi, flags);
-                    page2Image = (page1Index == page2Index) ? page1Image : currentPdfDocument.Render(page2Index, renderDpi, renderDpi, flags);
+                    if (stitchCachePage2 != null && stitchCachePage2 != stitchCachePage1) stitchCachePage2.Dispose();
+                    stitchCachePage2 = (page1Index == page2Index) ? stitchCachePage1 : currentPdfDocument.Render(page2Index, 600f, 600f, flags);
+                    stitchCachePage2Index = page2Index;
                 }
+
+                Image page1Image = stitchCachePage1;
+                Image page2Image = stitchCachePage2;
 
                 if (fullWidth)
                 {
@@ -2883,11 +2880,22 @@ namespace DreamsLive_Solutions_PresenterApp1
                     }
                 }
 
-                // If we didn't use the cache, we need to dispose the images
                 if (renderDpi != 600f)
                 {
-                    page1Image.Dispose();
-                    if (page2Image != page1Image) page2Image.Dispose();
+                    // Scale the high-res stitch to the requested lower DPI
+                    float scaleFactor = renderDpi / 600f;
+                    int scaledWidth = (int)Math.Max(1, stitchedWidth * scaleFactor);
+                    int scaledHeight = (int)Math.Max(1, stitchedHeight * scaleFactor);
+                    Bitmap scaledStitch = new Bitmap(scaledWidth, scaledHeight, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                    scaledStitch.SetResolution(renderDpi, renderDpi);
+
+                    using (Graphics gScale = Graphics.FromImage(scaledStitch))
+                    {
+                        gScale.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear; // Fast scaling
+                        gScale.DrawImage(stitchedImage, 0, 0, scaledWidth, scaledHeight);
+                    }
+                    stitchedImage.Dispose();
+                    return scaledStitch;
                 }
 
                 return stitchedImage;
