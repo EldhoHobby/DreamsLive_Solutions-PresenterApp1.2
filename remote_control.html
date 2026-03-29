@@ -1153,9 +1153,16 @@
             document.getElementById('rotation-val').textContent = '0';
 
             img.onload = () => {
+                // Clear onload handler immediately to prevent re-initialization during cropper.replace
+                img.onload = null;
+
                 // Wait for layout to settle
                 setTimeout(() => {
-                    if (cropper) cropper.destroy();
+                    if (cropper && !isEditing) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
+                    if (cropper) return; // Already initialized or replaced
 
                     // If we have a normalized selection from host status, convert it to natural pixels for Cropper
                     if (!isUpload && lastNormalizedSelection) {
@@ -1461,21 +1468,30 @@
 
                     // Track file/page changes to update editor
                     if (status.currentFilePath !== lastStatusFilePath || status.pdfCurrentPage !== lastStatusPageNum) {
-                        if (isEditing && cropper && !isUploadEditing && status.currentFilePath === lastStatusFilePath) {
-                            console.log("Page change detected in editor, reloading content...");
+                        if (isEditing && cropper && !isUploadEditing) {
+                            console.log("File or page change detected in editor, reloading content...");
                             const currentData = cropper.getData();
-                            cropper.replace(`/database/current?t=${new Date().getTime()}`);
 
-                            // Ensure data is maintained and synced if Live Sync is on
-                            setTimeout(() => {
+                            // Use ready event for smoother data restoration after replace
+                            const imgEl = document.getElementById('editor-image');
+                            const onReady = () => {
                                 if (cropper && isEditing) {
-                                    cropper.setData(currentData);
+                                    // If it's a new file, we might want to reset crop, but for PDF pages we maintain it
+                                    if (status.currentFilePath === lastStatusFilePath) {
+                                        cropper.setData(currentData);
+                                    }
                                     if (document.getElementById('chkLiveSyncEditor').checked) {
                                         const imageData = cropper.getImageData();
                                         syncCrop(cropper.getData(), imageData.naturalWidth, imageData.naturalHeight, true);
                                     }
                                 }
-                            }, 500);
+                                imgEl.removeEventListener('ready', onReady);
+                            };
+                            // Remove any old ready listener first
+                            imgEl.removeEventListener('ready', onReady);
+                            imgEl.addEventListener('ready', onReady);
+
+                            cropper.replace(`/database/current?t=${new Date().getTime()}`);
                         }
 
                         if (status.currentFilePath !== lastStatusFilePath) {
