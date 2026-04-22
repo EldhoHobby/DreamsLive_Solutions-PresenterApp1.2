@@ -554,6 +554,25 @@
             <button id="btnCloseLivePresenter" onclick="performAction('close')" style="display: none;">Close Live</button>
         </div>
 
+        <!-- PowerPoint Controls -->
+        <div id="ppt-controls" class="controls" style="display: none; background: rgba(0,0,0,0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <div style="grid-column: 1 / -1; text-align: center; font-weight: bold; margin-bottom: 10px;">PowerPoint Mode</div>
+            <button class="big-button" onclick="performAction('ppt-prev')" style="background-color: var(--accent-blue); color: white;">&laquo; Back</button>
+            <button class="big-button" onclick="performAction('ppt-next')" style="background-color: var(--accent-green); color: white;">Next &raquo;</button>
+
+            <div style="grid-column: 1 / -1; display: flex; justify-content: center; gap: 10px; margin-top: 10px;">
+                <button onclick="performAction('ppt-font-minus')">A-</button>
+                <button onclick="performAction('ppt-font-plus')">A+</button>
+                <button onclick="performAction('ppt-scroll-up')">Scroll Up</button>
+                <button onclick="performAction('ppt-scroll-down')">Scroll Down</button>
+            </div>
+
+            <div id="ppt-notes-display" style="grid-column: 1 / -1; margin-top: 15px; background: var(--container-bg); border: 1px solid var(--border-color); padding: 15px; max-height: 300px; overflow-y: auto; border-radius: 4px; line-height: 1.4;">
+                <div id="ppt-notes-text" style="font-size: 1.2em; white-space: pre-wrap;"></div>
+            </div>
+            <div id="ppt-status-text" style="grid-column: 1 / -1; text-align: center; font-size: 0.9em; margin-top: 5px; opacity: 0.7;">Slide 0 of 0</div>
+        </div>
+
         <div id="dashboard-pdf-controls" class="pdf-controls" style="display: none;">
             <button id="btnPdfPrev" onclick="performAction('pdf-prev')">Prev</button>
             <div class="pdf-page-selector">
@@ -772,6 +791,7 @@
         let lastRotationValue = 0;
         let isPinching = false;
         let lastGalleryVersion = -1;
+        let lastPPTNotes = "";
 
 
         let secondaryPan = { x: 0, y: 0 };
@@ -1680,6 +1700,20 @@
                 }
 
                 isInitialStatusLoad = false;
+
+                // Update PowerPoint state
+                const pptControls = document.getElementById('ppt-controls');
+                if (status.isPPTModeActive) {
+                    pptControls.style.display = 'grid';
+                    document.getElementById('ppt-status-text').textContent = `Slide ${status.pptCurrentSlide} of ${status.pptTotalSlides}`;
+
+                    if (status.pptNotes !== lastPPTNotes) {
+                        document.getElementById('ppt-notes-text').textContent = status.pptNotes || "(No notes)";
+                        lastPPTNotes = status.pptNotes;
+                    }
+                } else {
+                    pptControls.style.display = 'none';
+                }
             } catch (error) {
                 console.error('Error fetching status:', error);
                 document.getElementById('connection-status-val').textContent = 'Offline';

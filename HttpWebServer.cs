@@ -148,7 +148,15 @@ namespace DreamsLive_Solutions_PresenterApp1
                         await WriteImageResponse(response, _mainForm.GetPreviewImage());
                         break;
                     case "/preview/secondary":
-                        await WriteImageResponse(response, _mainForm.GetSecondaryPreviewImage());
+                        if (_mainForm.IsPPTModeActive)
+                        {
+                            var picMirror = _mainForm.Controls.Find("picPPTMirror", true).FirstOrDefault() as PictureBox;
+                            await WriteImageResponse(response, picMirror?.Image);
+                        }
+                        else
+                        {
+                            await WriteImageResponse(response, _mainForm.GetSecondaryPreviewImage());
+                        }
                         break;
                     case "/splash.png":
                         await WriteFileResponse(response, "splash.png", "image/png");
@@ -502,6 +510,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                         case "pdf-prev": _mainForm.PreviousPage(); break;
                         case "pdf-next": _mainForm.NextPage(); break;
                         case "clear-message": _mainForm.ClearMessage(); break;
+                        case "ppt-next": _mainForm.GetPowerPointManager()?.Next(); break;
+                        case "ppt-prev": _mainForm.GetPowerPointManager()?.Previous(); break;
+                        case "ppt-font-plus": _mainForm.GetNotesViewForm()?.AdjustFontSize(4); break;
+                        case "ppt-font-minus": _mainForm.GetNotesViewForm()?.AdjustFontSize(-4); break;
+                        case "ppt-scroll-up": _mainForm.GetNotesViewForm()?.ScrollNotes(-1); break;
+                        case "ppt-scroll-down": _mainForm.GetNotesViewForm()?.ScrollNotes(1); break;
                     }
                 }));
             }
@@ -599,6 +613,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             int selectionHeight = 0;
             bool isLicenseExpired = false;
             long galleryVersion = 0;
+            bool isPPTModeActive = false;
+            string pptNotes = "";
+            int pptCurrentSlide = 0;
+            int pptTotalSlides = 0;
 
             _mainForm.Invoke((Action)(() =>
             {
@@ -659,6 +677,17 @@ namespace DreamsLive_Solutions_PresenterApp1
                 selectionHeight = _mainForm.SelectionHeight;
                 isLicenseExpired = new UsageManager().IsLicenseExpired();
                 galleryVersion = _mainForm.GalleryVersion;
+                isPPTModeActive = _mainForm.IsPPTModeActive;
+                if (isPPTModeActive)
+                {
+                    var ppt = _mainForm.GetPowerPointManager();
+                    if (ppt != null)
+                    {
+                        pptNotes = ppt.CurrentNotes;
+                        pptCurrentSlide = ppt.CurrentSlideIndex;
+                        pptTotalSlides = ppt.TotalSlides;
+                    }
+                }
             }));
 
             var statusObject = new
@@ -695,7 +724,11 @@ namespace DreamsLive_Solutions_PresenterApp1
                 selectionWidth,
                 selectionHeight,
                 isLicenseExpired,
-                galleryVersion
+                galleryVersion,
+                isPPTModeActive,
+                pptNotes,
+                pptCurrentSlide,
+                pptTotalSlides
             };
 
             return JsonConvert.SerializeObject(statusObject);
