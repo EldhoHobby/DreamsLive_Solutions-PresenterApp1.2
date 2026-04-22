@@ -73,6 +73,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnSnip = new System.Windows.Forms.Button();
             this.btnOpenGallery = new System.Windows.Forms.Button();
             this.btnAddToDatabase = new System.Windows.Forms.Button();
+            this.btnPPTMode = new System.Windows.Forms.Button();
+            this.pnlPPTMirror = new System.Windows.Forms.Panel();
+            this.picPPTMirror = new System.Windows.Forms.PictureBox();
+            this.lblPPTMirror = new System.Windows.Forms.Label();
             this.panelSecondaryPreviewBorder.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -517,11 +521,55 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnAddToDatabase.UseVisualStyleBackColor = true;
             this.btnAddToDatabase.Click += new System.EventHandler(this.btnAddToDatabase_Click);
             // 
+            // btnPPTMode
+            //
+            this.btnPPTMode.Location = new System.Drawing.Point(612, 196);
+            this.btnPPTMode.Name = "btnPPTMode";
+            this.btnPPTMode.Size = new System.Drawing.Size(136, 36);
+            this.btnPPTMode.TabIndex = 55;
+            this.btnPPTMode.Text = "PowerPoint Mode";
+            this.btnPPTMode.UseVisualStyleBackColor = true;
+            this.btnPPTMode.Click += new System.EventHandler(this.btnPPTMode_Click);
+            //
+            // pnlPPTMirror
+            //
+            this.pnlPPTMirror.BackColor = System.Drawing.Color.Black;
+            this.pnlPPTMirror.Controls.Add(this.picPPTMirror);
+            this.pnlPPTMirror.Controls.Add(this.lblPPTMirror);
+            this.pnlPPTMirror.Location = new System.Drawing.Point(4, 108);
+            this.pnlPPTMirror.Name = "pnlPPTMirror";
+            this.pnlPPTMirror.Size = new System.Drawing.Size(600, 425);
+            this.pnlPPTMirror.TabIndex = 56;
+            this.pnlPPTMirror.Visible = false;
+            //
+            // picPPTMirror
+            //
+            this.picPPTMirror.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.picPPTMirror.Location = new System.Drawing.Point(0, 0);
+            this.picPPTMirror.Name = "picPPTMirror";
+            this.picPPTMirror.Size = new System.Drawing.Size(600, 425);
+            this.picPPTMirror.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.picPPTMirror.TabIndex = 0;
+            this.picPPTMirror.TabStop = false;
+            //
+            // lblPPTMirror
+            //
+            this.lblPPTMirror.AutoSize = true;
+            this.lblPPTMirror.BackColor = System.Drawing.Color.Transparent;
+            this.lblPPTMirror.ForeColor = System.Drawing.Color.White;
+            this.lblPPTMirror.Location = new System.Drawing.Point(3, 3);
+            this.lblPPTMirror.Name = "lblPPTMirror";
+            this.lblPPTMirror.Size = new System.Drawing.Size(63, 13);
+            this.lblPPTMirror.TabIndex = 1;
+            this.lblPPTMirror.Text = "PPT Mirror";
+            //
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1359, 600);
+            this.Controls.Add(this.pnlPPTMirror);
+            this.Controls.Add(this.btnPPTMode);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.btnMessageOkay);
@@ -625,5 +673,9 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnSnip;
         private System.Windows.Forms.Button btnOpenGallery;
         private System.Windows.Forms.Button btnAddToDatabase;
+        private System.Windows.Forms.Button btnPPTMode;
+        private System.Windows.Forms.Panel pnlPPTMirror;
+        private System.Windows.Forms.PictureBox picPPTMirror;
+        private System.Windows.Forms.Label lblPPTMirror;
     }
 }

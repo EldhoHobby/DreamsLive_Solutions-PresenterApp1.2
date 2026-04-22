@@ -25,6 +25,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private GalleryForm _galleryForm;
         private System.Windows.Forms.Timer _statusUpdateTimer;
         private System.Windows.Forms.Timer _autoStageDebounceTimer;
+        private System.Windows.Forms.Timer _pptMirrorTimer;
         private FileSystemWatcher _dbWatcher;
         private long _galleryVersion = 0;
 
@@ -64,6 +65,13 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool isDarkMode = false; // Added for theme switching
         private bool isPresenterBlackedOut = false; // Added for blackout toggle
         private bool hasAlwaysOnTopBeenAutoChecked = false;
+
+        // PPT Mode Fields
+        private PowerPointManager _pptManager;
+        private NotesViewForm _notesForm;
+        public int AudienceScreenIndex { get; set; } = 1;
+        public int NotesScreenIndex { get; set; } = 2;
+        private bool _isPPTModeActive = false;
 
         // New PDF Navigation Settings - Reset to false on startup
         private bool skipOnePage = false;
@@ -285,6 +293,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 _autoStageDebounceTimer.Stop();
                 btnStageContent_Click(this, EventArgs.Empty);
             };
+
+            _pptMirrorTimer = new System.Windows.Forms.Timer();
+            _pptMirrorTimer.Interval = 100; // 10 FPS
+            _pptMirrorTimer.Tick += PptMirrorTimer_Tick;
 
             this.lblPreviewLabel.BringToFront();
             this.lblStagedLabel.BringToFront();
@@ -603,6 +615,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                                 lblDatabaseFolderPath.Text = "Database Folder: Not Selected";
                             }
                         }
+                        if (settings.ContainsKey("AudienceScreenIndex") && int.TryParse(settings["AudienceScreenIndex"], out int asi)) AudienceScreenIndex = asi;
+                        if (settings.ContainsKey("NotesScreenIndex") && int.TryParse(settings["NotesScreenIndex"], out int nsi)) NotesScreenIndex = nsi;
                     }
                 }
                 catch (Exception ex)
@@ -653,7 +667,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     { "DatabaseFolderPath", DatabaseFolderPath },
                     { "SkipOnePage", skipOnePage.ToString() },
-                    { "TwoPagePdf", twoPagePdf.ToString() }
+                    { "TwoPagePdf", twoPagePdf.ToString() },
+                    { "AudienceScreenIndex", AudienceScreenIndex.ToString() },
+                    { "NotesScreenIndex", NotesScreenIndex.ToString() }
                 };
                 string json = JsonConvert.SerializeObject(settings, Formatting.Indented);
                 File.WriteAllText(filePath, json);
@@ -3004,6 +3020,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
 
             _httpWebServer?.Stop();
+            _pptMirrorTimer?.Stop();
+            _pptManager?.Cleanup();
+            _notesForm?.Close();
 
             if (_dbWatcher != null)
             {
@@ -4187,6 +4206,102 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.WindowState = FormWindowState.Normal;
             this.BringToFront();
         }
-    }
 
+        private void btnPPTMode_Click(object sender, EventArgs e)
+        {
+            if (_isPPTModeActive)
+            {
+                StopPPTMode();
+            }
+            else
+            {
+                StartPPTMode();
+            }
+        }
+
+        private void StartPPTMode()
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "PowerPoint Presentations|*.pptx;*.ppt;*.ppsx;*.pps";
+                if (ofd.ShowDialog(this) == DialogResult.OK)
+                {
+                    try
+                    {
+                        if (_pptManager == null) _pptManager = new PowerPointManager();
+                        _pptManager.SlideChanged += (s, ev) => Interlocked.Increment(ref _galleryVersion); // Trigger remote status refresh
+
+                        Screen[] screens = Screen.AllScreens;
+                        Screen audienceScreen = (AudienceScreenIndex < screens.Length) ? screens[AudienceScreenIndex] : screens[0];
+                        Screen notesScreen = (NotesScreenIndex < screens.Length) ? screens[NotesScreenIndex] : screens[0];
+
+                        _pptManager.OpenPresentation(ofd.FileName, audienceScreen);
+
+                        _notesForm = new NotesViewForm();
+                        _pptManager.NotesChanged += (s, notes) => _notesForm.UpdateNotes(notes);
+
+                        if (screens.Length > 2)
+                        {
+                            _notesForm.StartPosition = FormStartPosition.Manual;
+                            _notesForm.Bounds = notesScreen.Bounds;
+                            _notesForm.WindowState = FormWindowState.Maximized;
+                        }
+                        else
+                        {
+                            _notesForm.StartPosition = FormStartPosition.CenterScreen;
+                            _notesForm.Size = new Size(400, 600);
+                        }
+                        _notesForm.Show();
+                        _notesForm.UpdateNotes(_pptManager.CurrentNotes);
+
+                        _isPPTModeActive = true;
+                        btnPPTMode.Text = "Stop PPT Mode";
+                        pnlPPTMirror.Visible = true;
+                        panelSecondaryPreviewBorder.Visible = false;
+                        _pptMirrorTimer.Start();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void StopPPTMode()
+        {
+            _pptMirrorTimer.Stop();
+            _pptManager?.Cleanup();
+            _notesForm?.Close();
+            _isPPTModeActive = false;
+            btnPPTMode.Text = "PowerPoint Mode";
+            pnlPPTMirror.Visible = false;
+            panelSecondaryPreviewBorder.Visible = true;
+        }
+
+        private void PptMirrorTimer_Tick(object sender, EventArgs e)
+        {
+            if (!_isPPTModeActive) return;
+
+            try
+            {
+                Screen[] screens = Screen.AllScreens;
+                Screen audienceScreen = (AudienceScreenIndex < screens.Length) ? screens[AudienceScreenIndex] : screens[0];
+
+                Bitmap bmp = new Bitmap(audienceScreen.Bounds.Width, audienceScreen.Bounds.Height);
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.CopyFromScreen(audienceScreen.Bounds.X, audienceScreen.Bounds.Y, 0, 0, bmp.Size);
+                }
+
+                if (picPPTMirror.Image != null) picPPTMirror.Image.Dispose();
+                picPPTMirror.Image = bmp;
+            }
+            catch { }
+        }
+
+        public PowerPointManager GetPowerPointManager() => _pptManager;
+        public NotesViewForm GetNotesViewForm() => _notesForm;
+        public bool IsPPTModeActive => _isPPTModeActive;
+    }
 }
