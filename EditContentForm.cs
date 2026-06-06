@@ -38,6 +38,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             _currentRotation = initialRotation;
 
             InitializeComponent();
+            LinearTheme.Apply(this);
 
             this.Text = "Edit / Crop Content";
             this.Size = new Size(1000, 800);

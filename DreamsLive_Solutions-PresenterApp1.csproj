@@ -98,6 +98,7 @@
     </Compile>
     <Compile Include="ActivationStatusHelper.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="LinearTheme.cs" />
     <Compile Include="DatabaseFileInfo.cs" />
     <Compile Include="GalleryForm.cs">
       <SubType>Form</SubType>

@@ -61,7 +61,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private Bitmap stagedStitchedImage = null;          // High-res stitched bitmap if stitching is active
         private Bitmap stagedMasterImage = null;            // High-res master bitmap for non-stitched content
         private bool isSecondaryPreviewPopulated = false;   // True if secondary preview has content
-        private bool isDarkMode = false; // Added for theme switching
+        private bool isDarkMode = true; // Added for theme switching - default to the modern dark look
         private bool isPresenterBlackedOut = false; // Added for blackout toggle
         private bool hasAlwaysOnTopBeenAutoChecked = false;
 

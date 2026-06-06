@@ -21,19 +21,8 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void ApplyTheme()
         {
-            // Simple theme application or match MainForm's logic if needed
-            // For now, standard colors
-            this.BackColor = Color.FromArgb(45, 45, 48);
-            this.ForeColor = Color.White;
-            foreach (Control c in this.Controls)
-            {
-                c.ForeColor = Color.White;
-                if (c is Button btn)
-                {
-                    btn.BackColor = Color.FromArgb(63, 63, 70);
-                    btn.FlatStyle = FlatStyle.Flat;
-                }
-            }
+            LinearTheme.SetMode(_mainForm != null ? _mainForm.IsDarkMode : LinearTheme.IsDark);
+            LinearTheme.Apply(this);
         }
 
         private void btnSave_Click(object sender, EventArgs e)

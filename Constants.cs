@@ -4,20 +4,20 @@ namespace DreamsLive_Solutions_PresenterApp1
 {
     internal static class Constants
     {
-        // Theme Colors for btnClearPresenterDisplay (Blackout Button)
-        public static readonly Color LightTheme_BlackoutButton_Normal_Back = SystemColors.Control;
-        public static readonly Color LightTheme_BlackoutButton_Normal_Fore = SystemColors.ControlText;
-        public static readonly Color LightTheme_BlackoutButton_Active_Back = Color.LightCoral;
+        // Theme Colors for btnClearPresenterDisplay (Blackout Button) - Linear palette.
+        public static readonly Color LightTheme_BlackoutButton_Normal_Back = Color.FromArgb(0xFF, 0xFF, 0xFF); // surface-1 light
+        public static readonly Color LightTheme_BlackoutButton_Normal_Fore = Color.FromArgb(0x1C, 0x1D, 0x21); // ink light
+        public static readonly Color LightTheme_BlackoutButton_Active_Back = Color.FromArgb(0xC0, 0x3A, 0x3A); // danger light
         public static readonly Color LightTheme_BlackoutButton_Active_Fore = Color.White;
 
-        public static readonly Color DarkTheme_BlackoutButton_Normal_Back = Color.FromArgb(63, 63, 70);
-        public static readonly Color DarkTheme_BlackoutButton_Normal_Fore = Color.White;
-        public static readonly Color DarkTheme_BlackoutButton_Active_Back = Color.DarkRed;
+        public static readonly Color DarkTheme_BlackoutButton_Normal_Back = Color.FromArgb(0x14, 0x15, 0x18); // surface-1 dark
+        public static readonly Color DarkTheme_BlackoutButton_Normal_Fore = Color.FromArgb(0xF7, 0xF8, 0xF8); // ink dark
+        public static readonly Color DarkTheme_BlackoutButton_Active_Back = Color.FromArgb(0xD2, 0x5E, 0x5E); // danger dark
         public static readonly Color DarkTheme_BlackoutButton_Active_Fore = Color.White;
 
-        // Border colors for picSecondaryPreview's wrapper panel
-        public static readonly Color BorderColorDefault = Color.Gray;
-        public static readonly Color BorderColorStagedNotLive = Color.Green;
-        public static readonly Color BorderColorLive = Color.Red;
+        // Border colors for picSecondaryPreview's wrapper panel (staging status).
+        public static readonly Color BorderColorDefault = Color.FromArgb(0x33, 0x36, 0x3D); // hairline-strong
+        public static readonly Color BorderColorStagedNotLive = Color.FromArgb(0x27, 0xA6, 0x44); // success green
+        public static readonly Color BorderColorLive = Color.FromArgb(0xD2, 0x5E, 0x5E); // danger
     }
 }

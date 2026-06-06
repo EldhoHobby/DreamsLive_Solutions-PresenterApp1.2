@@ -9,6 +9,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         public ActivationForm()
         {
             InitializeComponent();
+            LinearTheme.Apply(this);
             this.TopMost = true;
 
             // Handle focus explicitly when the form is fully displayed

@@ -9,6 +9,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private CopyableMessageBox(string message, string title, MessageBoxButtons buttons, MessageBoxIcon icon)
         {
             InitializeComponent();
+            LinearTheme.Apply(this);
             this.Text = title;
             this.txtMessage.Text = message;
             SetupButtons(buttons);

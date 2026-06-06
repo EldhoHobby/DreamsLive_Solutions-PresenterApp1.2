@@ -15,6 +15,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         public AddToDatabaseForm(List<string> existingSubfolders, string currentFileName)
         {
             InitializeComponent();
+            LinearTheme.Apply(this);
             _existingSubfolders = existingSubfolders;
             txtCustomFileName.Text = Path.GetFileNameWithoutExtension(currentFileName);
 

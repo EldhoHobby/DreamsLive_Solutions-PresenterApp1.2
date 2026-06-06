@@ -73,8 +73,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 // Clear highlights when disabling
                 ClearHighlights();
-                this.btnHighlighter.BackColor = isDarkMode ? Color.FromArgb(63, 63, 70) : SystemColors.Control;
-                this.btnHighlighter.ForeColor = isDarkMode ? Color.White : SystemColors.ControlText;
+                this.btnHighlighter.BackColor = LinearTheme.Current.Surface1;
+                this.btnHighlighter.ForeColor = LinearTheme.Current.Ink;
             }
         }
 

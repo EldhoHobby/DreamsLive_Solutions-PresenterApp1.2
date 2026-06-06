@@ -284,21 +284,12 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void ApplyTheme()
         {
-            bool isDark = _mainForm.IsDarkMode;
-            Color backColor = isDark ? Color.FromArgb(45, 45, 48) : SystemColors.Control;
-            Color foreColor = isDark ? Color.White : SystemColors.ControlText;
+            LinearTheme.SetMode(_mainForm.IsDarkMode);
+            LinearTheme.Apply(this);
 
-            this.BackColor = backColor;
-            this.ForeColor = foreColor;
-
-            pnlTop.BackColor = isDark ? Color.FromArgb(30, 30, 30) : SystemColors.Control;
-            pnlTop.ForeColor = foreColor;
-
-            pnlBottom.BackColor = isDark ? Color.FromArgb(30, 30, 30) : SystemColors.Control;
-            pnlBottom.ForeColor = foreColor;
-
-            cmbSubfolders.BackColor = isDark ? Color.FromArgb(63, 63, 70) : SystemColors.Window;
-            cmbSubfolders.ForeColor = isDark ? Color.White : SystemColors.WindowText;
+            // Lift the top/bottom chrome bars one step above the canvas.
+            pnlTop.BackColor = LinearTheme.Current.Surface1;
+            pnlBottom.BackColor = LinearTheme.Current.Surface1;
 
         }
     }
