@@ -7,35 +7,53 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <style>
         :root {
-            --bg-color: #f0f0f0;
-            --text-color: #333;
-            --container-bg: #fff;
-            --border-color: #ccc;
-            --button-bg: #fff;
-            --button-text: #333;
-            --modal-bg: rgba(0, 0, 0, 0.6);
-            --header-bg: #222;
+            --bg-color: #f4f5f7;
+            --text-color: #1c1d21;
+            --container-bg: #ffffff;
+            --border-color: #e1e3e8;
+            --button-bg: #ffffff;
+            --button-text: #1c1d21;
+            --modal-bg: rgba(8, 8, 10, 0.55);
+            --header-bg: #eef0f3;
             --accent-blue: #2196F3;
-            --accent-green: #4CAF50;
-            --accent-orange: #FF9800;
-            --status-ready: #4CAF50;
-            --status-busy: #FF9800;
-            --status-error: #f44336;
-            --spinner-bg: rgba(255, 255, 255, 0.8);
-            --spinner-color: #3498db;
+            --accent-green: #1f9d3a;
+            --accent-orange: #c77f0a;
+            --status-ready: #1f9d3a;
+            --status-busy: #c77f0a;
+            --status-error: #c0392b;
+            --spinner-bg: rgba(255, 255, 255, 0.85);
+            --spinner-color: #5e6ad2;
             --overlay-staged: rgba(128, 128, 128, 0.8);
-            --overlay-active: red;
+            --overlay-active: #e24b4a;
+            /* modern design tokens */
+            --accent: #5e6ad2;
+            --accent-hover: #4c57c0;
+            --border-strong: #cdd0d7;
+            --text-muted: #6e727c;
+            --radius: 14px;
+            --radius-sm: 10px;
+            --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
         }
 
         body.dark-mode {
-            --bg-color: #121212;
-            --text-color: #e0e0e0;
-            --container-bg: #1e1e1e;
-            --border-color: #444;
-            --button-bg: #333;
-            --button-text: #e0e0e0;
-            --header-bg: #000;
+            --bg-color: #08080a;
+            --text-color: #f7f8f8;
+            --container-bg: #141518;
+            --border-color: #23252a;
+            --button-bg: #16171b;
+            --button-text: #f7f8f8;
+            --header-bg: #0d0e10;
+            --modal-bg: rgba(0, 0, 0, 0.66);
             --spinner-bg: rgba(0, 0, 0, 0.8);
+            --spinner-color: #828fff;
+            --status-ready: #27a644;
+            --status-busy: #e0a200;
+            --status-error: #d25e5e;
+            --accent: #5e6ad2;
+            --accent-hover: #828fff;
+            --border-strong: #33363d;
+            --text-muted: #8a8f98;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.55);
         }
 
         h1 {
@@ -497,6 +515,189 @@
             border-radius: 4px;
             background-color: var(--button-bg);
             color: var(--button-text);
+        }
+
+        /* ============================================================
+           Modern UI layer (2024) — mobile-first, touch-friendly.
+           Restyles existing components without touching layout that
+           the crop editor's coordinate math depends on.
+           ============================================================ */
+        * { -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 880px;
+            padding: 16px;
+            padding-bottom: 96px;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            margin: 4px 0 12px;
+        }
+
+        .sticky-header {
+            background: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            padding: 12px 0;
+        }
+
+        /* Buttons */
+        button {
+            box-sizing: border-box;
+            min-height: 46px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--button-bg);
+            color: var(--button-text);
+            transition: background .15s ease, border-color .15s ease, transform .05s ease;
+            user-select: none;
+        }
+
+            button:hover { border-color: var(--border-strong); }
+            button:active { transform: scale(0.97); }
+            button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        .button-disabled { opacity: 0.45; pointer-events: none; }
+
+        /* Primary / call-to-action buttons carry the lavender accent */
+        .big-button,
+        #btnStageContent,
+        #btnPushToPresenter,
+        #btnPresentNow,
+        #btnChooseCapture,
+        #btnUploadNow {
+            background: var(--accent) !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: var(--radius) !important;
+        }
+
+            .big-button:hover,
+            #btnStageContent:hover,
+            #btnPushToPresenter:hover,
+            #btnPresentNow:hover,
+            #btnChooseCapture:hover,
+            #btnUploadNow:hover { background: var(--accent-hover) !important; }
+
+        /* Inputs */
+        input[type="text"],
+        input[type="number"],
+        select {
+            box-sizing: border-box;
+            min-height: 44px;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+        }
+
+            input:focus, select:focus {
+                outline: 2px solid var(--accent);
+                outline-offset: 1px;
+                border-color: var(--accent);
+            }
+
+        /* Status bar */
+        #status-bar {
+            padding: 12px 8px;
+            font-size: 0.72rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--container-bg);
+            box-shadow: var(--shadow);
+        }
+
+        .status-indicator { width: 10px; height: 10px; margin: 0 auto; }
+
+        /* Preview thumbnails — keep `outline` (layout-neutral) for crop math */
+        .preview-box {
+            border-radius: var(--radius);
+            outline: 1px solid var(--border-strong);
+            outline-offset: -1px;
+            box-shadow: var(--shadow);
+        }
+
+        /* Gallery */
+        .gallery-item {
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background: var(--container-bg);
+            transition: transform .15s ease, border-color .15s ease;
+        }
+
+            .gallery-item:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+            .gallery-item img { border-radius: var(--radius-sm); }
+
+        /* Directional pad */
+        .d-pad { width: 168px; gap: 8px; }
+
+            .d-pad button { min-height: 52px; border-radius: var(--radius-sm); font-size: 1.3em; }
+
+        /* Modals */
+        .modal-content { background: var(--bg-color); }
+
+        .modal-header,
+        .modal-footer {
+            background: var(--container-bg);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        .modal-header { border-bottom: 1px solid var(--border-color); }
+        .modal-footer { border-top: 1px solid var(--border-color); }
+
+        .rotation-slider-container {
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+        }
+
+            .rotation-slider-container label { color: var(--text-muted); }
+
+        /* Bottom message toast */
+        .message-box {
+            border-radius: var(--radius) var(--radius) 0 0;
+            border: 1px solid var(--border-color);
+            background: var(--container-bg);
+            box-shadow: var(--shadow);
+            padding: 12px 16px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+        }
+
+        .spinner { border-color: var(--border-color); border-top-color: var(--accent); }
+
+        .expired-content { border-radius: var(--radius); box-shadow: var(--shadow); }
+
+        /* ----- Mobile-first refinements ----- */
+        @media (max-width: 600px) {
+            .container { padding: 12px; padding-bottom: 96px; }
+            h1 { font-size: 1.1rem; }
+            .controls, .upload, .scroll-controls { grid-template-columns: 1fr 1fr; }
+            button { min-height: 48px; }
+            .big-button { font-size: 1.25em !important; padding: 16px !important; }
+            #status-bar { font-size: 0.66rem; padding: 10px 6px; }
+            .modal-footer { gap: 12px; flex-wrap: wrap; }
+        }
+
+        @media (min-width: 900px) {
+            .preview-box { width: 38%; }
         }
     </style>
 </head>
@@ -1781,9 +1982,10 @@
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;
 
-        // Apply the saved theme on page load
+        // Apply the saved theme on page load. Default to the app's dark look
+        // unless the user has explicitly chosen light.
         const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
+        if (savedTheme !== 'light') {
             body.classList.add('dark-mode');
         }
 
