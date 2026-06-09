@@ -179,13 +179,13 @@ namespace DreamsLive_Solutions_PresenterApp1
                 thumbContainer.Controls.Add(lbl);
                 flowThumbs.Controls.Add(thumbContainer);
 
-                // Load thumb async
-                _ = Task.Run(() => LoadThumbnailAsync(pb, file));
+                // Load thumb on a background thread
+                _ = Task.Run(() => LoadThumbnail(pb, file));
             }
             flowThumbs.ResumeLayout();
         }
 
-        private async Task LoadThumbnailAsync(PictureBox pb, DatabaseFileInfo file)
+        private void LoadThumbnail(PictureBox pb, DatabaseFileInfo file)
         {
             if (pb.IsDisposed) return;
             Image thumb = null;
