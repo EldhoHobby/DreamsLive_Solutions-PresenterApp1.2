@@ -2,6 +2,20 @@ namespace DreamsLive_Solutions_PresenterApp1
 {
     partial class MainForm
     {
+        // ---------------------------------------------------------------------
+        // DESIGNER vs RUNTIME APPEARANCE
+        // The Visual Studio designer renders ONLY the controls/properties defined
+        // in InitializeComponent() below. It does not run MainForm_Load or any
+        // theming code, so the design surface intentionally looks different from
+        // the running app. At runtime the following is applied on top:
+        //   * ApplyTheme() -> LinearTheme.Apply(this): recolors/restyles all
+        //     controls (colors, fonts, flat/rounded buttons) for light/dark mode.
+        //   * LinearTheme.InstallHeader(...): creates and adds a header Panel in
+        //     code (not present in this designer file).
+        // Use this designer for LAYOUT (control positions/sizes); the themed skin
+        // is layered on at runtime by design. See LinearTheme.cs / MainForm.Theme.cs.
+        // ---------------------------------------------------------------------
+
         /// <summary>
         /// Required designer variable.
         /// </summary>
@@ -516,9 +530,145 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnAddToDatabase.Text = "Add to Database";
             this.btnAddToDatabase.UseVisualStyleBackColor = true;
             this.btnAddToDatabase.Click += new System.EventHandler(this.btnAddToDatabase_Click);
-            // 
+            //
+            // --- Design-time theme preview (Dark palette mirrored from LinearTheme) ---
+            // These property values approximate LinearTheme.Apply() so the Visual
+            // Studio design surface roughly matches the running app's dark theme.
+            // At runtime LinearTheme re-applies the theme (and adds the header bar /
+            // rounded owner-drawn buttons), so these values are overridden then and
+            // exist only to make the designer representative. Layout is intentionally
+            // NOT changed here (the runtime header shifts controls down 56px).
+            //
+            this.BackColor = System.Drawing.Color.FromArgb(8, 8, 10);
+            this.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            // Buttons - normal (Surface1 bg / Ink fg, flat)
+            this.tnBrowse.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.tnBrowse.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.tnBrowse.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.tnBrowse.UseVisualStyleBackColor = false;
+            this.btnPrevPage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnPrevPage.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnPrevPage.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnPrevPage.UseVisualStyleBackColor = false;
+            this.btnNextPage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnNextPage.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnNextPage.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnNextPage.UseVisualStyleBackColor = false;
+            this.btnCloseLivePresenter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCloseLivePresenter.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnCloseLivePresenter.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnCloseLivePresenter.UseVisualStyleBackColor = false;
+            this.btnToggleTheme.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnToggleTheme.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnToggleTheme.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnToggleTheme.UseVisualStyleBackColor = false;
+            this.btnUp.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnUp.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnUp.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnUp.UseVisualStyleBackColor = false;
+            this.btnDown.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnDown.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnDown.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnDown.UseVisualStyleBackColor = false;
+            this.btnLeft.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnLeft.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnLeft.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnLeft.UseVisualStyleBackColor = false;
+            this.btnRight.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnRight.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnRight.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnRight.UseVisualStyleBackColor = false;
+            this.btnSettings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSettings.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnSettings.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnSettings.UseVisualStyleBackColor = false;
+            this.btnHelp.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnHelp.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnHelp.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnHelp.UseVisualStyleBackColor = false;
+            this.btnEditContent.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnEditContent.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnEditContent.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnEditContent.UseVisualStyleBackColor = false;
+            this.btnMessageOkay.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnMessageOkay.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnMessageOkay.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnMessageOkay.UseVisualStyleBackColor = false;
+            this.btnSetDatabaseFolder.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSetDatabaseFolder.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnSetDatabaseFolder.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnSetDatabaseFolder.UseVisualStyleBackColor = false;
+            this.btnSnip.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSnip.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnSnip.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnSnip.UseVisualStyleBackColor = false;
+            this.btnOpenGallery.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnOpenGallery.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnOpenGallery.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnOpenGallery.UseVisualStyleBackColor = false;
+            this.btnAddToDatabase.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnAddToDatabase.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnAddToDatabase.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnAddToDatabase.UseVisualStyleBackColor = false;
+            this.btnClearPresenterDisplay.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnClearPresenterDisplay.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnClearPresenterDisplay.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnClearPresenterDisplay.UseVisualStyleBackColor = false;
+            this.btnHighlighter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnHighlighter.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.btnHighlighter.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.btnHighlighter.UseVisualStyleBackColor = false;
+            // Buttons - primary CTA (lavender accent)
+            this.btnStageContent.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnStageContent.BackColor = System.Drawing.Color.FromArgb(94, 106, 210);
+            this.btnStageContent.ForeColor = System.Drawing.Color.White;
+            this.btnStageContent.UseVisualStyleBackColor = false;
+            this.btnPushToPresenter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnPushToPresenter.BackColor = System.Drawing.Color.FromArgb(94, 106, 210);
+            this.btnPushToPresenter.ForeColor = System.Drawing.Color.White;
+            this.btnPushToPresenter.UseVisualStyleBackColor = false;
+            // Labels (transparent over canvas, ink text)
+            this.lblImagePath.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.lblTotalPages.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.lblConnectionInfo.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.lblWebServerUrl.ForeColor = System.Drawing.Color.FromArgb(138, 143, 152);
+            this.lblMessage.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.lblMoveStep.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.lblSelectionSize.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.lblDatabaseFolderPath.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.label1.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.lblPreviewLabel.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.lblPreviewLabel.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.lblStagedLabel.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.lblStagedLabel.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            // Combo boxes / text boxes (Surface1 bg, ink fg)
+            this.cmbDisplays.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.cmbDisplays.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.cmbDisplays.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmbDisplayMode.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.cmbDisplayMode.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.cmbDisplayMode.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.txtCurrentPageNum.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.txtCurrentPageNum.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.txtMoveStep.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            this.txtMoveStep.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            // Check boxes (canvas bg, ink fg)
+            this.chkLinkLocalPreviewToPresenter.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.chkLinkLocalPreviewToPresenter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.chkAlwaysOnTop.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.chkAlwaysOnTop.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.chkEnableScroll.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.chkEnableScroll.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.chkAutoStagePreview.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.chkAutoStagePreview.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.chkLaserPointer.ForeColor = System.Drawing.Color.FromArgb(247, 248, 248);
+            this.chkLaserPointer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            // Panels / empty preview surfaces
+            this.panelSecondaryPreviewBorder.BackColor = System.Drawing.Color.FromArgb(8, 8, 10);
+            this.picSecondaryPreview.BackColor = System.Drawing.Color.FromArgb(20, 21, 24);
+            //
             // MainForm
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1359, 600);
@@ -567,7 +717,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.btnOpenGallery);
             this.Controls.Add(this.btnAddToDatabase);
             this.Name = "MainForm";
-            this.Text = "Form1";
+            // NOTE: At runtime this title is replaced in MainForm_Load with
+            // "Presenter App V{version} {activation status}". The value below is
+            // only what the Visual Studio designer shows at design time.
+            this.Text = "Presenter App";
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.panelSecondaryPreviewBorder.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).EndInit();
