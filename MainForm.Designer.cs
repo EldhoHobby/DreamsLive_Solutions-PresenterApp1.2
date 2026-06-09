@@ -85,12 +85,50 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnSnip = new System.Windows.Forms.Button();
             this.btnOpenGallery = new System.Windows.Forms.Button();
             this.btnAddToDatabase = new System.Windows.Forms.Button();
-            this.linearHeader = new DreamsLive_Solutions_PresenterApp1.LinearHeaderControl();
-            this.label1 = new System.Windows.Forms.Label();
+            this.liveIndicator = new DreamsLive_Solutions_PresenterApp1.LiveIndicatorControl();
+            this.logoBox = new System.Windows.Forms.PictureBox();
+            this.tableCenter = new System.Windows.Forms.TableLayoutPanel();
+            this.flowMid = new System.Windows.Forms.FlowLayoutPanel();
+            this.panelBottom = new System.Windows.Forms.TableLayoutPanel();
+            this.tableDocks = new System.Windows.Forms.TableLayoutPanel();
+            this.flowSource = new System.Windows.Forms.FlowLayoutPanel();
+            this.flowOutput = new System.Windows.Forms.FlowLayoutPanel();
+            this.flowTools = new System.Windows.Forms.FlowLayoutPanel();
+            this.flowPosition = new System.Windows.Forms.FlowLayoutPanel();
+            this.pnlNudge = new System.Windows.Forms.Panel();
+            this.tableStatus = new System.Windows.Forms.TableLayoutPanel();
+            this.flowStatus = new System.Windows.Forms.FlowLayoutPanel();
+            this.paneLocal = new System.Windows.Forms.TableLayoutPanel();
+            this.paneProgram = new System.Windows.Forms.TableLayoutPanel();
+            this.cardSource = new System.Windows.Forms.TableLayoutPanel();
+            this.cardOutput = new System.Windows.Forms.TableLayoutPanel();
+            this.cardTools = new System.Windows.Forms.TableLayoutPanel();
+            this.cardPosition = new System.Windows.Forms.TableLayoutPanel();
+            this.lblHdrSource = new System.Windows.Forms.Label();
+            this.lblHdrOutput = new System.Windows.Forms.Label();
+            this.lblHdrTools = new System.Windows.Forms.Label();
+            this.lblHdrPosition = new System.Windows.Forms.Label();
             this.panelSecondaryPreviewBorder.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picPreview)).BeginInit();
-            this.linearHeader.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.logoBox)).BeginInit();
+            this.tableCenter.SuspendLayout();
+            this.flowMid.SuspendLayout();
+            this.panelBottom.SuspendLayout();
+            this.tableDocks.SuspendLayout();
+            this.flowSource.SuspendLayout();
+            this.flowOutput.SuspendLayout();
+            this.flowTools.SuspendLayout();
+            this.flowPosition.SuspendLayout();
+            this.pnlNudge.SuspendLayout();
+            this.tableStatus.SuspendLayout();
+            this.flowStatus.SuspendLayout();
+            this.paneLocal.SuspendLayout();
+            this.paneProgram.SuspendLayout();
+            this.cardSource.SuspendLayout();
+            this.cardOutput.SuspendLayout();
+            this.cardTools.SuspendLayout();
+            this.cardPosition.SuspendLayout();
             this.SuspendLayout();
             // 
             // tnBrowse
@@ -605,26 +643,250 @@ namespace DreamsLive_Solutions_PresenterApp1
             // 
             // linearHeader
             // 
-            this.linearHeader.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(21)))), ((int)(((byte)(24)))));
-            this.linearHeader.Controls.Add(this.label1);
-            this.linearHeader.Dock = System.Windows.Forms.DockStyle.Top;
-            this.linearHeader.IsLive = false;
-            this.linearHeader.Location = new System.Drawing.Point(0, 0);
-            this.linearHeader.Name = "linearHeader";
-            this.linearHeader.Size = new System.Drawing.Size(1359, 56);
-            this.linearHeader.TabIndex = 55;
-            this.linearHeader.Tag = "chrome";
+            this.flowMid.Controls.Add(this.btnEditContent);
+            this.flowMid.Controls.Add(this.btnStageContent);
+            this.flowMid.Controls.Add(this.chkAutoStagePreview);
+            this.flowMid.Controls.Add(this.btnPushToPresenter);
+            this.flowMid.Controls.Add(this.chkLinkLocalPreviewToPresenter);
+            this.flowMid.Controls.Add(this.btnClearPresenterDisplay);
+            this.flowMid.Controls.Add(this.btnCloseLivePresenter);
+            this.flowMid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowMid.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.flowMid.Margin = new System.Windows.Forms.Padding(2, 28, 2, 2);
+            this.flowMid.Name = "flowMid";
+            this.flowMid.WrapContents = false;
+            //
+            // tableCenter
+            //
+            this.lblPreviewLabel.AutoSize = false;
+            this.lblPreviewLabel.BackColor = System.Drawing.Color.Transparent;
+            this.lblPreviewLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblPreviewLabel.Text = "Local preview";
+            this.lblPreviewLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.picPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.paneLocal.ColumnCount = 1;
+            this.paneLocal.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.paneLocal.Controls.Add(this.lblPreviewLabel, 0, 0);
+            this.paneLocal.Controls.Add(this.picPreview, 0, 1);
+            this.paneLocal.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.paneLocal.Name = "paneLocal";
+            this.paneLocal.RowCount = 2;
+            this.paneLocal.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.paneLocal.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.lblStagedLabel.AutoSize = false;
+            this.lblStagedLabel.BackColor = System.Drawing.Color.Transparent;
+            this.lblStagedLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblStagedLabel.Text = "Program / live";
+            this.lblStagedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.panelSecondaryPreviewBorder.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.paneProgram.ColumnCount = 1;
+            this.paneProgram.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.paneProgram.Controls.Add(this.lblStagedLabel, 0, 0);
+            this.paneProgram.Controls.Add(this.panelSecondaryPreviewBorder, 0, 1);
+            this.paneProgram.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.paneProgram.Name = "paneProgram";
+            this.paneProgram.RowCount = 2;
+            this.paneProgram.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.paneProgram.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableCenter.ColumnCount = 3;
+            this.tableCenter.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableCenter.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 146F));
+            this.tableCenter.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableCenter.Controls.Add(this.paneLocal, 0, 0);
+            this.tableCenter.Controls.Add(this.flowMid, 1, 0);
+            this.tableCenter.Controls.Add(this.paneProgram, 2, 0);
+            this.tableCenter.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableCenter.Name = "tableCenter";
+            this.tableCenter.RowCount = 1;
+            this.tableCenter.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            //
+            // flowSource
+            //
+            this.flowSource.Controls.Add(this.tnBrowse);
+            this.flowSource.Controls.Add(this.btnSnip);
+            this.flowSource.Controls.Add(this.btnOpenGallery);
+            this.flowSource.Controls.Add(this.btnAddToDatabase);
+            this.flowSource.Controls.Add(this.lblImagePath);
+            this.flowSource.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowSource.Name = "flowSource";
+            //
+            // flowOutput
+            //
+            this.flowOutput.Controls.Add(this.cmbDisplays);
+            this.flowOutput.Controls.Add(this.cmbDisplayMode);
+            this.flowOutput.Controls.Add(this.btnSettings);
+            this.flowOutput.Controls.Add(this.btnHelp);
+            this.flowOutput.Controls.Add(this.btnToggleTheme);
+            this.flowOutput.Controls.Add(this.chkAlwaysOnTop);
+            this.flowOutput.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowOutput.Name = "flowOutput";
+            //
+            // flowTools
+            //
+            this.flowTools.Controls.Add(this.chkLaserPointer);
+            this.flowTools.Controls.Add(this.btnHighlighter);
+            this.flowTools.Controls.Add(this.chkEnableScroll);
+            this.flowTools.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowTools.Name = "flowTools";
+            //
+            // pnlNudge
+            //
+            this.pnlNudge.Controls.Add(this.btnUp);
+            this.pnlNudge.Controls.Add(this.btnLeft);
+            this.pnlNudge.Controls.Add(this.btnDown);
+            this.pnlNudge.Controls.Add(this.btnRight);
+            this.pnlNudge.Name = "pnlNudge";
+            this.pnlNudge.Size = new System.Drawing.Size(98, 66);
+            this.btnUp.Location = new System.Drawing.Point(34, 2);
+            this.btnUp.Size = new System.Drawing.Size(30, 30);
+            this.btnLeft.Location = new System.Drawing.Point(2, 34);
+            this.btnLeft.Size = new System.Drawing.Size(30, 30);
+            this.btnDown.Location = new System.Drawing.Point(34, 34);
+            this.btnDown.Size = new System.Drawing.Size(30, 30);
+            this.btnRight.Location = new System.Drawing.Point(66, 34);
+            this.btnRight.Size = new System.Drawing.Size(30, 30);
+            //
+            // flowPosition
+            //
+            this.flowPosition.Controls.Add(this.pnlNudge);
+            this.flowPosition.Controls.Add(this.lblSelectionSize);
+            this.flowPosition.Controls.Add(this.lblMoveStep);
+            this.flowPosition.Controls.Add(this.txtMoveStep);
+            this.flowPosition.Controls.Add(this.btnPrevPage);
+            this.flowPosition.Controls.Add(this.txtCurrentPageNum);
+            this.flowPosition.Controls.Add(this.lblTotalPages);
+            this.flowPosition.Controls.Add(this.btnNextPage);
+            this.flowPosition.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowPosition.Name = "flowPosition";
+            //
+            // tableDocks
+            //
+            this.lblHdrSource.AutoSize = false;
+            this.lblHdrSource.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblHdrSource.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.lblHdrSource.Text = "Source";
+            this.lblHdrSource.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.cardSource.ColumnCount = 1;
+            this.cardSource.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.cardSource.Controls.Add(this.lblHdrSource, 0, 0);
+            this.cardSource.Controls.Add(this.flowSource, 0, 1);
+            this.cardSource.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.cardSource.Name = "cardSource";
+            this.cardSource.RowCount = 2;
+            this.cardSource.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.cardSource.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.lblHdrOutput.AutoSize = false;
+            this.lblHdrOutput.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblHdrOutput.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.lblHdrOutput.Text = "Display & options";
+            this.lblHdrOutput.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.cardOutput.ColumnCount = 1;
+            this.cardOutput.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.cardOutput.Controls.Add(this.lblHdrOutput, 0, 0);
+            this.cardOutput.Controls.Add(this.flowOutput, 0, 1);
+            this.cardOutput.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.cardOutput.Name = "cardOutput";
+            this.cardOutput.RowCount = 2;
+            this.cardOutput.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.cardOutput.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.lblHdrTools.AutoSize = false;
+            this.lblHdrTools.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblHdrTools.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.lblHdrTools.Text = "Tools";
+            this.lblHdrTools.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.cardTools.ColumnCount = 1;
+            this.cardTools.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.cardTools.Controls.Add(this.lblHdrTools, 0, 0);
+            this.cardTools.Controls.Add(this.flowTools, 0, 1);
+            this.cardTools.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.cardTools.Name = "cardTools";
+            this.cardTools.RowCount = 2;
+            this.cardTools.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.cardTools.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.lblHdrPosition.AutoSize = false;
+            this.lblHdrPosition.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblHdrPosition.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.lblHdrPosition.Text = "Position & pages";
+            this.lblHdrPosition.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.cardPosition.ColumnCount = 1;
+            this.cardPosition.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.cardPosition.Controls.Add(this.lblHdrPosition, 0, 0);
+            this.cardPosition.Controls.Add(this.flowPosition, 0, 1);
+            this.cardPosition.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.cardPosition.Name = "cardPosition";
+            this.cardPosition.RowCount = 2;
+            this.cardPosition.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.cardPosition.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableDocks.ColumnCount = 4;
+            this.tableDocks.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+            this.tableDocks.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+            this.tableDocks.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+            this.tableDocks.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+            this.tableDocks.Controls.Add(this.cardSource, 0, 0);
+            this.tableDocks.Controls.Add(this.cardOutput, 1, 0);
+            this.tableDocks.Controls.Add(this.cardTools, 2, 0);
+            this.tableDocks.Controls.Add(this.cardPosition, 3, 0);
+            this.tableDocks.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableDocks.Name = "tableDocks";
+            this.tableDocks.RowCount = 1;
+            this.tableDocks.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            //
+            // logoBox
+            //
+            this.logoBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.logoBox.Image = global::DreamsLive_Solutions_PresenterApp1.Properties.Resources.DreamsLiveSolutions_Logo1;
+            this.logoBox.Name = "logoBox";
+            this.logoBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.logoBox.TabStop = false;
+            //
+            // flowStatus
+            //
+            this.flowStatus.Controls.Add(this.lblConnectionInfo);
+            this.flowStatus.Controls.Add(this.lblWebServerUrl);
+            this.flowStatus.Controls.Add(this.lblDatabaseFolderPath);
+            this.flowStatus.Controls.Add(this.btnSetDatabaseFolder);
+            this.flowStatus.Controls.Add(this.lblMessage);
+            this.flowStatus.Controls.Add(this.btnMessageOkay);
+            this.flowStatus.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowStatus.Name = "flowStatus";
+            //
+            // tableStatus
+            //
+            this.tableStatus.ColumnCount = 2;
+            this.tableStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 132F));
+            this.tableStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableStatus.Controls.Add(this.logoBox, 0, 0);
+            this.tableStatus.Controls.Add(this.flowStatus, 1, 0);
+            this.tableStatus.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableStatus.Name = "tableStatus";
+            this.tableStatus.RowCount = 1;
+            this.tableStatus.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            //
+            // panelBottom
+            //
+            this.panelBottom.ColumnCount = 1;
+            this.panelBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.panelBottom.Controls.Add(this.tableDocks, 0, 0);
+            this.panelBottom.Controls.Add(this.tableStatus, 0, 1);
+            this.panelBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panelBottom.Name = "panelBottom";
+            this.panelBottom.RowCount = 2;
+            this.panelBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 152F));
+            this.panelBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
+            this.panelBottom.Size = new System.Drawing.Size(1359, 186);
+            //
+            // liveIndicator
+            //
+            this.liveIndicator.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.liveIndicator.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(17)))), ((int)(((byte)(20)))));
+            this.liveIndicator.IsLive = false;
+            this.liveIndicator.Location = new System.Drawing.Point(490, 10);
+            this.liveIndicator.Name = "liveIndicator";
+            this.liveIndicator.Size = new System.Drawing.Size(94, 28);
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Segoe UI Variable Small Semibol", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(247)))), ((int)(((byte)(248)))), ((int)(((byte)(248)))));
-            this.label1.Location = new System.Drawing.Point(246, 20);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(166, 21);
-            this.label1.TabIndex = 35;
-            this.label1.Text = "Where Ideas Go Live.";
+            this.picSecondaryPreview.Controls.Add(this.liveIndicator);
             // 
             // MainForm
             // 
@@ -632,49 +894,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(8)))), ((int)(((byte)(8)))), ((int)(((byte)(10)))));
             this.ClientSize = new System.Drawing.Size(1359, 656);
-            this.Controls.Add(this.btnMessageOkay);
-            this.Controls.Add(this.lblMessage);
-            this.Controls.Add(this.chkAlwaysOnTop);
-            this.Controls.Add(this.lblWebServerUrl);
-            this.Controls.Add(this.cmbDisplayMode);
-            this.Controls.Add(this.lblConnectionInfo);
-            this.Controls.Add(this.btnCloseLivePresenter);
-            this.Controls.Add(this.btnToggleTheme);
-            this.Controls.Add(this.btnClearPresenterDisplay);
-            this.Controls.Add(this.chkLinkLocalPreviewToPresenter);
-            this.Controls.Add(this.btnPushToPresenter);
-            this.Controls.Add(this.panelSecondaryPreviewBorder);
-            this.Controls.Add(this.lblTotalPages);
-            this.Controls.Add(this.txtCurrentPageNum);
-            this.Controls.Add(this.btnNextPage);
-            this.Controls.Add(this.btnPrevPage);
-            this.Controls.Add(this.btnStageContent);
-            this.Controls.Add(this.cmbDisplays);
-            this.Controls.Add(this.lblImagePath);
-            this.Controls.Add(this.tnBrowse);
-            this.Controls.Add(this.btnHelp);
-            this.Controls.Add(this.chkEnableScroll);
-            this.Controls.Add(this.chkAutoStagePreview);
-            this.Controls.Add(this.btnUp);
-            this.Controls.Add(this.btnDown);
-            this.Controls.Add(this.btnLeft);
-            this.Controls.Add(this.btnRight);
-            this.Controls.Add(this.btnSettings);
-            this.Controls.Add(this.lblMoveStep);
-            this.Controls.Add(this.txtMoveStep);
-            this.Controls.Add(this.lblSelectionSize);
-            this.Controls.Add(this.chkLaserPointer);
-            this.Controls.Add(this.lblPreviewLabel);
-            this.Controls.Add(this.lblStagedLabel);
-            this.Controls.Add(this.btnHighlighter);
-            this.Controls.Add(this.btnEditContent);
-            this.Controls.Add(this.picPreview);
-            this.Controls.Add(this.btnSetDatabaseFolder);
-            this.Controls.Add(this.lblDatabaseFolderPath);
-            this.Controls.Add(this.btnSnip);
-            this.Controls.Add(this.btnOpenGallery);
-            this.Controls.Add(this.btnAddToDatabase);
-            this.Controls.Add(this.linearHeader);
+            this.Controls.Add(this.tableCenter);
+            this.Controls.Add(this.panelBottom);
             this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(247)))), ((int)(((byte)(248)))), ((int)(((byte)(248)))));
             this.Name = "MainForm";
             this.Text = "Presenter App";
@@ -682,8 +903,24 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.panelSecondaryPreviewBorder.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.picSecondaryPreview)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picPreview)).EndInit();
-            this.linearHeader.ResumeLayout(false);
-            this.linearHeader.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.logoBox)).EndInit();
+            this.tableCenter.ResumeLayout(false);
+            this.flowMid.ResumeLayout(false);
+            this.panelBottom.ResumeLayout(false);
+            this.tableDocks.ResumeLayout(false);
+            this.flowSource.ResumeLayout(false);
+            this.flowOutput.ResumeLayout(false);
+            this.flowTools.ResumeLayout(false);
+            this.flowPosition.ResumeLayout(false);
+            this.pnlNudge.ResumeLayout(false);
+            this.tableStatus.ResumeLayout(false);
+            this.flowStatus.ResumeLayout(false);
+            this.paneLocal.ResumeLayout(false);
+            this.paneProgram.ResumeLayout(false);
+            this.cardSource.ResumeLayout(false);
+            this.cardOutput.ResumeLayout(false);
+            this.cardTools.ResumeLayout(false);
+            this.cardPosition.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -734,7 +971,28 @@ namespace DreamsLive_Solutions_PresenterApp1
         private System.Windows.Forms.Button btnSnip;
         private System.Windows.Forms.Button btnOpenGallery;
         private System.Windows.Forms.Button btnAddToDatabase;
-        private LinearHeaderControl linearHeader;
-        private System.Windows.Forms.Label label1;
+        private LiveIndicatorControl liveIndicator;
+        private System.Windows.Forms.PictureBox logoBox;
+        private System.Windows.Forms.TableLayoutPanel tableCenter;
+        private System.Windows.Forms.FlowLayoutPanel flowMid;
+        private System.Windows.Forms.TableLayoutPanel panelBottom;
+        private System.Windows.Forms.TableLayoutPanel tableDocks;
+        private System.Windows.Forms.FlowLayoutPanel flowSource;
+        private System.Windows.Forms.FlowLayoutPanel flowOutput;
+        private System.Windows.Forms.FlowLayoutPanel flowTools;
+        private System.Windows.Forms.FlowLayoutPanel flowPosition;
+        private System.Windows.Forms.Panel pnlNudge;
+        private System.Windows.Forms.TableLayoutPanel tableStatus;
+        private System.Windows.Forms.FlowLayoutPanel flowStatus;
+        private System.Windows.Forms.TableLayoutPanel paneLocal;
+        private System.Windows.Forms.TableLayoutPanel paneProgram;
+        private System.Windows.Forms.TableLayoutPanel cardSource;
+        private System.Windows.Forms.TableLayoutPanel cardOutput;
+        private System.Windows.Forms.TableLayoutPanel cardTools;
+        private System.Windows.Forms.TableLayoutPanel cardPosition;
+        private System.Windows.Forms.Label lblHdrSource;
+        private System.Windows.Forms.Label lblHdrOutput;
+        private System.Windows.Forms.Label lblHdrTools;
+        private System.Windows.Forms.Label lblHdrPosition;
     }
 }

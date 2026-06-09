@@ -99,7 +99,7 @@
     <Compile Include="ActivationStatusHelper.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="LinearTheme.cs" />
-    <Compile Include="LinearHeaderControl.cs">
+    <Compile Include="LiveIndicatorControl.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="DatabaseFileInfo.cs" />

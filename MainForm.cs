@@ -133,10 +133,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             // Initialize theme
             ApplyTheme();
 
-            // Branded header bar (logo mark + wordmark + accent). Shifts content down
-            // and grows the form; the old top-left logo becomes redundant, so hide it.
-            LinearTheme.InstallHeader(this, "Dreams", "Live Solutions", "Where Ideas Go Live.");
-            //if (this.pictureBox1 != null) this.pictureBox1.Visible = false;
+            // The old branded header bar is removed; branding now lives in the bottom
+            // status strip. The console layout is authored in the designer (InitializeComponent).
             // Subscribe to picPreview mouse events
             if (this.picPreview != null) // Ensure picPreview is not null
             {

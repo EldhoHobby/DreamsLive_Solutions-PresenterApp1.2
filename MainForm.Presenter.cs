@@ -248,11 +248,11 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.btnCloseLivePresenter.Enabled = (this.activePresentationForm != null && !this.activePresentationForm.IsDisposed);
             }
 
-            // Drive the header "LIVE" indicator: pulsing red while the presenter window
-            // is open, steady dim-gray otherwise.
-            if (this.linearHeader != null)
+            // Drive the "LIVE" indicator on the Program preview: pulsing red while the
+            // presenter window is open, steady dim-gray otherwise.
+            if (this.liveIndicator != null)
             {
-                this.linearHeader.IsLive = (this.activePresentationForm != null && !this.activePresentationForm.IsDisposed);
+                this.liveIndicator.IsLive = (this.activePresentationForm != null && !this.activePresentationForm.IsDisposed);
             }
             // This method can be expanded later to include other button states if needed.
         }
