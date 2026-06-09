@@ -24,6 +24,9 @@ namespace DreamsLive_Solutions_PresenterApp1
         public string ServerUrl { get; private set; }
         public bool IsRunning => _listener != null && _listener.IsListening;
 
+        private bool _cachedIsLicenseExpired;
+        private DateTime _licenseExpiredCheckTime = DateTime.MinValue;
+
         public HttpWebServer(MainForm mainForm)
         {
             _mainForm = mainForm;
@@ -259,7 +262,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                             {
                                 Match filenameMatch = Regex.Match(headers, @"filename=""([^""]+)""");
                                 if (filenameMatch.Success) originalFilename = filenameMatch.Groups[1].Value;
-                                fileData = new byte[dataEndIndex - dataStartIndex];
+                                int dataLength = dataEndIndex - dataStartIndex;
+                                if (dataLength < 0) break; // malformed multipart: boundary too close
+                                fileData = new byte[dataLength];
                                 Array.Copy(bodyBytes, dataStartIndex, fileData, 0, fileData.Length);
                             }
                         }
@@ -481,10 +486,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 var query = request.QueryString;
                 _mainForm.Invoke((Action)(() =>
                 {
-                    if (query.Get("skipOnePage") != null) _mainForm.SkipOnePage = bool.Parse(query.Get("skipOnePage"));
-                    if (query.Get("twoPagePdf") != null) _mainForm.TwoPagePdf = bool.Parse(query.Get("twoPagePdf"));
-                    if (query.Get("enableScroll") != null) _mainForm.EnableAutoScroll = bool.Parse(query.Get("enableScroll"));
-                    if (query.Get("autoStage") != null) _mainForm.AutoStagePreview = bool.Parse(query.Get("autoStage"));
+                    if (bool.TryParse(query.Get("skipOnePage"), out bool skipVal)) _mainForm.SkipOnePage = skipVal;
+                    if (bool.TryParse(query.Get("twoPagePdf"), out bool twoPageVal)) _mainForm.TwoPagePdf = twoPageVal;
+                    if (bool.TryParse(query.Get("enableScroll"), out bool scrollVal)) _mainForm.EnableAutoScroll = scrollVal;
+                    if (bool.TryParse(query.Get("autoStage"), out bool stageVal)) _mainForm.AutoStagePreview = stageVal;
                     if (query.Get("moveStep") != null) _mainForm.MoveStepText = query.Get("moveStep");
                     _mainForm.SaveSettings();
                 }));
@@ -657,7 +662,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                 isBlackout = _mainForm.PresenterDisplayIsBlack;
                 selectionWidth = _mainForm.SelectionWidth;
                 selectionHeight = _mainForm.SelectionHeight;
-                isLicenseExpired = new UsageManager().IsLicenseExpired();
+                if ((DateTime.UtcNow - _licenseExpiredCheckTime).TotalSeconds > 30)
+                {
+                    _cachedIsLicenseExpired = new UsageManager().IsLicenseExpired();
+                    _licenseExpiredCheckTime = DateTime.UtcNow;
+                }
+                isLicenseExpired = _cachedIsLicenseExpired;
                 galleryVersion = _mainForm.GalleryVersion;
             }));
 

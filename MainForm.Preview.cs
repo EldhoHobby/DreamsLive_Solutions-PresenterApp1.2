@@ -133,8 +133,15 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             float picBoxWidth = picPreview.ClientSize.Width;
             float picBoxHeight = picPreview.ClientSize.Height;
+
+            if (picBoxWidth <= 0 || picBoxHeight <= 0)
+                return RectangleF.Empty;
+
             float imgWidth = picPreview.Image.Width;
             float imgHeight = picPreview.Image.Height;
+
+            if (imgWidth <= 0 || imgHeight <= 0)
+                return RectangleF.Empty;
 
             float picBoxAspectRatio = picBoxWidth / picBoxHeight;
             float imgAspectRatio = imgWidth / imgHeight;

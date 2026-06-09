@@ -183,15 +183,21 @@ namespace DreamsLive_Solutions_PresenterApp1
         public void ProcessUploadedFile(string tempPath, string originalFileName, bool updateStaging = true)
         {
             string fileExtension = Path.GetExtension(originalFileName).ToLowerInvariant();
-            string newTempPath = Path.ChangeExtension(tempPath, fileExtension);
+            // Skip rename entirely when there is no extension to add: Path.ChangeExtension with ""
+            // appends a trailing dot which Windows resolves to the original path, causing the guard
+            // below to delete the source file before File.Move can read it.
+            string newTempPath = string.IsNullOrEmpty(fileExtension)
+                ? tempPath
+                : Path.ChangeExtension(tempPath, fileExtension);
 
             try
             {
-                if (File.Exists(newTempPath))
+                if (newTempPath != tempPath)
                 {
-                    File.Delete(newTempPath);
+                    if (File.Exists(newTempPath))
+                        File.Delete(newTempPath);
+                    File.Move(tempPath, newTempPath);
                 }
-                File.Move(tempPath, newTempPath);
 
                 ProcessNewImage(newTempPath, updateStaging);
             }
@@ -199,13 +205,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 ShowErrorMessage($"Error processing uploaded file: {ex.Message}");
                 if (File.Exists(tempPath))
-                {
                     File.Delete(tempPath);
-                }
-                if (File.Exists(newTempPath))
-                {
+                if (newTempPath != tempPath && File.Exists(newTempPath))
                     File.Delete(newTempPath);
-                }
             }
         }
 

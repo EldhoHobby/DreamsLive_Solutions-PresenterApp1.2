@@ -269,7 +269,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                     throw new FileNotFoundException("Content file not found.", contentPath);
                 }
 
-                if (sourceBitmap == null) return;
+                if (sourceBitmap == null)
+                {
+                    // Clear stale master so laser/highlight don't render against a previous image
+                    if (this.stagedMasterImage != null) { this.stagedMasterImage.Dispose(); this.stagedMasterImage = null; }
+                    return;
+                }
 
                 // Apply manual rotation to the source content (Image or PDF render)
                 if (manualRotationAngle != 0)
@@ -443,7 +448,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.picSecondaryPreview.Invalidate();
                 NotifyPresenterOfHighlights();
             }
-            else if (e.Button == MouseButtons.Right || e.Button == MouseButtons.Left)
+            else if ((e.Button == MouseButtons.Right || e.Button == MouseButtons.Left) &&
+                     !(this.chkLaserPointer != null && this.chkLaserPointer.Checked))
             {
                 this.isPanningSecondaryPreview = true;
                 this.secondaryPreviewLastMousePosition = e.Location;
