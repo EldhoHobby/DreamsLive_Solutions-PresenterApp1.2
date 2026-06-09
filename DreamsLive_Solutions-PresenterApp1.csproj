@@ -236,6 +236,28 @@
     <Content Include="splash.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="Resources\logo_mark.png" />
+    <EmbeddedResource Include="Resources\splash_bg.png" />
+    <EmbeddedResource Include="Resources\icons\adddb.png" />
+    <EmbeddedResource Include="Resources\icons\blackout.png" />
+    <EmbeddedResource Include="Resources\icons\browse.png" />
+    <EmbeddedResource Include="Resources\icons\close.png" />
+    <EmbeddedResource Include="Resources\icons\down.png" />
+    <EmbeddedResource Include="Resources\icons\edit.png" />
+    <EmbeddedResource Include="Resources\icons\gallery.png" />
+    <EmbeddedResource Include="Resources\icons\help.png" />
+    <EmbeddedResource Include="Resources\icons\highlighter.png" />
+    <EmbeddedResource Include="Resources\icons\left.png" />
+    <EmbeddedResource Include="Resources\icons\next.png" />
+    <EmbeddedResource Include="Resources\icons\prev.png" />
+    <EmbeddedResource Include="Resources\icons\push.png" />
+    <EmbeddedResource Include="Resources\icons\right.png" />
+    <EmbeddedResource Include="Resources\icons\setfolder.png" />
+    <EmbeddedResource Include="Resources\icons\settings.png" />
+    <EmbeddedResource Include="Resources\icons\snip.png" />
+    <EmbeddedResource Include="Resources\icons\stage.png" />
+    <EmbeddedResource Include="Resources\icons\theme.png" />
+    <EmbeddedResource Include="Resources\icons\up.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

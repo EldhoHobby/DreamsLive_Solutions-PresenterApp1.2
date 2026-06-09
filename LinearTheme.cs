@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.Linq;
 using System.Reflection;
@@ -148,6 +149,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             try { form.Font = Resolve(form.Font); } catch { }
             foreach (Control c in form.Controls) Style(c);
             UseDarkTitleBar(form, Current.IsDark);
+            var hdr = form.Controls["linearHeader"]; if (hdr != null) hdr.Invalidate();
             form.ResumeLayout();
             form.Invalidate(true);
         }
@@ -214,6 +216,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 case PictureBox pic:
                     if (pic.Image == null)
                         pic.BackColor = Current.Surface1;
+                    if (string.Equals(pic.Name, "picPreview", StringComparison.OrdinalIgnoreCase))
+                        AttachPreviewFrame(pic);
                     break;
                 case NumericUpDown num:
                     num.BackColor = Current.Surface1;
@@ -331,9 +335,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                     g.DrawPath(pen, path);
             }
 
-            TextRenderer.DrawText(g, btn.Text, btn.Font, rect, text,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter |
-                TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            DrawButtonContent(g, btn, rect, text);
         }
 
         // ---- Helpers ----------------------------------------------------------
@@ -410,6 +412,209 @@ namespace DreamsLive_Solutions_PresenterApp1
                 UseDarkTitleBar(form, dark);
             }
             form.HandleCreated += Handler;
+        }
+
+        // ---- Icon + brand graphics -------------------------------------------
+        private static readonly Dictionary<string, Image> _imgCache =
+            new Dictionary<string, Image>(StringComparer.OrdinalIgnoreCase);
+
+        public static readonly Dictionary<string, string> ButtonIcons =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "btnStageContent", "stage" }, { "btnPushToPresenter", "push" },
+            { "tnBrowse", "browse" }, { "btnOpenGallery", "gallery" },
+            { "btnSettings", "settings" }, { "btnEditContent", "edit" },
+            { "btnSnip", "snip" }, { "btnHighlighter", "highlighter" },
+            { "btnClearPresenterDisplay", "blackout" }, { "btnCloseLivePresenter", "close" },
+            { "btnToggleTheme", "theme" }, { "btnHelp", "help" },
+            { "btnAddToDatabase", "adddb" }, { "btnSetDatabaseFolder", "setfolder" },
+            { "btnPrevPage", "prev" }, { "btnNextPage", "next" },
+            { "btnUp", "up" }, { "btnDown", "down" }, { "btnLeft", "left" }, { "btnRight", "right" },
+        };
+
+        private static Image LoadEmbedded(string endsWith)
+        {
+            if (_imgCache.TryGetValue(endsWith, out var cached)) return cached;
+            Image img = null;
+            try
+            {
+                var asm = Assembly.GetExecutingAssembly();
+                var name = asm.GetManifestResourceNames()
+                    .FirstOrDefault(n => n.EndsWith(endsWith, StringComparison.OrdinalIgnoreCase));
+                if (name != null)
+                    using (var s = asm.GetManifestResourceStream(name))
+                        if (s != null) img = Image.FromStream(s);
+            }
+            catch { img = null; }
+            _imgCache[endsWith] = img;
+            return img;
+        }
+
+        private static Image LoadIcon(string iconName)
+        {
+            return string.IsNullOrEmpty(iconName) ? null : LoadEmbedded("Resources.icons." + iconName + ".png");
+        }
+
+        public static Image BrandMark => LoadEmbedded("Resources.logo_mark.png");
+
+        private static void DrawTintedImage(Graphics g, Image img, Rectangle dest, Color color)
+        {
+            if (img == null) return;
+            var cm = new ColorMatrix(new float[][]
+            {
+                new float[] { 0, 0, 0, 0, 0 },
+                new float[] { 0, 0, 0, 0, 0 },
+                new float[] { 0, 0, 0, 0, 0 },
+                new float[] { 0, 0, 0, 1, 0 },
+                new float[] { color.R / 255f, color.G / 255f, color.B / 255f, 0, 1 },
+            });
+            using (var ia = new ImageAttributes())
+            {
+                ia.SetColorMatrix(cm);
+                var old = g.InterpolationMode;
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.DrawImage(img, dest, 0, 0, img.Width, img.Height, GraphicsUnit.Pixel, ia);
+                g.InterpolationMode = old;
+            }
+        }
+
+        private static void DrawButtonContent(Graphics g, Button btn, Rectangle rect, Color text)
+        {
+            Image icon = (btn.Name != null && ButtonIcons.TryGetValue(btn.Name, out var ic)) ? LoadIcon(ic) : null;
+            string label = btn.Text ?? "";
+            bool hasText = label.Trim().Length > 1;     // single-glyph labels (arrows) -> icon only
+            int iconSize = Math.Min(18, rect.Height - 8);
+            if (iconSize < 10) icon = null;
+
+            if (icon != null && hasText)
+            {
+                Size ts = TextRenderer.MeasureText(g, label, btn.Font,
+                    new Size(rect.Width, rect.Height), TextFormatFlags.NoPrefix);
+                int gap = 7;
+                int groupW = iconSize + gap + ts.Width;
+                int startX = rect.X + Math.Max(6, (rect.Width - groupW) / 2);
+                int iconY = rect.Y + (rect.Height - iconSize) / 2;
+                DrawTintedImage(g, icon, new Rectangle(startX, iconY, iconSize, iconSize), text);
+                var textRect = new Rectangle(startX + iconSize + gap, rect.Y,
+                    rect.Right - (startX + iconSize + gap), rect.Height);
+                TextRenderer.DrawText(g, label, btn.Font, textRect, text,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter |
+                    TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            }
+            else if (icon != null)
+            {
+                int iconY = rect.Y + (rect.Height - iconSize) / 2;
+                int iconX = rect.X + (rect.Width - iconSize) / 2;
+                DrawTintedImage(g, icon, new Rectangle(iconX, iconY, iconSize, iconSize), text);
+            }
+            else
+            {
+                TextRenderer.DrawText(g, label, btn.Font, rect, text,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter |
+                    TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            }
+        }
+
+        // ---- Elevated preview surface ----------------------------------------
+        private static void AttachPreviewFrame(PictureBox pic)
+        {
+            if (!_wired.Add(pic)) return;
+            pic.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                var r = pic.ClientRectangle; r.Width -= 1; r.Height -= 1;
+                if (r.Width < 6 || r.Height < 6) return;
+                using (var path = RoundedRect(r, 10))
+                using (var pen = new Pen(Current.Hairline, 1f))
+                    g.DrawPath(pen, path);
+                using (var hi = new Pen(Color.FromArgb(26, 255, 255, 255), 1f))
+                    g.DrawLine(hi, r.X + 10, r.Y + 1, r.Right - 10, r.Y + 1);
+            };
+        }
+
+        // ---- Branded header bar ----------------------------------------------
+        public static void InstallHeader(Form form, string brandLead, string brandRest, string tagline)
+        {
+            if (form == null || form.Controls.ContainsKey("linearHeader")) return;
+            const int h = 56;
+            var existing = form.Controls.Cast<Control>().ToList();
+            foreach (var c in existing)
+                if ((c.Anchor & AnchorStyles.Bottom) == 0)
+                    c.Top += h;
+            try { form.Height += h; } catch { }
+
+            var header = new Panel
+            {
+                Name = "linearHeader",
+                Dock = DockStyle.Top,
+                Height = h,
+                Tag = "chrome",
+                BackColor = Current.Surface1
+            };
+            form.Controls.Add(header);
+            header.BringToFront();
+            EnableDoubleBuffer(header);
+            header.Paint += (s, e) =>
+                PaintHeader(e.Graphics, header.ClientRectangle, brandLead, brandRest, tagline);
+            form.Resize += (s, e) => header.Invalidate();
+            header.Invalidate();
+        }
+
+        private static void PaintHeader(Graphics g, Rectangle r, string lead, string rest, string tagline)
+        {
+            if (r.Width < 2 || r.Height < 2) return;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+
+            using (var br = new LinearGradientBrush(r, Current.Surface1, Current.Canvas, LinearGradientMode.Horizontal))
+                g.FillRectangle(br, r);
+            using (var pen = new Pen(Current.Hairline, 1f))
+                g.DrawLine(pen, r.X, r.Bottom - 1, r.Right, r.Bottom - 1);
+            using (var pen = new Pen(Current.Primary, 2f))
+                g.DrawLine(pen, r.X, r.Bottom - 2, r.X + 128, r.Bottom - 2);
+
+            int pad = 14, mark = 32;
+            int my = r.Y + (r.Height - mark) / 2;
+            int textX = r.X + pad;
+            var brand = BrandMark;
+            if (brand != null)
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.DrawImage(brand, new Rectangle(r.X + pad, my, mark, mark));
+                textX = r.X + pad + mark + 12;
+            }
+
+            using (var fLead = new Font(FontFamily, 14f, FontStyle.Bold))
+            using (var fRest = new Font(FontFamily, 14f, FontStyle.Regular))
+            {
+                int ty = r.Y + 7;
+                var sz1 = TextRenderer.MeasureText(g, lead, fLead, Size.Empty, TextFormatFlags.NoPrefix);
+                TextRenderer.DrawText(g, lead, fLead, new Point(textX, ty), Current.Ink, TextFormatFlags.NoPrefix);
+                TextRenderer.DrawText(g, rest, fRest, new Point(textX + sz1.Width - 2, ty), Current.InkSubtle, TextFormatFlags.NoPrefix);
+            }
+            if (!string.IsNullOrEmpty(tagline))
+                using (var fTag = new Font(FontFamily, 8.5f, FontStyle.Regular))
+                    TextRenderer.DrawText(g, tagline, fTag, new Point(textX, r.Y + 31), Current.InkSubtle, TextFormatFlags.NoPrefix);
+
+            string pill = "GO LIVE";
+            using (var fp = new Font(FontFamily, 8f, FontStyle.Bold))
+            {
+                var ps = TextRenderer.MeasureText(g, pill, fp, Size.Empty, TextFormatFlags.NoPrefix);
+                int ph = 22, pw = ps.Width + 30;
+                var pr = new Rectangle(r.Right - pw - 16, r.Y + (r.Height - ph) / 2, pw, ph);
+                if (pr.X > textX + 80)
+                {
+                    using (var path = RoundedRect(pr, ph / 2))
+                    using (var pen = new Pen(Current.Primary, 1.4f))
+                        g.DrawPath(pen, path);
+                    using (var dotb = new SolidBrush(Current.Primary))
+                        g.FillEllipse(dotb, pr.X + 10, pr.Y + ph / 2 - 3, 6, 6);
+                    TextRenderer.DrawText(g, pill, fp,
+                        new Rectangle(pr.X + 18, pr.Y, pr.Width - 18, pr.Height), Current.InkMuted,
+                        TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
+                }
+            }
         }
     }
 }
