@@ -136,7 +136,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // Branded header bar (logo mark + wordmark + accent). Shifts content down
             // and grows the form; the old top-left logo becomes redundant, so hide it.
             LinearTheme.InstallHeader(this, "Dreams", "Live Solutions", "Where Ideas Go Live.");
-            if (this.pictureBox1 != null) this.pictureBox1.Visible = false;
+            //if (this.pictureBox1 != null) this.pictureBox1.Visible = false;
             // Subscribe to picPreview mouse events
             if (this.picPreview != null) // Ensure picPreview is not null
             {
