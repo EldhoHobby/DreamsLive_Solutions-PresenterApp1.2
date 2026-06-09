@@ -457,6 +457,19 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         public static Image BrandMark => LoadEmbedded("Resources.logo_mark.png");
 
+        // Full brand wordmark (transparent PNG) used in the header bar and splash.
+        private static Image _brandLogo;
+        public static Image BrandLogo
+        {
+            get
+            {
+                if (_brandLogo != null) return _brandLogo;
+                try { _brandLogo = Properties.Resources.DreamsLiveSolutions_Logo1; }
+                catch { _brandLogo = null; }
+                return _brandLogo;
+            }
+        }
+
         private static void DrawTintedImage(Graphics g, Image img, Rectangle dest, Color color)
         {
             if (img == null) return;
@@ -556,12 +569,15 @@ namespace DreamsLive_Solutions_PresenterApp1
             header.BringToFront();
             EnableDoubleBuffer(header);
             header.Paint += (s, e) =>
+            {
                 PaintHeader(e.Graphics, header.ClientRectangle, brandLead, brandRest, tagline);
+                PaintLiveIndicator(e.Graphics, header.ClientRectangle, false, 0f);
+            };
             form.Resize += (s, e) => header.Invalidate();
             header.Invalidate();
         }
 
-        private static void PaintHeader(Graphics g, Rectangle r, string lead, string rest, string tagline)
+        public static void PaintHeader(Graphics g, Rectangle r, string lead, string rest, string tagline)
         {
             if (r.Width < 2 || r.Height < 2) return;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -574,46 +590,103 @@ namespace DreamsLive_Solutions_PresenterApp1
             using (var pen = new Pen(Current.Primary, 2f))
                 g.DrawLine(pen, r.X, r.Bottom - 2, r.X + 128, r.Bottom - 2);
 
-            int pad = 14, mark = 32;
-            int my = r.Y + (r.Height - mark) / 2;
-            int textX = r.X + pad;
-            var brand = BrandMark;
-            if (brand != null)
+            // Brand logo (DreamsLiveSolutions_Logo1), scaled to the bar height and kept
+            // clear of the right-hand LIVE indicator. Falls back to the wordmark text if
+            // the logo image cannot be loaded.
+            int pad = 14;
+            var brand = BrandLogo;
+            if (brand != null && brand.Width > 0 && brand.Height > 0)
             {
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.DrawImage(brand, new Rectangle(r.X + pad, my, mark, mark));
-                textX = r.X + pad + mark + 12;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                int logoH = r.Height - 18;
+                int logoW = (int)Math.Round(brand.Width * (logoH / (float)brand.Height));
+                int maxW = Math.Max(60, r.Width - 240);
+                if (logoW > maxW)
+                {
+                    logoW = maxW;
+                    logoH = (int)Math.Round(brand.Height * (logoW / (float)brand.Width));
+                }
+                int ly = r.Y + (r.Height - logoH) / 2;
+                g.DrawImage(brand, new Rectangle(r.X + pad, ly, logoW, logoH));
             }
-
-            using (var fLead = new Font(FontFamily, 14f, FontStyle.Bold))
-            using (var fRest = new Font(FontFamily, 14f, FontStyle.Regular))
+            else
             {
-                int ty = r.Y + 7;
-                var sz1 = TextRenderer.MeasureText(g, lead, fLead, Size.Empty, TextFormatFlags.NoPrefix);
-                TextRenderer.DrawText(g, lead, fLead, new Point(textX, ty), Current.Ink, TextFormatFlags.NoPrefix);
-                TextRenderer.DrawText(g, rest, fRest, new Point(textX + sz1.Width - 2, ty), Current.InkSubtle, TextFormatFlags.NoPrefix);
+                using (var fLead = new Font(FontFamily, 14f, FontStyle.Bold))
+                using (var fRest = new Font(FontFamily, 14f, FontStyle.Regular))
+                {
+                    int ty = r.Y + 7;
+                    var sz1 = TextRenderer.MeasureText(g, lead, fLead, Size.Empty, TextFormatFlags.NoPrefix);
+                    TextRenderer.DrawText(g, lead, fLead, new Point(r.X + pad, ty), Current.Ink, TextFormatFlags.NoPrefix);
+                    TextRenderer.DrawText(g, rest, fRest, new Point(r.X + pad + sz1.Width - 2, ty), Current.InkSubtle, TextFormatFlags.NoPrefix);
+                    if (!string.IsNullOrEmpty(tagline))
+                        using (var fTag = new Font(FontFamily, 8.5f, FontStyle.Regular))
+                            TextRenderer.DrawText(g, tagline, fTag, new Point(r.X + pad, r.Y + 31), Current.InkSubtle, TextFormatFlags.NoPrefix);
+                }
             }
-            if (!string.IsNullOrEmpty(tagline))
-                using (var fTag = new Font(FontFamily, 8.5f, FontStyle.Regular))
-                    TextRenderer.DrawText(g, tagline, fTag, new Point(textX, r.Y + 31), Current.InkSubtle, TextFormatFlags.NoPrefix);
 
-            string pill = "GO LIVE";
+            // The "LIVE" status indicator is drawn separately by PaintLiveIndicator so it
+            // can reflect presenter state (dim gray when idle, pulsing red when live).
+        }
+
+        /// <summary>
+        /// Draws the right-aligned status pill ("LIVE"). When <paramref name="live"/> is
+        /// false it renders as a steady dim-gray indicator; when true it renders red and
+        /// uses <paramref name="pulse"/> (0..1, a smooth breathing value) to brighten the
+        /// dot and grow a soft glow.
+        /// </summary>
+        public static void PaintLiveIndicator(Graphics g, Rectangle r, bool live, float pulse)
+        {
+            if (r.Width < 80 || r.Height < 10) return;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+
+            const string text = "LIVE";
             using (var fp = new Font(FontFamily, 8f, FontStyle.Bold))
             {
-                var ps = TextRenderer.MeasureText(g, pill, fp, Size.Empty, TextFormatFlags.NoPrefix);
-                int ph = 22, pw = ps.Width + 30;
+                var ts = TextRenderer.MeasureText(g, text, fp, Size.Empty, TextFormatFlags.NoPrefix);
+                int ph = 22, pw = ts.Width + 34;
                 var pr = new Rectangle(r.Right - pw - 16, r.Y + (r.Height - ph) / 2, pw, ph);
-                if (pr.X > textX + 80)
+                if (pr.X < r.X + 8) return;
+
+                if (pulse < 0f) pulse = 0f; else if (pulse > 1f) pulse = 1f;
+
+                Color dotColor, textColor, borderColor;
+                if (live)
                 {
-                    using (var path = RoundedRect(pr, ph / 2))
-                    using (var pen = new Pen(Current.Primary, 1.4f))
-                        g.DrawPath(pen, path);
-                    using (var dotb = new SolidBrush(Current.Primary))
-                        g.FillEllipse(dotb, pr.X + 10, pr.Y + ph / 2 - 3, 6, 6);
-                    TextRenderer.DrawText(g, pill, fp,
-                        new Rectangle(pr.X + 18, pr.Y, pr.Width - 18, pr.Height), Current.InkMuted,
-                        TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
+                    Color dimRed = Blend(Current.Danger, Current.Surface1, 0.45f);
+                    Color hotRed = Color.FromArgb(0xFF, 0x6B, 0x6B);
+                    dotColor = Blend(dimRed, hotRed, pulse);
+                    textColor = Blend(Blend(Current.Danger, Current.Ink, 0.15f), hotRed, pulse);
+                    borderColor = dotColor;
                 }
+                else
+                {
+                    dotColor = Current.InkSubtle;
+                    textColor = Current.InkSubtle;
+                    borderColor = Current.Hairline;
+                }
+
+                using (var path = RoundedRect(pr, ph / 2))
+                using (var pen = new Pen(borderColor, 1.4f))
+                    g.DrawPath(pen, path);
+
+                int dotD = 6;
+                int dotX = pr.X + 11;
+                int cy = pr.Y + ph / 2;
+                if (live)
+                {
+                    int gr = (int)(4 + 7 * pulse);
+                    int ga = (int)(40 + 130 * pulse);
+                    using (var gb = new SolidBrush(Color.FromArgb(ga, dotColor)))
+                        g.FillEllipse(gb, dotX - gr, cy - dotD / 2 - gr, dotD + gr * 2, dotD + gr * 2);
+                }
+                using (var dotb = new SolidBrush(dotColor))
+                    g.FillEllipse(dotb, dotX, cy - dotD / 2, dotD, dotD);
+
+                TextRenderer.DrawText(g, text, fp,
+                    new Rectangle(pr.X + 20, pr.Y, pr.Width - 20, pr.Height), textColor,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
             }
         }
     }
