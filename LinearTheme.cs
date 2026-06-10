@@ -641,7 +641,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
-            const string text = "LIVE";
+            const string text = "Presenter Live";
             using (var fp = new Font(FontFamily, 8f, FontStyle.Bold))
             {
                 var ts = TextRenderer.MeasureText(g, text, fp, Size.Empty, TextFormatFlags.NoPrefix);

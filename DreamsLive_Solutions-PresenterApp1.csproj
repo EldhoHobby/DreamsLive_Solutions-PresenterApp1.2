@@ -236,11 +236,10 @@
     </Content>
     <None Include="Resources\DreamsLiveSolutions_Logo.png" />
     <None Include="Resources\DreamsLiveSolutions_Logo1.png" />
-    <Content Include="splash.png">
+    <Content Include="brand_logo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <EmbeddedResource Include="Resources\logo_mark.png" />
-    <EmbeddedResource Include="Resources\splash_bg.png" />
     <EmbeddedResource Include="Resources\icons\adddb.png" />
     <EmbeddedResource Include="Resources\icons\blackout.png" />
     <EmbeddedResource Include="Resources\icons\browse.png" />

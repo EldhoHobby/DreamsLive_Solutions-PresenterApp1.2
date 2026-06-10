@@ -153,25 +153,16 @@
                 background: var(--primary);
             }
 
-        .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+        .brand { display: flex; align-items: center; min-width: 0; }
 
-            .brand__tile {
-                flex: none;
-                border-radius: 9px;
-                box-shadow: 0 2px 10px rgba(94, 106, 210, 0.45);
+            /* Brand wordmark (DreamsLiveSolutions_Logo1) — same asset the desktop app bar uses. */
+            .brand__logo {
+                height: 30px;
+                width: auto;
+                max-width: 62vw;
+                object-fit: contain;
+                display: block;
             }
-
-            .brand__name {
-                font-size: 1.02rem;
-                letter-spacing: -0.01em;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-                .brand__name b { font-weight: 800; color: var(--ink); }
-                .brand__name .live { color: var(--primary); font-weight: 800; }
-                .brand__name .sol { color: var(--ink-subtle); font-weight: 500; }
 
         .live-pill {
             flex: none;
@@ -191,17 +182,17 @@
             .live-pill__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-subtle); }
 
             .live-pill.is-live { color: #fff; border-color: transparent; background: var(--danger); }
-                .live-pill.is-live .live-pill__dot { background: #fff; animation: livePulse 1.6s ease-out infinite; }
+                /* Smooth "breathing" LED to match the desktop LiveIndicatorControl (sine pulse). */
+                .live-pill.is-live .live-pill__dot { background: #fff; animation: liveBreathe 2.4s ease-in-out infinite; }
 
             .live-pill.is-blackout { color: var(--ink); border-color: var(--warning); }
                 .live-pill.is-blackout .live-pill__dot { background: var(--warning); }
 
             .live-pill.is-offline { opacity: 0.55; }
 
-        @keyframes livePulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.6); }
-            70% { box-shadow: 0 0 0 8px rgba(255, 107, 107, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        @keyframes liveBreathe {
+            0%, 100% { opacity: 0.6; box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+            50% { opacity: 1; box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.9); }
         }
 
         /* ---------- Previews ---------- */
@@ -210,13 +201,17 @@
             gap: 10px;
             margin: 14px 0;
             justify-content: center;
+            /* flex-start (not the default stretch) so each box keeps its own
+               aspect-ratio; stretching letterboxes the image and misaligns the
+               %-positioned selection overlays. */
+            align-items: flex-start;
             touch-action: none; /* allow custom pan/zoom gestures */
         }
 
         .preview-box {
             position: relative;
             flex: 1 1 0;
-            min-height: 96px;
+            min-height: 80px; /* pre-load fallback; JS sets aspect-ratio once an image loads */
             background: #000;
             border-radius: var(--radius);
             /* outline (not border) keeps the JS coordinate math clean; JS recolors it */
@@ -304,6 +299,16 @@
             .btn-primary:hover { background: var(--primary-hover); border-color: transparent; }
 
         .btn-ghost { background: transparent; }
+
+        /* Blackout button while the presenter is blacked out (text reads "Restore Presenter").
+           Bright green so it clearly stands out against the dark UI and the red live cues. */
+        #btnClearPresenterDisplay.btn-restore {
+            background: #22c55e;
+            color: #06230f;
+            border-color: transparent;
+            font-weight: 700;
+        }
+            #btnClearPresenterDisplay.btn-restore:hover { background: #16a34a; border-color: transparent; }
 
         .big-button {
             width: 100%;
@@ -611,7 +616,16 @@
             pointer-events: none;
         }
 
-        .splash__logo { position: relative; width: 84%; max-width: 440px; height: auto; }
+        .splash__logo { position: relative; width: 82%; max-width: 460px; height: auto; }
+
+        /* Tagline drawn as live text (the logo is a bare wordmark), matching the desktop SplashForm. */
+        .splash__tag {
+            position: relative;
+            margin-top: 18px;
+            font-size: 0.95rem;
+            letter-spacing: 0.01em;
+            color: #969faf;
+        }
 
         .splash__bar {
             position: absolute;
@@ -676,10 +690,11 @@
     </style>
 </head>
 <body>
-    <!-- Splash (mirrors the desktop SplashForm: dark dotted canvas + lavender bar) -->
+    <!-- Splash (mirrors the desktop SplashForm: brand logo on dark dotted canvas + lavender bar) -->
     <div id="spinner" class="splash">
         <div class="splash__glow"></div>
-        <img class="splash__logo" src="splash.png" alt="DreamsLive Solutions — Where Ideas Go Live.">
+        <img class="splash__logo" src="brand_logo.png" alt="DreamsLive Solutions">
+        <div class="splash__tag">Where Ideas Go Live.</div>
         <div class="splash__bar"></div>
     </div>
 
@@ -695,17 +710,7 @@
     <!-- Branded app bar -->
     <header class="appbar">
         <div class="brand">
-            <svg class="brand__tile" width="28" height="28" viewBox="0 0 48 48" aria-hidden="true">
-                <defs>
-                    <linearGradient id="tileGrad" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0" stop-color="#828fff"></stop>
-                        <stop offset="1" stop-color="#5e6ad2"></stop>
-                    </linearGradient>
-                </defs>
-                <rect x="2" y="2" width="44" height="44" rx="12" fill="url(#tileGrad)"></rect>
-                <path d="M19 15 L34 24 L19 33 Z" fill="#ffffff"></path>
-            </svg>
-            <span class="brand__name"><b>Dreams</b><span class="live">Live</span> <span class="sol">Solutions</span></span>
+            <img class="brand__logo" src="brand_logo.png" alt="DreamsLive Solutions">
         </div>
         <div id="live-pill" class="live-pill">
             <span class="live-pill__dot"></span>
@@ -716,19 +721,19 @@
     <main class="container">
         <h1 class="sr-only">DreamsLive Solutions Presenter Remote</h1>
 
-        <!-- Live previews: presenter output + source (tap to crop) -->
+        <!-- Live previews: local/source (tap to crop) on the LEFT, presenter output on the RIGHT -->
         <div class="preview-container">
-            <div id="picSecondaryContainer" class="preview-box">
-                <span class="preview-box__tag">Presenter</span>
-                <img id="picSecondaryPreview" src="" alt="Presenter output preview">
-            </div>
             <div id="picPreviewContainer" class="preview-box" onclick="openEditor()">
-                <span class="preview-box__tag">Source &middot; tap to crop</span>
-                <img id="picPreview" src="" alt="Source preview">
+                <span class="preview-box__tag">Local Preview &middot; tap to crop</span>
+                <img id="picPreview" src="" alt="Local source preview">
                 <!-- Persistent staged reference box -->
                 <div id="staged-selection-overlay" class="sel-overlay"></div>
                 <!-- Current active selection box -->
                 <div id="selection-overlay" class="sel-overlay"></div>
+            </div>
+            <div id="picSecondaryContainer" class="preview-box">
+                <span class="preview-box__tag">Presenter View</span>
+                <img id="picSecondaryPreview" src="" alt="Presenter output view">
             </div>
         </div>
 
@@ -1143,7 +1148,7 @@
                         };
                         const img = document.createElement('img');
                         if (f.Extension === '.pdf') {
-                            img.src = 'splash.png';
+                            img.src = 'data:image/svg+xml,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='14' y='8' width='36' height='48' rx='4' fill='none' stroke='#5e6ad2' stroke-width='3'/><path d='M40 8 v10 h10' fill='none' stroke='#5e6ad2' stroke-width='3'/><text x='32' y='45' font-family='Arial, sans-serif' font-size='12' font-weight='700' fill='#5e6ad2' text-anchor='middle'>PDF</text></svg>");
                         } else {
                             img.src = `/database/file?path=${encodeURIComponent(f.RelativePath)}`;
                         }
@@ -1850,6 +1855,8 @@
                 if (blackoutButton) {
                     blackoutButton.textContent = status.blackoutButtonText;
                     blackoutButton.classList.toggle('button-disabled', status.blackoutButtonEnabled !== true);
+                    // Stand out (bright green) while blacked out, when the button reads "Restore Presenter".
+                    blackoutButton.classList.toggle('btn-restore', status.isBlackout === true);
                     blackoutButton.style.display = status.closeLiveButtonEnabled ? 'inline-block' : 'none';
                 }
 
@@ -2031,7 +2038,7 @@
                 pill.classList.toggle('is-live', p === 'Open');
                 pill.classList.toggle('is-blackout', p === 'Blackout');
                 pill.classList.toggle('is-offline', !online);
-                if (txt) txt.textContent = p === 'Open' ? 'LIVE' : (p === 'Blackout' ? 'BLACKOUT' : (online ? 'READY' : 'OFFLINE'));
+                if (txt) txt.textContent = p === 'Open' ? 'Presenter Live' : (p === 'Blackout' ? 'BLACKOUT' : (online ? 'READY' : 'OFFLINE'));
             }
             try {
                 var mo = new MutationObserver(sync);

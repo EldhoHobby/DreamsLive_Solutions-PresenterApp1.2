@@ -153,8 +153,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                     case "/preview/secondary":
                         await WriteImageResponse(response, _mainForm.GetSecondaryPreviewImage());
                         break;
-                    case "/splash.png":
-                        await WriteFileResponse(response, "splash.png", "image/png");
+                    case "/brand_logo.png":
+                        await WriteFileResponse(response, "brand_logo.png", "image/png");
                         break;
                     case "/upload":
                         await HandleFileUpload(request, response);

@@ -21,9 +21,18 @@ AppDomain.CurrentDomain.BaseDirectory + "remote_control.html"   ->  bin\Debug\re
 ```
 
 The **source of truth is the repo-root `remote_control.html`**. The `.csproj` marks it
-(and `splash.png`) `CopyToOutputDirectory = PreserveNewest`, so a build refreshes the
-served copy. When editing without a rebuild, also copy the source over
+(and `brand_logo.png`) `CopyToOutputDirectory = PreserveNewest`, so a build refreshes the
+served copy. When editing only the HTML without a rebuild, also copy the source over
 `bin\Debug\remote_control.html` so a running instance serves the new version.
+
+### Image routes
+
+`HttpWebServer.cs` serves images by **explicit route only** (no generic static handler).
+The brand logo is served at **`/brand_logo.png`** (repo-root `brand_logo.png`, a copy of
+`Resources\DreamsLiveSolutions_Logo1.png` — the same asset the desktop app embeds). The
+old `/splash.png` route and the `splash.png` / `Resources\splash_bg.png` assets were
+removed. Adding a new web image = add a `case "/x.png"` route + a `<Content>` csproj
+entry, then rebuild.
 
 ## Structure
 
@@ -75,13 +84,19 @@ Legacy aliases used by the script and inline styles (`--bg-color`, `--text-color
 references to the base tokens, so overriding only the base tokens in `.dark-mode` is
 enough. **Lavender is scarce** — reserved for the Stage / Go Live CTAs.
 
-## Splash
+## Splash & brand logo
 
-Recreates the desktop `SplashForm`: `#08080a` canvas, a full-screen faint dotted grid
-(`radial-gradient`, 26px), a soft lavender radial glow, the centered `splash.png`
-(brand logo + "Where Ideas Go Live." tagline), and an **indeterminate lavender progress
-bar** (`#5e6ad2 → #828fff`) sweeping along the bottom edge — replacing the old rotating
-spinner.
+The splash recreates the desktop `SplashForm`: `#08080a` canvas, a full-screen faint
+dotted grid (`radial-gradient`, 26px), a soft lavender radial glow, the centered brand
+logo (`/brand_logo.png` = `DreamsLiveSolutions_Logo1`), the **"Where Ideas Go Live."**
+tagline drawn as live text (`.splash__tag`), and an **indeterminate lavender progress
+bar** (`#5e6ad2 → #828fff`) sweeping along the bottom edge.
+
+The same logo image is used in the sticky **app bar** (`.brand__logo`) in place of the
+former CSS play-tile + text wordmark, matching the desktop header. Note: like the
+desktop app bar, the logo's white "Solutions" goes low-contrast on the near-white
+**light** theme bar — the app defaults to dark, where it reads cleanly. (If light-theme
+header legibility ever matters, put `.brand__logo` on a small dark plate.)
 
 ## Previewing locally (no C# host)
 
@@ -100,6 +115,25 @@ remote, temporarily copy `remote_control.html` → `index.html` (and delete it a
 
 ## Change log
 
+- **2026-06-09** — Live/preview polish (web + desktop parity):
+  - Live pill now "breathes" smoothly (`@keyframes liveBreathe`, ease-in-out) to match
+    the desktop `LiveIndicatorControl` sine pulse, and reads **"Presenter Live"**.
+    Desktop: `LinearTheme.PaintLiveIndicator` text → "Presenter Live"; `liveIndicator`
+    control widened (94→160px) to fit.
+  - Blackout button turns **bright green** (`#22c55e`) while blacked out (text
+    "Restore Presenter"), via `.btn-restore` toggled on `status.isBlackout`. Desktop
+    match: `Constants` blackout-active colors changed from red to the same green.
+  - Fixed the staged/active selection overlays drifting to the wrong location:
+    `.preview-container` now uses `align-items: flex-start` so each preview box keeps
+    its own `aspect-ratio` instead of being stretched to equal height (which
+    letterboxed the image under the `%`-positioned overlays).
+  - Swapped the previews: **Local Preview** (tap-to-crop, selection overlays) is now on
+    the left, **Presenter View** on the right.
+- **2026-06-09** — Brand logo integration. Replaced the lavender play-tile composite
+  splash with `DreamsLiveSolutions_Logo1` (served at `/brand_logo.png` via a new server
+  route) on the splash and in the app bar; tagline now live text. Removed `splash.png`
+  and the orphan `Resources\splash_bg.png`; gallery PDF thumbnail now uses an inline SVG
+  document icon. Required C# (`HttpWebServer.cs` route) + `.csproj` changes and a rebuild.
 - **2026-06-09** — Full mobile-first redesign. Single clean stylesheet (removed the
   duplicated/conflicting "modern UI 2024" layer), Linear design tokens, branded sticky
   app bar with live pill, **Stage → Go Live** reorder to match desktop, collapsible

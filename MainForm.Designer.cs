@@ -355,7 +355,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.liveIndicator.IsLive = false;
             this.liveIndicator.Location = new System.Drawing.Point(3, 34);
             this.liveIndicator.Name = "liveIndicator";
-            this.liveIndicator.Size = new System.Drawing.Size(94, 28);
+            this.liveIndicator.Size = new System.Drawing.Size(160, 28);
             this.liveIndicator.TabIndex = 0;
             // 
             // chkAlwaysOnTop
