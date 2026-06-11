@@ -55,12 +55,15 @@ netsh http add urlacl url=http://*:21011/ user=Everyone
 2. **Select** — mouse drag on `picPreview` draws `selectionRectangle` (constrained to the target monitor's aspect ratio).
 3. **Stage** — `btnStageContent_Click` renders the selected region into a high-res `stagedMasterImage` (or `stagedStitchedImage` for two-page mode) → displayed in `picSecondaryPreview`. Staged state is stored in `stagedContentPath`, `stagedContentRegion`, etc.
 4. **Push** — `btnPushToPresenter_Click` sends `stagedMasterImage` to `PresentationForm` (a borderless full-screen form on the chosen monitor). `isPresenterShowingLiveContent` tracks whether the presenter matches staged content; the staging border turns red when live.
-5. **Remote** — `HttpWebServer` (port 21011) serves `remote_control.html`, a `/status` JSON endpoint (images, page info, border color, auto-send state), and `/action/*` endpoints that call back into `MainForm` methods. File uploads arrive via `/upload`.
+5. **Remote** — `HttpWebServer` (port 21011) serves `remote_control.html` and the brand logo (`/brand_logo.png`). State reaches the remote via **Server-Sent Events** (`/events`, push-on-change) with a `/status` JSON polling fallback (images, page info, border color, auto-send state). Preview images are served from `/preview/main` and `/preview/secondary` with **versioned URLs** (`?v={n}`) so the remote only re-fetches a preview when it actually changes. `/action/*` endpoints call back into `MainForm`; file uploads arrive via `/upload`; the database browser uses `/database/*`.
 
 ### Supporting components
 
-- **`PresentationForm`** — borderless window placed on the secondary display; receives a `Bitmap` and renders it.
-- **`HttpWebServer`** — self-contained `HttpListener` running on a background `Task`; calls `MainForm` via `Invoke` for all UI updates.
+- **`PresentationForm`** — borderless window placed on the secondary display; receives a `Bitmap` and renders it at full quality.
+- **`HttpWebServer`** — self-contained `HttpListener` running on a background `Task`; processes requests concurrently and calls `MainForm` via `Invoke` for UI-thread work. Caches the status JSON (~200 ms) and encoded previews (keyed by the source `Image` reference); pushes status over SSE (`/events`).
+- **`SplashForm`** — code-painted startup splash (dark dotted canvas, brand logo, "Where Ideas Go Live." tagline, animated lavender bar). The web splash mirrors it.
+- **`LiveIndicatorControl`** — the "Presenter Live" status chip on the Program preview; steady gray when idle, smooth breathing red when live (paints via `LinearTheme.PaintLiveIndicator`).
+- **`EditContentForm`** — host-side precise crop dialog (footer: actions/modifiers on top, auto-scroll + d-pad at the bottom — mirrors the web editor).
 - **`GalleryForm`** — image/document database browser; changes tracked by `FileSystemWatcher` and a version counter (`_galleryVersion`).
 - **`ImageUtils`** — static helpers for rendering, cropping, and stitching bitmaps.
 - **`SecureLicenseManager`** — RSA signature validation (BouncyCastle) against an embedded public key; license file stored in `%LocalAppData%\DreamsLive_Solutions_PresenterApp1\license.key`.
@@ -71,6 +74,14 @@ netsh http add urlacl url=http://*:21011/ user=Everyone
 ### License key generation
 
 The `KeyGeneratorTool\` folder contains standalone Python scripts for generating license keys (requires the private key counterpart to the embedded public key). See `KeyGeneratorTool\README.md`.
+
+## Documentation
+
+- **`WEB_REMOTE_UI.md`** — design reference for the web remote (`remote_control.html`):
+  layout order, Linear design tokens, splash/brand assets, image routes, and a change log.
+  Update it when the remote UI changes.
+- **`PERFORMANCE.md`** — performance diagnostic report and the optimizations applied
+  (status/preview caching, SSE, concurrent requests, the PDF page-render cache, etc.).
 
 ## NuGet packages
 

@@ -79,7 +79,7 @@ Click **"Push to Presenter"** (`btnPushToPresenter`).
 ### 7. Remote Control (Phone / Tablet)
 
 1. On any device on the same Wi-Fi network, open a browser and go to the URL shown in the status strip (e.g. `http://192.168.1.10:21011`).
-2. The remote page polls `/status` every second and shows live thumbnails of both previews, current page info, and border color.
+2. The remote page receives live state over **Server-Sent Events** (`/events`, pushed on change) with a 1-second `/status` polling fallback, and shows live thumbnails of both previews (re-fetched only when their version changes), current page info, and border color.
 3. Buttons on the remote map to these server endpoints:
 
 | Remote button | Endpoint | Effect |

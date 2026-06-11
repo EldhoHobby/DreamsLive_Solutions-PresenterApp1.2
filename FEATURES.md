@@ -31,10 +31,10 @@ The remote control functionality turns a second device (like a phone or tablet) 
 
 2.  **Web-Based Interface:** The server hosts a file called `remote_control.html`. When a user navigates to the computer's IP address and port (e.g., `http://192.168.1.10:21011`) from another device on the same network, this HTML file is loaded, presenting a remote-control interface in their browser.
 
-3.  **Real-Time Status Updates:** The remote interface continuously polls a `/status` API endpoint on the server. This endpoint returns a JSON object containing the real-time state of the application, including:
-    *   Dynamically generated URLs to the main and staging preview images, allowing the remote to see what the operator sees.
+3.  **Real-Time Status Updates:** The remote receives state via **Server-Sent Events** (the `/events` stream pushes only when something changes), falling back to 1-second `/status` polling if SSE is unavailable. The status payload is a JSON object containing the real-time state of the application, including:
+    *   **Versioned** URLs to the main (local) and presenter preview images — the remote re-downloads a preview only when its version changes, so an idle remote does no redundant image traffic.
     *   The current and total page numbers for loaded PDFs.
-    *   The color of the staging preview's border, so the remote user knows if the content is live, staged, or empty.
+    *   The color of the presenter preview's border, so the remote user knows if the content is live, staged, or empty.
     *   The status of the "auto-send" (link) feature.
 
 4.  **Action Endpoints:** The remote interface has buttons that correspond to the main application's controls. Pressing a button on the remote sends a request to an `/action/...` endpoint. For example:
@@ -44,8 +44,25 @@ The remote control functionality turns a second device (like a phone or tablet) 
 
 5.  **File Upload:** The remote interface includes a file upload feature. A user can select a file from their remote device, and it will be uploaded to the main application via a `/upload` endpoint. The main application then processes this file as if it had been opened locally, making it immediately available for presentation.
 
+## Modern Web Remote UI
+
+The web remote (`remote_control.html`) is a mobile-first, dark-by-default interface styled
+to match the desktop's Linear-inspired theme and brand:
+
+*   **Brand identity:** the `DreamsLiveSolutions_Logo1` wordmark in the splash (served at
+    `/brand_logo.png`) and the sticky app bar, with a breathing **"Presenter Live"** status
+    pill that mirrors the desktop indicator.
+*   **Fixed-size preview windows:** the **Local Preview** (left, tap to crop) and
+    **Presenter View** (right) are locked to a 16:9 box; a dashed **ratio overlay** frames
+    the true active presentation aspect inside the box. Selection overlays are positioned
+    letterbox-aware so they stay accurate.
+*   **Workflow parity:** Stage Preview → Go Live ordering; the blackout button turns bright
+    green and reads **"Restore Presenter"** while blacked out.
+*   Full design details (layout order, tokens, routes, change log) live in **`WEB_REMOTE_UI.md`**;
+    performance work is documented in **`PERFORMANCE.md`**.
+
 ## Other Features
 
-*   **Theme Switching:** The application supports both a light and a dark theme.
+*   **Theme Switching:** The application supports both a light and a dark theme (the web remote defaults to dark).
 *   **Always on Top:** The main window can be set to always be on top of other windows.
 *   **Error Handling:** The application includes error handling and displays messages to the user via a custom message box.

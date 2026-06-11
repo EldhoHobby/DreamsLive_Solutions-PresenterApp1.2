@@ -6,11 +6,17 @@ Welcome to the presentation app! This guide will walk you through everything you
 
 ### Installation
 
-[Placeholder for installation instructions]
+1. Copy the application folder (containing `DreamsLive_Solutions-PresenterApp1.2.exe`) to your PC.
+2. Make sure the **.NET Framework 4.8** runtime is installed (it's included with current versions of Windows).
+3. Run `DreamsLive_Solutions-PresenterApp1.2.exe`.
+4. **First run only** — to let phones/tablets connect to the remote control, open
+   Command Prompt **as Administrator** once and run:
+   ```
+   netsh http add urlacl url=http://*:21011/ user=Everyone
+   ```
+   If a device still can't connect, allow TCP port **21011** through Windows Firewall.
 
 ### The Main Window
-
-[Placeholder for screenshot of the main window]
 
 The main window is your control center. Here's a quick look at what everything does:
 
@@ -31,8 +37,6 @@ You can load an image or a PDF file in two ways:
 If you open a PDF, you'll see controls to navigate through the pages.
 
 ### 2. Select a Presentation Area
-
-[Placeholder for screenshot of selecting a region]
 
 Once your image or PDF page is loaded, click and drag your mouse over the main preview to select the area you want to present. The selection box will automatically keep the same shape as your presentation screen, so you don't have to worry about a distorted image.
 
@@ -58,13 +62,13 @@ You can control the presentation from your phone or tablet! Here's how:
 1.  Make sure your computer and your remote device are connected to the same Wi-Fi network.
 2.  Open a web browser on your remote device.
 3.  Type in your computer's IP address, followed by `:21011`. For example: `http://192.168.1.10:21011`
-4.  You'll see a remote control interface in your browser that lets you stage content, push to the presenter, and even upload files.
+4.  You'll see a mobile-friendly remote control interface in your browser. It shows two live preview windows — **Local Preview** (your source, tap it to crop) and **Presenter View** (what's on the presenter screen) — and lets you stage content, go live, navigate PDF pages, blackout/restore, and upload or capture files. A breathing **"Presenter Live"** badge appears at the top while you're live.
 
 ## Other Features
 
 ### Light and Dark Themes
 
-You can switch between a light and a dark theme to match your preference. Look for the theme switcher in the settings menu.
+You can switch between a light and a dark theme to match your preference using the theme toggle button. The web remote also has its own theme toggle and opens in dark mode by default.
 
 ### Always on Top
 

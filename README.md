@@ -37,8 +37,8 @@ flowchart TD
     MF -- "9. Stage Content" --> MF
     MF -- "10. Render to Secondary Display" --> PF
 
-    WS -- "11. Polling / Status Updates" --> RC
-    MF -- "12. Serve Previews" --> WS
+    WS -- "11. Live status (SSE push / polling fallback)" --> RC
+    MF -- "12. Serve versioned previews" --> WS
 ```
 
 ## Workflow Description
@@ -62,6 +62,9 @@ flowchart TD
 - **Blackout:** A dedicated feature to immediately clear the secondary display without losing the current staging state.
 
 ### 5. Synchronization & State
-- **Polling Loop:** The remote control polls the `/status` endpoint every second to stay synchronized with the host's active file, selection coordinates, and PDF page numbers.
-- **Thread Safety:** The `HttpWebServer` uses `Invoke/BeginInvoke` to safely communicate with the Windows Forms UI thread.
+- **Live Updates:** The remote stays in sync via **Server-Sent Events** (`/events`) — the host pushes status only when it changes — with a 1-second `/status` polling **fallback** if SSE is unavailable. Both pause while the remote's browser tab is hidden.
+- **Efficient Previews:** Preview image URLs are **versioned** (`/preview/main?v={n}`), so the remote re-downloads a preview only when it actually changes; the server caches encoded previews and the status JSON to absorb multiple clients.
+- **Thread Safety:** The `HttpWebServer` handles requests concurrently and uses `Invoke/BeginInvoke` to safely communicate with the Windows Forms UI thread.
 - **Persistence:** User settings and image-specific selection regions are persisted in JSON files within the user's AppData directory.
+
+> The web remote UI itself (mobile-first layout, fixed-size Local/Presenter preview windows, the presenter aspect-ratio overlay, theming, and asset/route details) is documented in **`WEB_REMOTE_UI.md`**; performance work is in **`PERFORMANCE.md`**.
