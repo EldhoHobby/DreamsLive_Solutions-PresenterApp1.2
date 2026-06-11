@@ -20,7 +20,13 @@ nuget restore DreamsLive_Solutions-PresenterApp1.sln
 .\bin\Debug\DreamsLive_Solutions-PresenterApp1.2.exe
 ```
 
-There are no automated tests in this project. Verification is done by running the app manually.
+`msbuild` is often not on `PATH`; resolve it from the VS install, e.g.
+`& (vswhere -latest -find 'MSBuild\**\Bin\MSBuild.exe')`.
+
+There are no automated tests — verify by building and running the app. The web remote's
+**layout/JS** can be sanity-checked by serving the repo root with a static server
+(`python -m http.server`) and opening `remote_control.html`, but live previews/status/SSE
+require the running WinForms host (the page degrades to an offline state without it).
 
 ## Web Server Setup (required for remote control)
 
@@ -45,7 +51,7 @@ netsh http add urlacl url=http://*:21011/ user=Everyone
 | `MainForm.Presenter.cs` | Push-to-presenter, blackout, live state tracking, `PresentationForm` lifecycle |
 | `MainForm.Annotations.cs` | Laser pointer and highlighter overlays on the staging preview |
 | `MainForm.Remote.cs` | Delegates to `HttpWebServer`; connection info display |
-| `MainForm.Persistence.cs` | `LoadSettings` / `SaveSettings` (JSON via Newtonsoft.Json) |
+| `MainForm.Persistence.cs` | `LoadSettings` / `SaveSettings` and per-file selection regions — JSON in `%AppData%\DreamsLivePresenterApp\` (settings.json, selections.json) |
 | `MainForm.Theme.cs` | `ApplyTheme()` — dark/light mode, Linear design palette |
 | `MainForm.Dialogs.cs` | Opens modal forms: Settings, Gallery, EditContent, Snip |
 
@@ -56,6 +62,36 @@ netsh http add urlacl url=http://*:21011/ user=Everyone
 3. **Stage** — `btnStageContent_Click` renders the selected region into a high-res `stagedMasterImage` (or `stagedStitchedImage` for two-page mode) → displayed in `picSecondaryPreview`. Staged state is stored in `stagedContentPath`, `stagedContentRegion`, etc.
 4. **Push** — `btnPushToPresenter_Click` sends `stagedMasterImage` to `PresentationForm` (a borderless full-screen form on the chosen monitor). `isPresenterShowingLiveContent` tracks whether the presenter matches staged content; the staging border turns red when live.
 5. **Remote** — `HttpWebServer` (port 21011) serves `remote_control.html` and the brand logo (`/brand_logo.png`). State reaches the remote via **Server-Sent Events** (`/events`, push-on-change) with a `/status` JSON polling fallback (images, page info, border color, auto-send state). Preview images are served from `/preview/main` and `/preview/secondary` with **versioned URLs** (`?v={n}`) so the remote only re-fetches a preview when it actually changes. `/action/*` endpoints call back into `MainForm`; file uploads arrive via `/upload`; the database browser uses `/database/*`.
+
+### Threading & rendering invariants
+
+These cut across many files; violating them causes UI freezes, crashes, or quality regressions:
+
+- **All `MainForm`/UI access from the server goes through `_mainForm.Invoke(...)`.** `HttpWebServer`
+  handles requests **concurrently** on background tasks (`RunServer` does not await each one).
+- **GDI+ `Image`s are not thread-safe.** When serving previews, snapshot (clone) on the UI thread,
+  then scale + JPEG-encode **off** the UI thread (`WritePreviewResponse` / `EncodePreview`). Encoded
+  previews are cached keyed by the source `Image` reference; the `/status` JSON is cached ~200 ms.
+- **PdfiumViewer `PdfDocument` is not thread-safe.** `currentPdfDocument` rendering is serialized on
+  the UI thread. The shared page-render cache (`GetRenderedPdfPage` in `MainForm.Pdf.cs`, used by both
+  the preview and staging renders, with idle adjacent prefetch via `BeginInvoke`) is **UI-thread
+  only** — do not move PDF rendering to a background thread without serializing every render site
+  behind one lock.
+- **Image-quality invariant:** the presenter output (`PresentationForm`) and the staged master image
+  must stay full/native quality. Only the **web preview thumbnails** are downscaled (≤1024 px, JPEG
+  q50) — never the presenter pipeline.
+- **Preview freshness:** the remote re-fetches a preview only when its **version** changes
+  (`/preview/main?v={n}`); the version bumps when the underlying `picPreview.Image` /
+  `picSecondaryPreview.Image` reference is replaced (computed in `GetStatusJson`).
+
+### Web remote (`remote_control.html`)
+
+One self-contained file (markup + CSS + a large inline `<script>` that owns all behavior: SSE/poll,
+Cropper.js editor, pan/zoom, uploads). **Do not rename element IDs** — the inline script binds to
+them. It is **served from the build output** (`bin\Debug\remote_control.html`, i.e.
+`AppDomain.BaseDirectory`); the repo-root copy is the source and the build copies it there
+(`PreserveNewest`). When iterating on the HTML without a full rebuild, also copy it into `bin\Debug\`.
+See `WEB_REMOTE_UI.md` for layout order, design tokens, image routes, and the change log.
 
 ### Supporting components
 
