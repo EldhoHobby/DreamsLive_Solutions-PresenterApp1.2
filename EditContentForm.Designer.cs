@@ -61,16 +61,18 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.panelFooter.Controls.Add(this.btnDone);
             this.panelFooter.Controls.Add(this.btnClose);
             this.panelFooter.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelFooter.Location = new System.Drawing.Point(0, 700);
+            this.panelFooter.Location = new System.Drawing.Point(0, 630);
             this.panelFooter.Name = "panelFooter";
             this.panelFooter.Padding = new System.Windows.Forms.Padding(10);
-            this.panelFooter.Size = new System.Drawing.Size(1000, 100);
+            // Two bands: top = actions/modifiers/rotate, bottom = auto-scroll + d-pad
+            // (mirrors the web Edit/Crop footer order).
+            this.panelFooter.Size = new System.Drawing.Size(1000, 170);
             this.panelFooter.TabIndex = 1;
 
             // chkAutoSend
             this.chkAutoSend.AutoSize = true;
             this.chkAutoSend.ForeColor = System.Drawing.Color.White;
-            this.chkAutoSend.Location = new System.Drawing.Point(20, 40);
+            this.chkAutoSend.Location = new System.Drawing.Point(430, 36);
             this.chkAutoSend.Name = "chkAutoSend";
             this.chkAutoSend.Size = new System.Drawing.Size(100, 20);
             this.chkAutoSend.TabIndex = 5;
@@ -81,7 +83,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // chkLiveSync
             this.chkLiveSync.AutoSize = true;
             this.chkLiveSync.ForeColor = System.Drawing.Color.White;
-            this.chkLiveSync.Location = new System.Drawing.Point(20, 20);
+            this.chkLiveSync.Location = new System.Drawing.Point(430, 14);
             this.chkLiveSync.Name = "chkLiveSync";
             this.chkLiveSync.Size = new System.Drawing.Size(100, 20);
             this.chkLiveSync.TabIndex = 6;
@@ -90,7 +92,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.chkLiveSync.CheckedChanged += new System.EventHandler(this.chkLiveSync_CheckedChanged);
 
             // btnRotateL
-            this.btnRotateL.Location = new System.Drawing.Point(150, 30);
+            this.btnRotateL.Location = new System.Drawing.Point(560, 12);
             this.btnRotateL.Name = "btnRotateL";
             this.btnRotateL.Size = new System.Drawing.Size(50, 40);
             this.btnRotateL.TabIndex = 3;
@@ -100,7 +102,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnRotateL.Click += new System.EventHandler(this.btnRotateL_Click);
 
             // btnRotateR
-            this.btnRotateR.Location = new System.Drawing.Point(210, 30);
+            this.btnRotateR.Location = new System.Drawing.Point(620, 12);
             this.btnRotateR.Name = "btnRotateR";
             this.btnRotateR.Size = new System.Drawing.Size(50, 40);
             this.btnRotateR.TabIndex = 4;
@@ -113,7 +115,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnPresentNow.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(150)))), ((int)(((byte)(243)))));
             this.btnPresentNow.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPresentNow.ForeColor = System.Drawing.Color.White;
-            this.btnPresentNow.Location = new System.Drawing.Point(500, 30);
+            this.btnPresentNow.Location = new System.Drawing.Point(20, 12);
             this.btnPresentNow.Name = "btnPresentNow";
             this.btnPresentNow.Size = new System.Drawing.Size(150, 40);
             this.btnPresentNow.TabIndex = 2;
@@ -125,7 +127,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnDone.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(76)))), ((int)(((byte)(175)))), ((int)(((byte)(80)))));
             this.btnDone.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnDone.ForeColor = System.Drawing.Color.White;
-            this.btnDone.Location = new System.Drawing.Point(670, 30);
+            this.btnDone.Location = new System.Drawing.Point(185, 12);
             this.btnDone.Name = "btnDone";
             this.btnDone.Size = new System.Drawing.Size(100, 40);
             this.btnDone.TabIndex = 0;
@@ -134,7 +136,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.btnDone.Click += new System.EventHandler(this.btnDone_Click);
 
             // btnClose
-            this.btnClose.Location = new System.Drawing.Point(880, 30);
+            this.btnClose.Location = new System.Drawing.Point(300, 12);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(100, 40);
             this.btnClose.TabIndex = 1;
@@ -144,7 +146,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             // btnUp
             //
-            this.btnUp.Location = new System.Drawing.Point(350, 5);
+            this.btnUp.Location = new System.Drawing.Point(230, 70);
             this.btnUp.Name = "btnUp";
             this.btnUp.Size = new System.Drawing.Size(30, 30);
             this.btnUp.TabIndex = 7;
@@ -153,7 +155,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             // btnDown
             //
-            this.btnDown.Location = new System.Drawing.Point(350, 65);
+            this.btnDown.Location = new System.Drawing.Point(230, 130);
             this.btnDown.Name = "btnDown";
             this.btnDown.Size = new System.Drawing.Size(30, 30);
             this.btnDown.TabIndex = 8;
@@ -162,7 +164,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             // btnLeft
             //
-            this.btnLeft.Location = new System.Drawing.Point(320, 35);
+            this.btnLeft.Location = new System.Drawing.Point(200, 100);
             this.btnLeft.Name = "btnLeft";
             this.btnLeft.Size = new System.Drawing.Size(30, 30);
             this.btnLeft.TabIndex = 9;
@@ -171,7 +173,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             // btnRight
             //
-            this.btnRight.Location = new System.Drawing.Point(380, 35);
+            this.btnRight.Location = new System.Drawing.Point(260, 100);
             this.btnRight.Name = "btnRight";
             this.btnRight.Size = new System.Drawing.Size(30, 30);
             this.btnRight.TabIndex = 10;
@@ -182,7 +184,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             //
             this.chkEnableAutoScroll.AutoSize = true;
             this.chkEnableAutoScroll.ForeColor = System.Drawing.Color.White;
-            this.chkEnableAutoScroll.Location = new System.Drawing.Point(280, 75);
+            this.chkEnableAutoScroll.Location = new System.Drawing.Point(20, 108);
             this.chkEnableAutoScroll.Name = "chkEnableAutoScroll";
             this.chkEnableAutoScroll.Size = new System.Drawing.Size(120, 20);
             this.chkEnableAutoScroll.TabIndex = 13;

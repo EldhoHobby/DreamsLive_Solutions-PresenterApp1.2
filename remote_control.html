@@ -211,7 +211,7 @@
         .preview-box {
             position: relative;
             flex: 1 1 0;
-            min-height: 80px; /* pre-load fallback; JS sets aspect-ratio once an image loads */
+            aspect-ratio: 16 / 9; /* strict fixed window size; content scales with object-fit: contain */
             background: #000;
             border-radius: var(--radius);
             /* outline (not border) keeps the JS coordinate math clean; JS recolors it */
@@ -246,6 +246,16 @@
         .sel-overlay { position: absolute; pointer-events: none; box-sizing: border-box; display: none; }
         #staged-selection-overlay { border: 5px dotted var(--overlay-staged); }
         #selection-overlay { border: 2px solid var(--overlay-active); }
+
+        /* Presenter ratio overlay: frames the active presentation aspect inside the fixed box */
+        #presenter-ratio-overlay {
+            position: absolute;
+            pointer-events: none;
+            box-sizing: border-box;
+            display: none;
+            border: 2px dashed var(--primary);
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+        }
 
         /* ---------- Cards & sections ---------- */
         .card {
@@ -734,6 +744,8 @@
             <div id="picSecondaryContainer" class="preview-box">
                 <span class="preview-box__tag">Presenter View</span>
                 <img id="picSecondaryPreview" src="" alt="Presenter output view">
+                <!-- Active presentation aspect-ratio boundary -->
+                <div id="presenter-ratio-overlay"></div>
             </div>
         </div>
 
@@ -908,27 +920,11 @@
             <div id="editor-reference-overlay" style="position: absolute; border: 10px dotted var(--overlay-staged); background-color: transparent; pointer-events: none; display: none; box-sizing: border-box; z-index: 10;"></div>
         </div>
         <div class="modal-footer" style="flex-wrap: wrap; gap: 10px; justify-content: center;">
-            <!-- Rotation Slider Container (Standard/Always Visible in upload mode) -->
-            <div id="rotation-container" class="rotation-slider-container">
-                <label>Rotation: <span id="rotation-val">0</span>°</label>
-                <input type="range" id="rotation-slider" min="-180" max="180" value="0" step="1" oninput="handleRotationSlider(this.value)">
-                <button onclick="handleRotationSlider(0); document.getElementById('rotation-slider').value = 0;" style="font-size: 0.8em; padding: 2px 10px;">Reset</button>
-            </div>
-
-            <div id="editor-nav-group" style="display: flex; gap: 10px; align-items: center; width: 100%; justify-content: center;">
-                <label style="color: white;">
-                    <input type="checkbox" id="chkEnableScrollEditor" onchange="updateScrollSettings({enableScroll: this.checked})"> Auto Scroll
-                </label>
-                <div class="d-pad" style="width: 150px; margin: 0;">
-                    <button class="up" onclick="moveInEditor(0, -1)">↑</button>
-                    <button class="left" onclick="moveInEditor(-1, 0)">←</button>
-                    <button class="down" onclick="moveInEditor(0, 1)">↓</button>
-                    <button class="right" onclick="moveInEditor(1, 0)">→</button>
-                </div>
-            </div>
-
-            <div id="editor-dims" style="color: white; font-size: 0.9em; width: 100%; text-align: center;">
-                W: <span id="editor-w">0</span> H: <span id="editor-h">0</span>
+            <!-- ===== Actions (top) ===== -->
+            <div id="editor-action-row" style="display: flex; flex-wrap: wrap; gap: 10px; width: 100%; justify-content: center;">
+                <button id="btnPresentNow" onclick="presentNow()" style="background-color: var(--accent-blue); color: white; min-width: 100px;">Present Now</button>
+                <button id="btnDoneEditor" onclick="closeEditor(true)" style="background-color: var(--accent-green); color: white; min-width: 80px;">Done</button>
+                <button onclick="closeEditor(false)" style="min-width: 80px;">Close</button>
             </div>
 
             <!-- PDF Page Navigation in Editor -->
@@ -946,16 +942,38 @@
                 <button onclick="rotateInEditor(1)" style="font-size: 1.2em;">&#8635;</button>
             </div>
 
-            <label id="lblLiveSync" style="color: white;">
-                <input type="checkbox" id="chkLiveSyncEditor" onchange="toggleLiveSync()"> Live Sync
-            </label>
-            <label id="lblAutoSendEditor" style="color: white;">
-                <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Send
-            </label>
+            <!-- Rotation Slider Container (Standard/Always Visible in upload mode) -->
+            <div id="rotation-container" class="rotation-slider-container">
+                <label>Rotation: <span id="rotation-val">0</span>°</label>
+                <input type="range" id="rotation-slider" min="-180" max="180" value="0" step="1" oninput="handleRotationSlider(this.value)">
+                <button onclick="handleRotationSlider(0); document.getElementById('rotation-slider').value = 0;" style="font-size: 0.8em; padding: 2px 10px;">Reset</button>
+            </div>
 
-            <button id="btnPresentNow" onclick="presentNow()" style="background-color: var(--accent-blue); color: white; min-width: 100px;">Present Now</button>
-            <button id="btnDoneEditor" onclick="closeEditor(true)" style="background-color: var(--accent-green); color: white; min-width: 80px;">Done</button>
-            <button onclick="closeEditor(false)" style="min-width: 80px;">Close</button>
+            <div id="editor-sync-row" style="display: flex; flex-wrap: wrap; gap: 16px; width: 100%; justify-content: center;">
+                <label id="lblLiveSync" style="color: white;">
+                    <input type="checkbox" id="chkLiveSyncEditor" onchange="toggleLiveSync()"> Live Sync
+                </label>
+                <label id="lblAutoSendEditor" style="color: white;">
+                    <input type="checkbox" id="chkAutoSendEditor" onchange="updateAutoSend(this)"> Auto Send
+                </label>
+            </div>
+
+            <!-- ===== Navigation (pinned bottom): Auto Scroll + D-pad + W/H ===== -->
+            <div id="editor-nav-group" style="display: flex; gap: 10px; align-items: center; width: 100%; justify-content: center;">
+                <label style="color: white;">
+                    <input type="checkbox" id="chkEnableScrollEditor" onchange="updateScrollSettings({enableScroll: this.checked})"> Auto Scroll
+                </label>
+                <div class="d-pad" style="width: 150px; margin: 0;">
+                    <button class="up" onclick="moveInEditor(0, -1)">↑</button>
+                    <button class="left" onclick="moveInEditor(-1, 0)">←</button>
+                    <button class="down" onclick="moveInEditor(0, 1)">↓</button>
+                    <button class="right" onclick="moveInEditor(1, 0)">→</button>
+                </div>
+            </div>
+
+            <div id="editor-dims" style="color: white; font-size: 0.9em; width: 100%; text-align: center;">
+                W: <span id="editor-w">0</span> H: <span id="editor-h">0</span>
+            </div>
         </div>
     </div>
 
@@ -1649,6 +1667,30 @@
             }
         }
 
+        // --- Letterbox-aware overlay positioning --------------------------------
+        // Preview boxes are a fixed 16:9 size and use object-fit: contain, so an
+        // overlay normalized to the image must be placed against the rendered
+        // (letterboxed) image rect, not the whole box.
+        function getContainRect(container, contentAspect) {
+            const cw = container.clientWidth, ch = container.clientHeight;
+            if (!contentAspect || contentAspect <= 0 || cw <= 0 || ch <= 0) return null;
+            const boxAspect = cw / ch;
+            let w, h, x, y;
+            if (contentAspect > boxAspect) { w = cw; h = cw / contentAspect; x = 0; y = (ch - h) / 2; }
+            else { h = ch; w = ch * contentAspect; y = 0; x = (cw - w) / 2; }
+            return { x: x, y: y, w: w, h: h };
+        }
+
+        function placeNormalizedOverlay(overlayEl, sel, container, contentAspect) {
+            const r = getContainRect(container, contentAspect);
+            if (!r) { overlayEl.style.display = 'none'; return; }
+            overlayEl.style.left = (r.x + sel.X * r.w) + 'px';
+            overlayEl.style.top = (r.y + sel.Y * r.h) + 'px';
+            overlayEl.style.width = (sel.Width * r.w) + 'px';
+            overlayEl.style.height = (sel.Height * r.h) + 'px';
+            overlayEl.style.display = 'block';
+        }
+
         let isStatusUpdateRunning = false;
 
         async function updateStatus() {
@@ -1745,31 +1787,36 @@
                     document.getElementById('message-box').style.display = 'none';
                 }
 
-                // The "secondary" preview is now physically the first element
+                // Presenter output preview (right box) — fixed 16:9; the ratio overlay
+                // frames the true active presentation aspect inside the box.
                 const firstPreview = document.getElementById('picSecondaryPreview');
                 firstPreview.src = status.secondaryPreview;
-                if (status.secondaryPreviewAspectRatio) {
-                    document.getElementById('picSecondaryContainer').style.aspectRatio = `${status.secondaryPreviewAspectRatio}`;
-                }
-                document.getElementById('picSecondaryContainer').style.outlineColor = status.secondaryPreviewBorderColor;
+                const picSecondaryContainer = document.getElementById('picSecondaryContainer');
+                picSecondaryContainer.style.outlineColor = status.secondaryPreviewBorderColor;
 
-                // The "main" preview is now physically the second element
+                const ratioOverlay = document.getElementById('presenter-ratio-overlay');
+                const rr = status.secondaryPreviewAspectRatio
+                    ? getContainRect(picSecondaryContainer, status.secondaryPreviewAspectRatio) : null;
+                if (rr) {
+                    ratioOverlay.style.left = rr.x + 'px';
+                    ratioOverlay.style.top = rr.y + 'px';
+                    ratioOverlay.style.width = rr.w + 'px';
+                    ratioOverlay.style.height = rr.h + 'px';
+                    ratioOverlay.style.display = 'block';
+                } else {
+                    ratioOverlay.style.display = 'none';
+                }
+
+                // Local/source preview (left box) — fixed 16:9; image scales with
+                // object-fit: contain, so overlays are placed against the image rect.
                 const secondPreview = document.getElementById('picPreview');
                 secondPreview.src = status.mainPreview;
                 const previewContainer = document.getElementById('picPreviewContainer');
-                if (status.mainPreviewAspectRatio) {
-                    previewContainer.style.aspectRatio = `${status.mainPreviewAspectRatio}`;
-                }
 
                 // Active selection overlay update
                 const overlay = document.getElementById('selection-overlay');
                 if (status.currentSelectionNormalized) {
-                    const sel = status.currentSelectionNormalized;
-                    overlay.style.left = (sel.X * 100) + '%';
-                    overlay.style.top = (sel.Y * 100) + '%';
-                    overlay.style.width = (sel.Width * 100) + '%';
-                    overlay.style.height = (sel.Height * 100) + '%';
-                    overlay.style.display = 'block';
+                    placeNormalizedOverlay(overlay, status.currentSelectionNormalized, previewContainer, status.mainPreviewAspectRatio);
 
                     if (!isEditing) lastNormalizedSelection = status.currentSelectionNormalized;
                 } else {
@@ -1780,12 +1827,7 @@
                 // Staged reference overlay update
                 const stagedOverlay = document.getElementById('staged-selection-overlay');
                 if (status.stagedSelectionNormalized) {
-                    const sel = status.stagedSelectionNormalized;
-                    stagedOverlay.style.left = (sel.X * 100) + '%';
-                    stagedOverlay.style.top = (sel.Y * 100) + '%';
-                    stagedOverlay.style.width = (sel.Width * 100) + '%';
-                    stagedOverlay.style.height = (sel.Height * 100) + '%';
-                    stagedOverlay.style.display = 'block';
+                    placeNormalizedOverlay(stagedOverlay, status.stagedSelectionNormalized, previewContainer, status.mainPreviewAspectRatio);
 
                     stagedNormalizedSelection = status.stagedSelectionNormalized;
 

@@ -40,7 +40,10 @@ The file is one self-contained document: `<style>` + markup + a large inline
 `<script>`. The script owns all behavior (status polling, Cropper.js crop editor,
 pan/zoom, uploads). **Do not rename element IDs or change the layout the crop editor
 depends on** — the script is wired to specific IDs and to the preview boxes'
-`outline`-based borders and JS-set `aspect-ratio`.
+`outline`-based borders. The preview boxes are a **fixed 16:9 size** (CSS
+`aspect-ratio`); selection overlays are positioned **letterbox-aware** via
+`getContainRect()` / `placeNormalizedOverlay()` against the rendered image rect, so the
+JS no longer mutates the box `aspect-ratio`.
 
 ### Layout order (top → bottom) — mirrors the desktop workflow
 
@@ -48,8 +51,12 @@ depends on** — the script is wired to specific IDs and to the preview boxes'
 2. **App bar** (`.appbar`, sticky) — brand play-tile + "Dreams**Live** Solutions"
    wordmark, and a `#live-pill` that mirrors presenter state (READY / LIVE / BLACKOUT /
    OFFLINE).
-3. **Previews** (`.preview-container`) — `Presenter` output (pinch/zoom) and `Source`
-   (tap to open the crop editor) with the staged + active selection overlays.
+3. **Previews** (`.preview-container`) — fixed **16:9** boxes (content scales with
+   `object-fit: contain`, never resizing per image): **Local Preview** (left, tap to open
+   the crop editor, with the staged + active selection overlays) and **Presenter View**
+   (right, pinch/zoom) with a dashed-lavender **ratio overlay** (`#presenter-ratio-overlay`)
+   framing the active presentation aspect (`secondaryPreviewAspectRatio`). Overlays are
+   placed letterbox-aware so they stay accurate inside the fixed box.
 4. **Primary actions** (`.actions`) — **Stage Preview → Go Live** (lavender CTAs), each
    with its toggle (Auto Preview / Auto Send). Order matches desktop
    *Load → Select → Stage → Push*.
@@ -61,7 +68,11 @@ depends on** — the script is wired to specific IDs and to the preview boxes'
    collapsed by default.
 10. **Footer** — Scroll Settings + Toggle Theme.
 11. **Status bar** — System / Presenter / Connection.
-12. **Modals** (upload-choice, settings, editor) + bottom toast.
+12. **Modals** (upload-choice, settings, editor) + bottom toast. The **editor** footer is
+    ordered top→bottom: Present Now / Done / Close → PDF nav → rotate buttons → rotation
+    slider → Live Sync / Auto Send → **(pinned bottom)** Auto Scroll + D-pad + W/H. The
+    desktop `EditContentForm` footer mirrors this (top band = actions / modifiers / rotate,
+    bottom band = auto-scroll + d-pad).
 
 ## Design tokens
 
@@ -115,6 +126,16 @@ remote, temporarily copy `remote_control.html` → `index.html` (and delete it a
 
 ## Change log
 
+- **2026-06-10** — Fixed-size preview windows + editor layout:
+  - Local Preview and Presenter View are now strict **fixed 16:9** boxes; the JS no longer
+    mutates their `aspect-ratio`. Content scales with `object-fit: contain`.
+  - Selection overlays moved to **letterbox-aware** positioning (`getContainRect` /
+    `placeNormalizedOverlay`) so they stay aligned with the contained image rect.
+  - Added the **presenter ratio overlay** (`#presenter-ratio-overlay`): a dashed-lavender
+    frame reflecting the active presentation aspect within the fixed box.
+  - Reordered the Edit/Crop footer — actions/PDF/rotate/rotation/sync on top, Auto Scroll
+    + D-pad + W/H pinned at the bottom. Mirrored on the desktop `EditContentForm`
+    (`panelFooter` split into top/bottom bands).
 - **2026-06-09** — Live/preview polish (web + desktop parity):
   - Live pill now "breathes" smoothly (`@keyframes liveBreathe`, ease-in-out) to match
     the desktop `LiveIndicatorControl` sine pulse, and reads **"Presenter Live"**.
