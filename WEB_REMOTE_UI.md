@@ -126,6 +126,24 @@ remote, temporarily copy `remote_control.html` → `index.html` (and delete it a
 
 ## Change log
 
+- **2026-06-11** — PDF page-switch freeze fix (multi-page navigate → stage):
+  - **Root cause:** switching to a page rendered it once for the preview
+    (`RenderPdfPageToPreview`, 150 DPI), then staging a crop **re-rendered the same page**
+    (`RenderContentToPictureBox`, `MainForm.Staging.cs`) — two synchronous Pdfium renders on
+    the WinForms UI thread back-to-back (two-page mode rendered two pages at 600 DPI). No page
+    cache existed, so revisiting a page re-rendered it every time. The PDF was *not* re-read
+    from disk (`currentPdfDocument` is cached) — the freeze was the redundant render.
+  - **Fix:** a UI-thread raw-page **LRU cache** (`GetRenderedPdfPage` in `MainForm.Pdf.cs`)
+    shared by the preview and staging renders, so the stage right after a switch is a **cache
+    hit** (no second render). **Adjacent pages are pre-rendered during idle**
+    (`PrefetchPdfPage` via `BeginInvoke`) so the *next* navigation is instant. Cache is
+    invalidated on PDF load/switch/close. Background (off-UI-thread) rendering was
+    deliberately avoided — `PdfDocument` is not thread-safe and can't be validated without a
+    live run (same hold as D-rec-2).
+  - No web changes were needed: the fixed-box + letterbox-aware overlays already position
+    against the box (not the image's load state), so there is no "compute coordinates before
+    the bitmap finished" race on the dashboard; the editor gates crop restore on Cropper's
+    `ready` event.
 - **2026-06-11** — Performance pass 2 (full recommendation set; see `PERFORMANCE.md`):
   - **SSE push** — added `/events`; the remote uses `EventSource` and falls back to interval
     polling automatically if SSE is unavailable. Both pause when the page is hidden.

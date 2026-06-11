@@ -19,6 +19,84 @@ namespace DreamsLive_Solutions_PresenterApp1
 {
     public partial class MainForm
     {
+        // --- PDF rendered-page cache (UI-thread only) ----------------------------------
+        // Root cause of the page-switch + stage freeze: the page was rendered once for the
+        // preview (RenderPdfPageToPreview) and then re-rendered for staging
+        // (RenderContentToPictureBox) — two synchronous Pdfium renders on the UI thread per
+        // navigate-then-stage. This cache stores raw (unrotated) page bitmaps at preview DPI
+        // so the second render is a cache hit, page revisits are instant, and adjacent pages
+        // can be pre-rendered during idle. Consumers rotate their own returned copy.
+        private const float PdfPreviewDpi = 150f;
+        private const int PdfPageCacheMax = 5;
+        private readonly System.Collections.Generic.Dictionary<int, Bitmap> _pdfPageCache = new System.Collections.Generic.Dictionary<int, Bitmap>();
+        private readonly System.Collections.Generic.LinkedList<int> _pdfPageLru = new System.Collections.Generic.LinkedList<int>();
+        private string _pdfPageCachePath = null;
+
+        private void ClearPdfPageCache()
+        {
+            foreach (var bmp in _pdfPageCache.Values) { try { bmp?.Dispose(); } catch { } }
+            _pdfPageCache.Clear();
+            _pdfPageLru.Clear();
+            _pdfPageCachePath = null;
+        }
+
+        private void StorePdfPage(int page, Bitmap bmp)
+        {
+            _pdfPageCache[page] = bmp;
+            _pdfPageLru.Remove(page);
+            _pdfPageLru.AddFirst(page);
+            while (_pdfPageLru.Count > PdfPageCacheMax)
+            {
+                int evict = _pdfPageLru.Last.Value;
+                if (evict == page) break;
+                _pdfPageLru.RemoveLast();
+                if (_pdfPageCache.TryGetValue(evict, out var old)) { try { old?.Dispose(); } catch { } _pdfPageCache.Remove(evict); }
+            }
+        }
+
+        // Returns a caller-owned bitmap of a PDF page. Preview-DPI pages of the current
+        // document are cached; cache hits return a CLONE, so the caller may freely
+        // dispose/rotate the result without affecting the cache.
+        private Bitmap GetRenderedPdfPage(int page, float dpi, bool useCache)
+        {
+            if (this.currentPdfDocument == null || page < 0 || page >= this.currentPdfDocument.PageCount) return null;
+
+            bool cacheable = useCache && Math.Abs(dpi - PdfPreviewDpi) < 0.5f && _pdfPageCachePath == this.selectedImagePath;
+            var flags = PdfRenderFlags.Annotations | PdfRenderFlags.LcdText | PdfRenderFlags.CorrectFromDpi;
+
+            if (cacheable && _pdfPageCache.TryGetValue(page, out var cached) && cached != null)
+            {
+                _pdfPageLru.Remove(page);
+                _pdfPageLru.AddFirst(page);
+                return (Bitmap)cached.Clone();
+            }
+
+            Bitmap rendered;
+            try { rendered = (Bitmap)this.currentPdfDocument.Render(page, dpi, dpi, flags); }
+            catch { return null; }
+
+            if (cacheable && rendered != null)
+            {
+                StorePdfPage(page, rendered);
+                return (Bitmap)rendered.Clone();
+            }
+            return rendered;
+        }
+
+        // Pre-render an adjacent page into the cache during idle (no work if already cached).
+        private void PrefetchPdfPage(int page)
+        {
+            if (this.currentPdfDocument == null || page < 0 || page >= this.currentPdfDocument.PageCount) return;
+            if (_pdfPageCachePath != this.selectedImagePath || _pdfPageCache.ContainsKey(page)) return;
+            try
+            {
+                var flags = PdfRenderFlags.Annotations | PdfRenderFlags.LcdText | PdfRenderFlags.CorrectFromDpi;
+                Bitmap r = (Bitmap)this.currentPdfDocument.Render(page, PdfPreviewDpi, PdfPreviewDpi, flags);
+                if (r != null) StorePdfPage(page, r);
+            }
+            catch { }
+        }
+
         // Add this method to MainForm.cs
         private void RenderPdfPageToPreview(int pageIndex)
         {
@@ -58,14 +136,19 @@ namespace DreamsLive_Solutions_PresenterApp1
                                         // The PdfDocument.Render(page, width, height, dpix, dpiy, flags) is also an option.
                                         // Let's use PdfDocument.Render(page, dpiX, dpiY) which uses page's natural size at that DPI.
 
-                Image renderedPageImage = this.currentPdfDocument.Render(currentPageNumber, renderDpi, renderDpi, true);
-                // The 'true' for forPrinting can sometimes improve rendering quality. Or use PdfRenderFlags.CorrectFromDpi
+                // Use the shared page cache so the preview render is reused by staging
+                // (and revisits are instant) instead of re-rendering on the UI thread.
+                Image renderedPageImage = GetRenderedPdfPage(currentPageNumber, renderDpi, true);
 
                 if (this.picPreview.Image != null)
                 {
                     this.picPreview.Image.Dispose();
                 }
                 this.picPreview.Image = renderedPageImage; // Display the rendered page
+
+                // Pre-render the neighbouring pages during idle so the next navigation is a cache hit.
+                int settledPage = this.currentPageNumber;
+                try { this.BeginInvoke((Action)(() => { PrefetchPdfPage(settledPage + 1); PrefetchPdfPage(settledPage - 1); })); } catch { }
 
                 // Update navigation UI
                 if (this.txtCurrentPageNum != null) this.txtCurrentPageNum.Text = (this.currentPageNumber + 1).ToString(); // Display 1-based page number
@@ -271,7 +354,9 @@ namespace DreamsLive_Solutions_PresenterApp1
                         this.currentPdfDocument.Dispose();
                         this.currentPdfDocument = null;
                     }
+                    ClearPdfPageCache(); // stale pages belong to the previous document
                     this.currentPdfDocument = PdfDocument.Load(pdfPath);
+                    _pdfPageCachePath = pdfPath;
                 }
 
                 this.selectedImagePath = pdfPath;
@@ -355,6 +440,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.currentPdfDocument = null;
                 this.totalPdfPages = 0;
                 this.currentPageNumber = 0;
+                ClearPdfPageCache();
             }
             SetPdfControlsVisibility(false);
 
@@ -398,6 +484,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.lblImagePath.Text = "Selected File: None";
             if (this.picPreview.Image != null) { this.picPreview.Image.Dispose(); this.picPreview.Image = null; }
             if (this.currentPdfDocument != null) { this.currentPdfDocument.Dispose(); this.currentPdfDocument = null; }
+            ClearPdfPageCache();
             this.totalPdfPages = 0;
             this.currentPageNumber = 0;
             this.selectionRectangle = Rectangle.Empty;

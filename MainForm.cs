@@ -447,6 +447,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.stagedMasterImage = null;
             }
 
+            ClearPdfPageCache();
+
             base.OnFormClosing(e);
         }
 

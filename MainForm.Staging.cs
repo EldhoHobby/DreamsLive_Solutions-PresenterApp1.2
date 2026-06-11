@@ -253,7 +253,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                     if (pageNumIfPdf >= 0 && pageNumIfPdf < docToUse.PageCount)
                     {
                         float previewRenderDpi = 150f; // Performance: Lower DPI for previews
-                        sourceBitmap = (Bitmap)docToUse.Render(pageNumIfPdf, previewRenderDpi, previewRenderDpi, PdfRenderFlags.Annotations | PdfRenderFlags.LcdText | PdfRenderFlags.CorrectFromDpi);
+                        if (docToUse == this.currentPdfDocument)
+                            // Reuse the page already rendered for the preview — no second
+                            // Pdfium render on the UI thread when staging right after a switch.
+                            sourceBitmap = GetRenderedPdfPage(pageNumIfPdf, previewRenderDpi, true);
+                        else
+                            sourceBitmap = (Bitmap)docToUse.Render(pageNumIfPdf, previewRenderDpi, previewRenderDpi, PdfRenderFlags.Annotations | PdfRenderFlags.LcdText | PdfRenderFlags.CorrectFromDpi);
                     }
                     else
                     {

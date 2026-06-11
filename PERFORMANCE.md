@@ -166,3 +166,42 @@ previous bicubic resample, so presenter quality is preserved or improved.
   (no instrumented run). Desktop findings are from static path analysis. The **held**
   full-async file load (D-rec-2) in particular needs an on-device smoke test before it
   would be safe to add.
+
+---
+
+## 7. Targeted patch — PDF page-switch → stage freeze
+
+**Reported workflow:** open a multi-page PDF → switch page (`#dashboard-pdf-controls`) →
+immediately select + stage/present a crop of the new page → severe frame-drop/freeze.
+
+**Diagnosis (precise):**
+- Page switch path: `GoToPage()` → `RenderPdfPageToPreview()` does a **synchronous 150-DPI
+  `currentPdfDocument.Render()` on the UI thread** (`MainForm.Pdf.cs`).
+- Staging path: `RenderContentToPictureBox()` (`MainForm.Staging.cs`) **rendered the same
+  page again at 150 DPI on the UI thread**, discarding the bitmap just produced for the
+  preview. Two-page mode (`RenderStitchedPdfPages`) renders **two pages at 600 DPI**.
+- So "switch then stage" = **two full-page Pdfium renders on the UI thread back-to-back**,
+  with **no page cache** (every revisit re-rendered). The PDF is *not* re-read from disk
+  (`currentPdfDocument` is loaded once and reused) — the cost is the redundant render, not
+  disk I/O. No "bind-before-render" race exists on the dashboard (overlays are positioned
+  against the fixed 16:9 box; the editor restores crop on Cropper's `ready` event).
+
+**Fix implemented (UI-thread only — safe, build-verified):**
+- **Shared raw-page LRU cache** (`GetRenderedPdfPage`, max 5 pages, preview DPI) used by
+  **both** the preview render and the staging render → the stage right after a switch is a
+  **cache hit** (the second render is gone). Cache stores *unrotated* pages; consumers
+  rotate their own clone, so rotation never invalidates it and presenter quality is
+  untouched (the presenter still renders from the staged master / its own high-DPI path).
+- **Idle adjacent pre-render** (`PrefetchPdfPage` via `BeginInvoke`) of page ±1 after a
+  switch settles → the *next* navigation is a cache hit (no freeze on the click).
+- **Invalidation** (`ClearPdfPageCache`) on PDF load / switch-to-image / reset / form close.
+
+**Held (documented):** moving Pdfium rendering onto a background thread — `PdfDocument` is
+not thread-safe, so it would require serializing every render site behind one lock and an
+on-device smoke test of the stage/push/PDF flows. The 300-DPI editor render
+(`/database/current`) and 600-DPI two-page stitch were left on the UI thread for the same
+reason; they are off the reported hot path. With the cache, the common navigate→stage case
+no longer double-renders, which removes the reported freeze.
+
+**Files:** `MainForm.Pdf.cs` (cache + preview render + prefetch + invalidation),
+`MainForm.Staging.cs` (staging uses the cache), `MainForm.cs` (cache cleanup on close).
