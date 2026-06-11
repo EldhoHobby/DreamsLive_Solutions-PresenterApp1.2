@@ -61,9 +61,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                         using (Graphics g = Graphics.FromImage(baked))
                         {
                             g.Clear(Color.Transparent);
-                            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                            // Perf: this bake is a 1:1 copy (CorrectRotation already applied the
+                            // orientation in-place), so use NearestNeighbor — an exact pixel copy
+                            // with no resampling. HighQualityBicubic here only burned CPU on the UI
+                            // thread and slightly softened the image; a 1:1 copy is faster AND sharper.
+                            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+                            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
                             g.DrawImage(imgTemp, new Rectangle(0, 0, imgTemp.Width, imgTemp.Height));
                         }
                         return baked;

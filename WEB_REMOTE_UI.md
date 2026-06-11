@@ -126,6 +126,24 @@ remote, temporarily copy `remote_control.html` → `index.html` (and delete it a
 
 ## Change log
 
+- **2026-06-11** — Performance pass 2 (full recommendation set; see `PERFORMANCE.md`):
+  - **SSE push** — added `/events`; the remote uses `EventSource` and falls back to interval
+    polling automatically if SSE is unavailable. Both pause when the page is hidden.
+  - **Skip redundant DOM applies** — the remote no longer re-applies status when nothing
+    changed (re-applies on resize so fixed-box overlays reflow).
+  - **Cropper source downscale** — oversized editor images (> 2048 px) are downscaled for
+    Cropper.js in host-edit mode only (upload output untouched; host re-renders full-res).
+  - Server: ref-keyed encoded-preview cache + 200 ms status cache; resolve status controls
+    once; single-buffer upload read; concurrent request handling; 1:1 exact-copy image load.
+- **2026-06-11** — Performance pass (see `PERFORMANCE.md` for the full report):
+  - **Version-based previews** — preview URLs are now `/preview/main?v={n}` (bumped only
+    when the underlying `Image` is replaced); the remote reassigns `<img>.src` only when the
+    version changes, so unchanged previews are no longer refetched/redecoded every poll.
+  - **Polling pauses when the page is hidden** (Page Visibility API) and resumes on return.
+  - `<img decoding="async">` on previews.
+  - Server: `WriteImageResponse` downscale + encode moved **off the UI thread** (only a
+    clone snapshot stays on it); `RunServer` handles requests **concurrently** (no longer
+    awaits each one serially). Presenter output / staged master quality unchanged.
 - **2026-06-10** — Fixed-size preview windows + editor layout:
   - Local Preview and Presenter View are now strict **fixed 16:9** boxes; the JS no longer
     mutates their `aspect-ratio`. Content scales with `object-fit: contain`.

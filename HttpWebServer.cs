@@ -27,6 +27,34 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool _cachedIsLicenseExpired;
         private DateTime _licenseExpiredCheckTime = DateTime.MinValue;
 
+        // Preview change tracking: a version is bumped only when the underlying preview
+        // Image reference is replaced, so the remote re-fetches a preview ONLY when it
+        // actually changes — not on every 1s status poll.
+        private long _mainPreviewVersion = 0;
+        private long _secondaryPreviewVersion = 0;
+        private Image _lastMainPreviewRef = null;
+        private Image _lastSecondaryPreviewRef = null;
+
+        // D-rec-1b: short-lived status cache so rapid / multi-client polls share one build.
+        private string _cachedStatusJson = null;
+        private DateTime _cachedStatusJsonTime = DateTime.MinValue;
+        private readonly object _statusCacheLock = new object();
+
+        // D-rec-1a: ref-keyed encoded preview cache (per endpoint) so concurrent / repeat
+        // requests for an unchanged preview reuse a single JPEG encode.
+        private sealed class PreviewCache { public Image SourceRef; public byte[] Bytes; public string ContentType; }
+        private readonly PreviewCache _mainPreviewCache = new PreviewCache();
+        private readonly PreviewCache _secondaryPreviewCache = new PreviewCache();
+        private readonly object _previewCacheLock = new object();
+
+        // D-rec-4: cached control references (resolved once; these controls are stable).
+        private CheckBox _ctlChkLink;
+        private Label _ctlLblMessage;
+        private Button _ctlBtnPush, _ctlBtnClose, _ctlBtnBlackout;
+        private PictureBox _ctlPicSecondary;
+        private Panel _ctlPanelSecondaryBorder;
+        private bool _ctlsResolved = false;
+
         public HttpWebServer(MainForm mainForm)
         {
             _mainForm = mainForm;
@@ -101,7 +129,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 try
                 {
                     HttpListenerContext context = await listener.GetContextAsync();
-                    await ProcessRequest(context);
+                    // Handle each request concurrently — do NOT await, so a slow request
+                    // (large upload or image encode) doesn't block other clients/requests.
+                    // ProcessRequest has its own try/catch/finally that always closes the response.
+                    _ = ProcessRequest(context);
                 }
                 catch (HttpListenerException) when (token.IsCancellationRequested)
                 {
@@ -142,16 +173,18 @@ namespace DreamsLive_Solutions_PresenterApp1
                         await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
                         break;
                     case "/status":
-                        string statusJson = GetStatusJson();
-                        buffer = Encoding.UTF8.GetBytes(statusJson);
+                        buffer = Encoding.UTF8.GetBytes(GetCachedStatusJson());
                         response.ContentType = "application/json";
                         await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
                         break;
+                    case "/events":
+                        await HandleSseConnection(response);
+                        return; // stream stays open until the client disconnects
                     case "/preview/main":
-                        await WriteImageResponse(response, _mainForm.GetPreviewImage());
+                        await WritePreviewResponse(response, true);
                         break;
                     case "/preview/secondary":
-                        await WriteImageResponse(response, _mainForm.GetSecondaryPreviewImage());
+                        await WritePreviewResponse(response, false);
                         break;
                     case "/brand_logo.png":
                         await WriteFileResponse(response, "brand_logo.png", "image/png");
@@ -212,10 +245,12 @@ namespace DreamsLive_Solutions_PresenterApp1
                 string boundary = Regex.Match(request.ContentType, @"boundary=(.+)").Groups[1].Value;
                 byte[] boundaryBytes = Encoding.UTF8.GetBytes("--" + boundary);
 
-                using (var ms = new MemoryStream())
+                long contentLen = request.ContentLength64;
+                using (var ms = contentLen > 0 ? new MemoryStream((int)contentLen) : new MemoryStream())
                 {
                     await request.InputStream.CopyToAsync(ms);
-                    byte[] bodyBytes = ms.ToArray();
+                    // D-rec-3: avoid a second full-body copy when the buffer is exactly sized.
+                    byte[] bodyBytes = (contentLen > 0 && ms.GetBuffer().Length == ms.Length) ? ms.GetBuffer() : ms.ToArray();
 
                     int currentPos = 0;
                     string targetSubfolder = "";
@@ -612,39 +647,48 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                 mainPreviewAvailable = mainImg != null;
                 secondaryPreviewAvailable = secondaryImg != null;
+
+                // Bump preview versions only when the Image object is actually replaced.
+                if (!object.ReferenceEquals(mainImg, _lastMainPreviewRef)) { _mainPreviewVersion++; _lastMainPreviewRef = mainImg; }
+                if (!object.ReferenceEquals(secondaryImg, _lastSecondaryPreviewRef)) { _secondaryPreviewVersion++; _lastSecondaryPreviewRef = secondaryImg; }
+
                 pdfCurrentPage = _mainForm.GetCurrentPdfPage();
                 pdfTotalPages = _mainForm.GetTotalPdfPages();
 
                 if (mainImg != null && mainImg.Height > 0)
                     mainPreviewAspectRatio = (double)mainImg.Width / mainImg.Height;
 
-                var picSecondaryPreview = _mainForm.Controls.Find("picSecondaryPreview", true).FirstOrDefault() as PictureBox;
-                if (picSecondaryPreview != null && picSecondaryPreview.Height > 0)
-                    secondaryPreviewAspectRatio = (double)picSecondaryPreview.Width / picSecondaryPreview.Height;
-
-                var panelSecondaryPreviewBorder = _mainForm.Controls.Find("panelSecondaryPreviewBorder", true).FirstOrDefault() as Panel;
-                if (panelSecondaryPreviewBorder != null) secondaryPreviewBorderColor = ColorTranslator.ToHtml(panelSecondaryPreviewBorder.BackColor);
-
-                var chkLink = _mainForm.Controls.Find("chkLinkLocalPreviewToPresenter", true).FirstOrDefault() as CheckBox;
-                if (chkLink != null) autoSend = chkLink.Checked;
-
-                var lblMessage = _mainForm.Controls.Find("lblMessage", true).FirstOrDefault() as Label;
-                if (lblMessage != null && lblMessage.Visible)
+                // D-rec-4: resolve these stable controls once, then reuse the references.
+                if (!_ctlsResolved)
                 {
-                    message = lblMessage.Text;
-                    if (lblMessage.ForeColor == Color.Red) messageType = "error";
-                    else if (lblMessage.ForeColor == Color.Orange) messageType = "warning";
+                    _ctlPicSecondary = _mainForm.Controls.Find("picSecondaryPreview", true).FirstOrDefault() as PictureBox;
+                    _ctlPanelSecondaryBorder = _mainForm.Controls.Find("panelSecondaryPreviewBorder", true).FirstOrDefault() as Panel;
+                    _ctlChkLink = _mainForm.Controls.Find("chkLinkLocalPreviewToPresenter", true).FirstOrDefault() as CheckBox;
+                    _ctlLblMessage = _mainForm.Controls.Find("lblMessage", true).FirstOrDefault() as Label;
+                    _ctlBtnPush = _mainForm.Controls.Find("btnPushToPresenter", true).FirstOrDefault() as Button;
+                    _ctlBtnClose = _mainForm.Controls.Find("btnCloseLivePresenter", true).FirstOrDefault() as Button;
+                    _ctlBtnBlackout = _mainForm.Controls.Find("btnClearPresenterDisplay", true).FirstOrDefault() as Button;
+                    _ctlsResolved = true;
+                }
+
+                if (_ctlPicSecondary != null && _ctlPicSecondary.Height > 0)
+                    secondaryPreviewAspectRatio = (double)_ctlPicSecondary.Width / _ctlPicSecondary.Height;
+
+                if (_ctlPanelSecondaryBorder != null) secondaryPreviewBorderColor = ColorTranslator.ToHtml(_ctlPanelSecondaryBorder.BackColor);
+
+                if (_ctlChkLink != null) autoSend = _ctlChkLink.Checked;
+
+                if (_ctlLblMessage != null && _ctlLblMessage.Visible)
+                {
+                    message = _ctlLblMessage.Text;
+                    if (_ctlLblMessage.ForeColor == Color.Red) messageType = "error";
+                    else if (_ctlLblMessage.ForeColor == Color.Orange) messageType = "warning";
                     else messageType = "info";
                 }
 
-                var btnPushToPresenter = _mainForm.Controls.Find("btnPushToPresenter", true).FirstOrDefault() as Button;
-                if (btnPushToPresenter != null) { goLiveButtonText = btnPushToPresenter.Text; goLiveButtonEnabled = btnPushToPresenter.Enabled; }
-
-                var btnCloseLivePresenter = _mainForm.Controls.Find("btnCloseLivePresenter", true).FirstOrDefault() as Button;
-                if (btnCloseLivePresenter != null) { closeLiveButtonText = btnCloseLivePresenter.Text; closeLiveButtonEnabled = btnCloseLivePresenter.Enabled; }
-
-                var btnClearPresenterDisplay = _mainForm.Controls.Find("btnClearPresenterDisplay", true).FirstOrDefault() as Button;
-                if (btnClearPresenterDisplay != null) { blackoutButtonText = btnClearPresenterDisplay.Text; blackoutButtonEnabled = btnClearPresenterDisplay.Enabled; }
+                if (_ctlBtnPush != null) { goLiveButtonText = _ctlBtnPush.Text; goLiveButtonEnabled = _ctlBtnPush.Enabled; }
+                if (_ctlBtnClose != null) { closeLiveButtonText = _ctlBtnClose.Text; closeLiveButtonEnabled = _ctlBtnClose.Enabled; }
+                if (_ctlBtnBlackout != null) { blackoutButtonText = _ctlBtnBlackout.Text; blackoutButtonEnabled = _ctlBtnBlackout.Enabled; }
 
                 pdfPrevButtonEnabled = _mainForm.IsPdfPrevButtonEnabled;
                 pdfNextButtonEnabled = _mainForm.IsPdfNextButtonEnabled;
@@ -673,12 +717,12 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             var statusObject = new
             {
-                mainPreview = mainPreviewAvailable ? $"/preview/main?t={DateTime.UtcNow.Ticks}" : "",
+                mainPreview = mainPreviewAvailable ? $"/preview/main?v={_mainPreviewVersion}" : "",
                 currentFilePath,
                 currentPage,
                 currentSelectionNormalized,
                 stagedSelectionNormalized,
-                secondaryPreview = secondaryPreviewAvailable ? $"/preview/secondary?t={DateTime.UtcNow.Ticks}" : "",
+                secondaryPreview = secondaryPreviewAvailable ? $"/preview/secondary?v={_secondaryPreviewVersion}" : "",
                 pdfCurrentPage,
                 pdfTotalPages,
                 mainPreviewAspectRatio,
@@ -711,6 +755,162 @@ namespace DreamsLive_Solutions_PresenterApp1
             return JsonConvert.SerializeObject(statusObject);
         }
 
+        // D-rec-1b: serve a recently-built status to rapid / concurrent callers without
+        // re-marshalling to the UI thread for each one.
+        private string GetCachedStatusJson()
+        {
+            lock (_statusCacheLock)
+            {
+                if (_cachedStatusJson != null && (DateTime.UtcNow - _cachedStatusJsonTime).TotalMilliseconds < 200)
+                    return _cachedStatusJson;
+            }
+            string json = GetStatusJson();
+            lock (_statusCacheLock)
+            {
+                _cachedStatusJson = json;
+                _cachedStatusJsonTime = DateTime.UtcNow;
+            }
+            return json;
+        }
+
+        // W-rec-1: Server-Sent Events. One long-lived connection per client; pushes status
+        // only when it actually changes (the JSON string differs). Heartbeats detect dead
+        // sockets. The remote falls back to polling if this endpoint is unavailable.
+        private async Task HandleSseConnection(HttpListenerResponse response)
+        {
+            response.ContentType = "text/event-stream";
+            try { response.Headers.Add("Cache-Control", "no-cache"); } catch { }
+            response.SendChunked = true;
+
+            var token = _cts?.Token ?? CancellationToken.None;
+            string last = null;
+            int idleTicks = 0;
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    string json = GetCachedStatusJson();
+                    if (json != last)
+                    {
+                        last = json;
+                        byte[] payload = Encoding.UTF8.GetBytes("data: " + json + "\n\n");
+                        await response.OutputStream.WriteAsync(payload, 0, payload.Length, token);
+                        await response.OutputStream.FlushAsync(token);
+                        idleTicks = 0;
+                    }
+                    else if (++idleTicks >= 60) // ~15s keepalive comment
+                    {
+                        byte[] ka = Encoding.UTF8.GetBytes(": keepalive\n\n");
+                        await response.OutputStream.WriteAsync(ka, 0, ka.Length, token);
+                        await response.OutputStream.FlushAsync(token);
+                        idleTicks = 0;
+                    }
+                    await Task.Delay(250, token);
+                }
+            }
+            catch { /* client disconnected or server stopping — finally closes the stream */ }
+        }
+
+        // D-rec-1a: serve previews from a per-endpoint cache keyed by the source Image
+        // reference, so concurrent / repeat requests for an unchanged preview reuse one
+        // encode. Only a lightweight clone happens on the UI thread; scale + encode is
+        // off-thread (see EncodePreview).
+        private async Task WritePreviewResponse(HttpListenerResponse response, bool isMain)
+        {
+            PreviewCache cache = isMain ? _mainPreviewCache : _secondaryPreviewCache;
+
+            Image refNow = null;
+            Bitmap snapshot = null;
+            bool cacheHit = false;
+            _mainForm.Invoke((Action)(() =>
+            {
+                refNow = isMain ? _mainForm.GetPreviewImage() : _mainForm.GetSecondaryPreviewImage();
+                if (refNow == null) return;
+                lock (_previewCacheLock)
+                {
+                    if (object.ReferenceEquals(refNow, cache.SourceRef) && cache.Bytes != null) cacheHit = true;
+                }
+                if (!cacheHit)
+                {
+                    try { snapshot = new Bitmap(refNow); } catch { }
+                }
+            }));
+
+            if (refNow == null) { response.StatusCode = (int)HttpStatusCode.NotFound; return; }
+
+            byte[] bytes;
+            string contentType;
+            if (cacheHit)
+            {
+                lock (_previewCacheLock) { bytes = cache.Bytes; contentType = cache.ContentType; }
+            }
+            else
+            {
+                if (snapshot == null) { response.StatusCode = (int)HttpStatusCode.InternalServerError; return; }
+                bytes = EncodePreview(snapshot, out contentType); // disposes snapshot
+                if (bytes == null) { response.StatusCode = (int)HttpStatusCode.InternalServerError; return; }
+                lock (_previewCacheLock) { cache.SourceRef = refNow; cache.Bytes = bytes; cache.ContentType = contentType; }
+            }
+
+            response.ContentType = contentType;
+            response.ContentLength64 = bytes.Length;
+            await response.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+        }
+
+        // Off-UI-thread downscale + JPEG encode of a snapshot bitmap (which is disposed here).
+        private byte[] EncodePreview(Bitmap snapshot, out string contentType)
+        {
+            contentType = "image/jpeg";
+            const int maxRemoteDim = 1024;
+            const long jpegQuality = 50;
+
+            Bitmap bmp;
+            try
+            {
+                if (snapshot.Width > maxRemoteDim || snapshot.Height > maxRemoteDim)
+                {
+                    float scale = (float)maxRemoteDim / Math.Max(snapshot.Width, snapshot.Height);
+                    int newW = (int)(snapshot.Width * scale);
+                    int newH = (int)(snapshot.Height * scale);
+                    bmp = new Bitmap(newW, newH);
+                    using (Graphics g = Graphics.FromImage(bmp))
+                    {
+                        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
+                        g.DrawImage(snapshot, 0, 0, newW, newH);
+                    }
+                    snapshot.Dispose();
+                }
+                else
+                {
+                    bmp = snapshot;
+                }
+            }
+            catch { snapshot.Dispose(); return null; }
+
+            try
+            {
+                using (var ms = new MemoryStream())
+                {
+                    ImageCodecInfo jpegEncoder = GetEncoder(ImageFormat.Jpeg);
+                    if (jpegEncoder != null)
+                    {
+                        var ep = new EncoderParameters(1);
+                        ep.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, jpegQuality);
+                        bmp.Save(ms, jpegEncoder, ep);
+                        contentType = "image/jpeg";
+                    }
+                    else
+                    {
+                        bmp.Save(ms, ImageFormat.Png);
+                        contentType = "image/png";
+                    }
+                    return ms.ToArray();
+                }
+            }
+            catch { return null; }
+            finally { bmp.Dispose(); }
+        }
+
         private async Task WriteImageResponse(HttpListenerResponse response, Image image)
         {
             if (image == null)
@@ -723,33 +923,43 @@ namespace DreamsLive_Solutions_PresenterApp1
             const int maxRemoteDim = 1024;
             const long jpegQuality = 50;
 
-            // Clone and scale image on UI thread
-            Bitmap bmpToProcess = null;
+            // Snapshot the image on the UI thread only (GDI+ images aren't thread-safe and
+            // the source PictureBox.Image may be replaced/disposed mid-encode). The expensive
+            // downscale + JPEG encode then run OFF the UI thread so they don't block the UI.
+            Bitmap snapshot = null;
             _mainForm.Invoke((Action)(() =>
             {
-                try
-                {
-                    if (image.Width > maxRemoteDim || image.Height > maxRemoteDim)
-                    {
-                        float scale = (float)maxRemoteDim / Math.Max(image.Width, image.Height);
-                        int newW = (int)(image.Width * scale);
-                        int newH = (int)(image.Height * scale);
-                        bmpToProcess = new Bitmap(newW, newH);
-                        using (Graphics g = Graphics.FromImage(bmpToProcess))
-                        {
-                            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
-                            g.DrawImage(image, 0, 0, newW, newH);
-                        }
-                    }
-                    else
-                    {
-                        bmpToProcess = new Bitmap(image);
-                    }
-                }
-                catch { }
+                try { snapshot = new Bitmap(image); } catch { }
             }));
 
-            if (bmpToProcess == null) return;
+            if (snapshot == null) return;
+
+            Bitmap bmpToProcess;
+            try
+            {
+                if (snapshot.Width > maxRemoteDim || snapshot.Height > maxRemoteDim)
+                {
+                    float scale = (float)maxRemoteDim / Math.Max(snapshot.Width, snapshot.Height);
+                    int newW = (int)(snapshot.Width * scale);
+                    int newH = (int)(snapshot.Height * scale);
+                    bmpToProcess = new Bitmap(newW, newH);
+                    using (Graphics g = Graphics.FromImage(bmpToProcess))
+                    {
+                        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
+                        g.DrawImage(snapshot, 0, 0, newW, newH);
+                    }
+                    snapshot.Dispose();
+                }
+                else
+                {
+                    bmpToProcess = snapshot;
+                }
+            }
+            catch
+            {
+                snapshot.Dispose();
+                return;
+            }
 
             try
             {

@@ -236,14 +236,23 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
 
             // Determine the file type and delegate to the appropriate handler.
+            // A wait cursor signals activity during the synchronous decode/render of large files.
             string fileExtension = Path.GetExtension(imagePath).ToLowerInvariant();
-            if (fileExtension == ".pdf")
+            this.UseWaitCursor = true;
+            try
             {
-                HandlePdfLoading(imagePath);
+                if (fileExtension == ".pdf")
+                {
+                    HandlePdfLoading(imagePath);
+                }
+                else
+                {
+                    HandleImageLoading(imagePath);
+                }
             }
-            else
+            finally
             {
-                HandleImageLoading(imagePath);
+                this.UseWaitCursor = false;
             }
 
             // After loading, update the UI state.
