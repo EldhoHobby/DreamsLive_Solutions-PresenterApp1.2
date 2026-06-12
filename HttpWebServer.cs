@@ -557,36 +557,15 @@ namespace DreamsLive_Solutions_PresenterApp1
                 return;
             }
 
-            string ext = Path.GetExtension(path).ToLowerInvariant();
-            if (ext == ".pdf")
-            {
-                // For PDF, we render the current page at high resolution for editing
-                // Reuse existing PDF document from MainForm if possible
-                Image img = null;
-                _mainForm.Invoke((Action)(() => {
-                    img = _mainForm.RenderCurrentPdfPage(300);
-                    if (img != null)
-                    {
-                        ImageUtils.ApplyRotation(img, _mainForm.GetCurrentManualRotationAngle());
-                    }
-                }));
-
-                if (img != null)
-                {
-                    await WriteImageResponse(response, img);
-                    _mainForm.Invoke((Action)(() => img.Dispose()));
-                }
-                else
-                {
-                    response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                }
-            }
-            else
-            {
-                // For standard images, serve the processed image from the PC (which has EXIF/Manual rotation applied)
-                // This ensures the remote editor and PC are always in the same coordinate system.
-                await WriteImageResponse(response, _mainForm.GetPreviewImage());
-            }
+            // Serve the SAME image the dashboard preview uses (`picPreview.Image`) for BOTH
+            // images and PDFs. The host normalizes selection coordinates against this exact
+            // image, so the remote editor and the dashboard share one coordinate basis and
+            // crop overlays never shift. Previously PDFs were served a separate 300-DPI render
+            // ("full PDF canvas"), whose downscaled aspect did not exactly match the 150-DPI
+            // preview the host normalizes against — causing the PDF-only gray/active overlay
+            // shift. (The preview is downscaled for transport anyway, so there is no loss of
+            // crop precision, and the presenter still renders the region at full resolution.)
+            await WriteImageResponse(response, _mainForm.GetPreviewImage());
         }
 
         private async Task WriteFileResponseFull(HttpListenerResponse response, string filePath, string contentType)

@@ -9,11 +9,15 @@ namespace DreamsLive_Solutions_PresenterApp1
         private CopyableMessageBox(string message, string title, MessageBoxButtons buttons, MessageBoxIcon icon)
         {
             InitializeComponent();
-            LinearTheme.Apply(this);
             this.Text = title;
             this.txtMessage.Text = message;
             SetupButtons(buttons);
             SetupIcon(icon);
+            // Theme AFTER the buttons are created so LinearTheme styles them too. If applied
+            // first, the dynamically-added buttons keep default colors and inherit the form's
+            // light ForeColor over a light visual-style button — making the text unreadable
+            // (invisible) in dark mode. Theming here gives them readable ink-on-surface text.
+            LinearTheme.Apply(this);
         }
 
         public static DialogResult Show(string message) => Show(null, message, "", MessageBoxButtons.OK, MessageBoxIcon.None);

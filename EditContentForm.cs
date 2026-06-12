@@ -16,6 +16,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool _isAutoSend = false;
         private bool _isLiveSync = false;
         private int _currentRotation = 0;
+        private int _lastPageShown = -1;
         private Timer _syncTimer;
         private Timer _outboundSyncTimer;
 
@@ -25,6 +26,19 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool _isResizing = false;
         private string _resizeHandle = "";
         private Point _lastMousePos;
+
+        // Image view (wheel zoom + pan). The canvas draws _displayImage itself so it can be
+        // scaled beyond / below the fit size; the crop region stays anchored to the image.
+        // _displayImage is an OWNED CLONE of the host preview: the host disposes
+        // picPreview.Image on page/file/rotation changes (which the web remote can trigger
+        // while this dialog is modal), so painting the host's reference directly would hit
+        // a disposed image. _lastHostImageRef is only an identity token for change
+        // detection — it may point at a disposed object and must never be dereferenced.
+        private Image _displayImage;
+        private Image _lastHostImageRef;
+        private bool _isPanning = false;
+        private float _viewZoom = 1f;                       // 1 = fit-to-window; >1 in; <1 out (smaller than window)
+        private System.Drawing.PointF _viewPan = System.Drawing.PointF.Empty;
 
         private const int HandleSize = 10;
 
@@ -40,8 +54,18 @@ namespace DreamsLive_Solutions_PresenterApp1
             InitializeComponent();
             LinearTheme.Apply(this);
 
+            // Re-assert the primary-action palette AFTER theming. LinearTheme owner-draws
+            // buttons from their BackColor/ForeColor; without this they would inherit the
+            // neutral surface color and lose the lavender/green/white styling.
+            ApplyActionButtonStyles();
+
+            // The canvas paints the image itself (so the wheel can zoom past / below fit).
+            picEdit.Image = null;
+            picEdit.BackColor = System.Drawing.Color.Black;
+
             this.Text = "Edit / Crop Content";
             this.Size = new Size(1000, 800);
+            this.MinimumSize = new Size(760, 580);   // keep the stacked footer rows from clipping
             this.StartPosition = FormStartPosition.CenterParent;
             this.DoubleBuffered = true;
 
@@ -65,10 +89,15 @@ namespace DreamsLive_Solutions_PresenterApp1
             btnLeft.Click += (s, e) => MoveCrop(-1, 0, false);
             btnRight.Click += (s, e) => MoveCrop(1, 0, false);
             chkEnableAutoScroll.CheckedChanged += (s, e) => _mainForm.EnableAutoScroll = chkEnableAutoScroll.Checked;
+            btnZoomFit.Click += (s, e) => ZoomToFit();
+            btnPrevPageEdit.Click += (s, e) => GoToPdfPage(-1);
+            btnNextPageEdit.Click += (s, e) => GoToPdfPage(1);
 
-            picEdit.Image = _mainForm.GetPreviewImage();
+            AdoptHostPreviewImage();
 
             UpdateCropRectFromNormalized();
+            _lastPageShown = _mainForm.GetCurrentPdfPage();
+            UpdatePagerUi();
 
             _syncTimer = new Timer();
             _syncTimer.Interval = 1000;
@@ -86,11 +115,43 @@ namespace DreamsLive_Solutions_PresenterApp1
                 _syncTimer.Stop();
                 _outboundSyncTimer.Stop();
             };
+            this.FormClosed += (s, e) => {
+                _displayImage?.Dispose();
+                _displayImage = null;
+                _originalImage?.Dispose();
+                _originalImage = null;
+            };
+        }
+
+        // Clone the host preview so this form owns what it paints. Keeps the previous
+        // clone if the host image is briefly unavailable; the next sync tick retries
+        // (the host reference token is only advanced on success).
+        private void AdoptHostPreviewImage()
+        {
+            Image src = _mainForm.GetPreviewImage();
+            if (src == null)
+            {
+                _displayImage?.Dispose();
+                _displayImage = null;
+                _lastHostImageRef = null;
+                return;
+            }
+            try
+            {
+                Image clone = new Bitmap(src);
+                _displayImage?.Dispose();
+                _displayImage = clone;
+                _lastHostImageRef = src;
+            }
+            catch (ArgumentException)
+            {
+                // src was already disposed by the host; keep the previous owned clone.
+            }
         }
 
         private void SyncTimer_Tick(object sender, EventArgs e)
         {
-            if (_isDragging || _isResizing) return;
+            if (_isDragging || _isResizing || _isPanning) return;
 
             bool changed = false;
 
@@ -99,7 +160,26 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (latestRotation != _currentRotation)
             {
                 _currentRotation = latestRotation;
-                picEdit.Image = _mainForm.GetPreviewImage();
+                changed = true;
+            }
+
+            // Sync PDF page bookkeeping.
+            if (_mainForm.GetTotalPdfPages() > 0)
+            {
+                int latestPage = _mainForm.GetCurrentPdfPage();
+                if (latestPage != _lastPageShown)
+                {
+                    _lastPageShown = latestPage;
+                    changed = true;
+                }
+            }
+
+            // Adopt the host preview whenever its bitmap was replaced — page switch,
+            // rotation, re-render, or a new file, including changes the web remote
+            // triggers while this dialog is open.
+            if (!ReferenceEquals(_mainForm.GetPreviewImage(), _lastHostImageRef))
+            {
+                AdoptHostPreviewImage();
                 changed = true;
             }
 
@@ -110,6 +190,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 _stagedRegionNormalized = latestStaged;
                 changed = true;
             }
+
+            UpdatePagerUi();
 
             if (changed)
             {
@@ -130,7 +212,16 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void PicEdit_Paint(object sender, PaintEventArgs e)
         {
-            if (picEdit.Image == null) return;
+            if (_displayImage == null) return;
+
+            // Draw the image at its current zoom/pan (the canvas owns the drawing now).
+            RectangleF dispRect = GetDisplayedImageRect();
+            if (dispRect.Width > 0 && dispRect.Height > 0)
+            {
+                e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                e.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                e.Graphics.DrawImage(_displayImage, dispRect);
+            }
 
             // Draw gray reference box for staged area
             if (_stagedRegionNormalized.HasValue)
@@ -204,15 +295,20 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private RectangleF GetDisplayedImageRect()
         {
-            float imgW = picEdit.Image.Width;
-            float imgH = picEdit.Image.Height;
+            if (_displayImage == null) return RectangleF.Empty;
+            float imgW = _displayImage.Width;
+            float imgH = _displayImage.Height;
             float boxW = picEdit.ClientSize.Width;
             float boxH = picEdit.ClientSize.Height;
+            if (imgW <= 0 || imgH <= 0 || boxW <= 0 || boxH <= 0) return RectangleF.Empty;
 
-            float ratio = Math.Min(boxW / imgW, boxH / imgH);
-            float w = imgW * ratio;
-            float h = imgH * ratio;
-            return new RectangleF((boxW - w) / 2, (boxH - h) / 2, w, h);
+            // Base fit-to-window, then apply the wheel zoom and the pan offset.
+            float fitRatio = Math.Min(boxW / imgW, boxH / imgH);
+            float w = imgW * fitRatio * _viewZoom;
+            float h = imgH * fitRatio * _viewZoom;
+            float x = (boxW - w) / 2f + _viewPan.X;
+            float y = (boxH - h) / 2f + _viewPan.Y;
+            return new RectangleF(x, y, w, h);
         }
 
         private void UpdateNormalizedFromCropRect(bool forceSync = false)
@@ -246,6 +342,69 @@ namespace DreamsLive_Solutions_PresenterApp1
             picEdit.Invalidate();
         }
 
+        /// <summary>
+        /// "Full Zoom Out" — mirrors the web remote: snap the view to the whole image/page,
+        /// resetting the crop selection to the entire (uncropped) content at a glance.
+        /// </summary>
+        private void ZoomToFit()
+        {
+            if (_displayImage == null) return;
+            // Reset the view zoom/pan so the whole page fits the window again. The selection
+            // box stays where it is on screen (viewfinder); re-derive what it now covers.
+            _viewZoom = 1f;
+            _viewPan = System.Drawing.PointF.Empty;
+            UpdateNormalizedFromCropRect();
+            picEdit.Invalidate();
+        }
+
+        // Lavender / green / white action buttons (re-applied after LinearTheme owner-draw).
+        private void ApplyActionButtonStyles()
+        {
+            // Brand accents from the shared palette (same lavender in both modes; the
+            // Close button is always white-with-ink regardless of the active mode).
+            btnPresentNow.BackColor = LinearTheme.Dark.Primary;
+            btnPresentNow.ForeColor = LinearTheme.Dark.OnPrimary;
+            btnDone.BackColor = LinearTheme.Dark.Success;
+            btnDone.ForeColor = LinearTheme.Dark.OnPrimary;
+            btnClose.BackColor = Color.White;
+            btnClose.ForeColor = LinearTheme.Light.Ink;
+            btnPresentNow.Invalidate();
+            btnDone.Invalidate();
+            btnClose.Invalidate();
+        }
+
+        // PDF pagination from the edit view — drives the host's page, mirroring the web remote.
+        private void GoToPdfPage(int delta)
+        {
+            int total = _mainForm.GetTotalPdfPages();
+            if (total <= 0) return;
+            int target = _mainForm.GetCurrentPdfPage() + (delta < 0 ? -1 : 1);
+            if (target < 0 || target >= total) return;
+
+            if (delta < 0) _mainForm.PreviousPage(); else _mainForm.NextPage();
+
+            // The host re-rendered the page; adopt the new bitmap and keep the crop region.
+            AdoptHostPreviewImage();
+            _lastPageShown = _mainForm.GetCurrentPdfPage();
+            UpdateCropRectFromNormalized();
+            UpdatePagerUi();
+            picEdit.Invalidate();
+            if (_isLiveSync) { _outboundSyncTimer.Stop(); SyncOutbound(); }
+        }
+
+        private void UpdatePagerUi()
+        {
+            int total = _mainForm.GetTotalPdfPages();
+            bool isPdf = total > 0;
+            if (tlpPager.Visible != isPdf) tlpPager.Visible = isPdf;
+            if (!isPdf) return;
+            int cur = _mainForm.GetCurrentPdfPage(); // 0-based
+            string text = (cur + 1) + "  /  " + total;
+            if (lblPageIndicator.Text != text) lblPageIndicator.Text = text;
+            btnPrevPageEdit.Enabled = cur > 0;
+            btnNextPageEdit.Enabled = cur < total - 1;
+        }
+
         private void PicEdit_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Left) return;
@@ -253,18 +412,16 @@ namespace DreamsLive_Solutions_PresenterApp1
             _resizeHandle = GetHandleAtPoint(e.Location);
             if (!string.IsNullOrEmpty(_resizeHandle))
             {
-                _isResizing = true;
+                _isResizing = true;   // resize the crop box via its handles
             }
             else if (_cropRect.Contains(e.Location))
             {
-                _isDragging = true;
+                _isDragging = true;   // move the crop box (its screen position/size is independent of zoom)
             }
             else
             {
-                // New rubberband selection
-                _isResizing = true;
-                _resizeHandle = "BR"; // Act as if dragging bottom-right corner
-                _cropRect = new Rectangle(e.Location, new Size(0, 0));
+                _isPanning = true;    // drag on the empty area pans the document under the fixed box
+                picEdit.Cursor = Cursors.SizeAll;
             }
             _lastMousePos = e.Location;
         }
@@ -287,6 +444,15 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void PicEdit_MouseMove(object sender, MouseEventArgs e)
         {
+            if (_isPanning)
+            {
+                _viewPan.X += e.X - _lastMousePos.X;
+                _viewPan.Y += e.Y - _lastMousePos.Y;
+                _lastMousePos = e.Location;
+                UpdateNormalizedFromCropRect(); // box stays fixed on screen; re-derive the selection it covers
+                picEdit.Invalidate();
+                return;
+            }
             if (_isDragging)
             {
                 int dx = e.X - _lastMousePos.X;
@@ -400,6 +566,12 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void PicEdit_MouseUp(object sender, MouseEventArgs e)
         {
+            if (_isPanning)
+            {
+                _isPanning = false;
+                picEdit.Cursor = Cursors.Default;
+                return;
+            }
             _isDragging = false;
             _isResizing = false;
             if (_cropRect.Width < 5 || _cropRect.Height < 5)
@@ -409,47 +581,29 @@ namespace DreamsLive_Solutions_PresenterApp1
             UpdateNormalizedFromCropRect();
         }
 
+        // Mouse wheel zooms the DOCUMENT only. The crop box keeps its absolute screen
+        // position/size — it is never modified here; we only re-derive which document region
+        // it now covers. Zoom-out may go below fit; zoom is anchored on the cursor.
         private void PicEdit_MouseWheel(object sender, MouseEventArgs e)
         {
-            if (_cropRect.IsEmpty) return;
+            if (_displayImage == null) return;
 
-            float zoomFactor = (e.Delta > 0) ? 0.9f : 1.1f;
-            int newW = (int)(_cropRect.Width * zoomFactor);
-            int newH = (int)(_cropRect.Height * zoomFactor);
+            RectangleF before = GetDisplayedImageRect();
+            if (before.Width <= 0 || before.Height <= 0) return;
 
-            // Maintain aspect ratio if set
-            if (_targetAspectRatio > 0)
-            {
-                newH = (int)(newW / _targetAspectRatio);
-            }
+            // Fraction of the image under the cursor, kept fixed across the zoom.
+            float fx = (e.X - before.X) / before.Width;
+            float fy = (e.Y - before.Y) / before.Height;
 
-            // Zoom relative to center
-            int dx = (newW - _cropRect.Width) / 2;
-            int dy = (newH - _cropRect.Height) / 2;
+            float factor = (e.Delta > 0) ? 1.1f : (1f / 1.1f);
+            _viewZoom = Math.Max(0.15f, Math.Min(8f, _viewZoom * factor)); // < 1 allowed (smaller than window)
 
-            _cropRect = new Rectangle(_cropRect.X - dx, _cropRect.Y - dy, newW, newH);
+            RectangleF after = GetDisplayedImageRect();
+            _viewPan.X += e.X - (after.X + fx * after.Width);
+            _viewPan.Y += e.Y - (after.Y + fy * after.Height);
 
-            // Clamp and sync
-            RectangleF displayRect = GetDisplayedImageRect();
-            if (_cropRect.Width > (int)displayRect.Width)
-            {
-                 float ratio = displayRect.Width / _cropRect.Width;
-                 _cropRect.Width = (int)displayRect.Width;
-                 _cropRect.Height = (int)(_cropRect.Height * ratio);
-            }
-            if (_cropRect.Height > (int)displayRect.Height)
-            {
-                float ratio = displayRect.Height / _cropRect.Height;
-                _cropRect.Height = (int)displayRect.Height;
-                _cropRect.Width = (int)(_cropRect.Width * ratio);
-            }
-
-            // Re-center if clamped
-            if (_cropRect.X < (int)displayRect.Left) _cropRect.X = (int)displayRect.Left;
-            if (_cropRect.Y < (int)displayRect.Top) _cropRect.Y = (int)displayRect.Top;
-            if (_cropRect.Right > (int)displayRect.Right) _cropRect.X = (int)displayRect.Right - _cropRect.Width;
-            if (_cropRect.Bottom > (int)displayRect.Bottom) _cropRect.Y = (int)displayRect.Bottom - _cropRect.Height;
-
+            // Fixed viewfinder: the crop box keeps its absolute screen position/size; only the
+            // document scaled. Re-derive which document region the (unmoved) box now frames.
             UpdateNormalizedFromCropRect();
             picEdit.Invalidate();
         }
@@ -522,16 +676,16 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         private void ReloadImage()
         {
-            picEdit.Image = _mainForm.GetPreviewImage(); // Use rotated image from host
+            AdoptHostPreviewImage(); // Use rotated image from host
             MaximizeCropArea();
         }
 
         private void MaximizeCropArea()
         {
-            if (picEdit.Image == null) return;
+            if (_displayImage == null) return;
 
-            float imgW = picEdit.Image.Width;
-            float imgH = picEdit.Image.Height;
+            float imgW = _displayImage.Width;
+            float imgH = _displayImage.Height;
             float imgAR = imgW / imgH;
 
             if (_targetAspectRatio > 0)

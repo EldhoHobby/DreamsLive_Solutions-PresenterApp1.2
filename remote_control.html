@@ -1568,22 +1568,31 @@
 
             if (!initialCropData) return;
 
-            const canvasData = cropper.getCanvasData();
+            // Anchor the gray reference box to the ACTUAL rendered image (the cropper canvas)
+            // via getBoundingClientRect, then express it in the overlay's own offsetParent
+            // space. Using cropper.getCanvasData() alone gives offsets relative to the cropper
+            // container, which is *centered* inside .modal-content — that centering offset was
+            // never added, so the box drifted (downward for portrait PDFs). Rect math removes
+            // any container-centering / header spacing from the X/Y, for images and PDFs alike.
+            const canvasEl = (cropper.cropper && cropper.cropper.querySelector)
+                ? cropper.cropper.querySelector('.cropper-canvas')
+                : document.querySelector('#editor-modal .cropper-canvas');
+            if (!canvasEl) return;
+
             const imageData = cropper.getImageData();
+            if (!imageData.naturalWidth) return;
 
-            // Calculate scale between natural image and current displayed image in cropper
-            const scale = imageData.width / imageData.naturalWidth;
+            const canvasRect = canvasEl.getBoundingClientRect();
+            if (!canvasRect.width) return; // hidden / not laid out yet — keep the last position
+            const parentEl = refOverlay.offsetParent || canvasEl.parentNode;
+            if (!parentEl || !parentEl.getBoundingClientRect) return; // overlay or canvas detached
+            const parentRect = parentEl.getBoundingClientRect();
+            const scale = canvasRect.width / imageData.naturalWidth; // displayed px per natural px
 
-            // initialCropData is in natural pixels
-            const refX = canvasData.left + (initialCropData.x * scale);
-            const refY = canvasData.top + (initialCropData.y * scale);
-            const refW = initialCropData.width * scale;
-            const refH = initialCropData.height * scale;
-
-            refOverlay.style.left = refX + 'px';
-            refOverlay.style.top = refY + 'px';
-            refOverlay.style.width = refW + 'px';
-            refOverlay.style.height = refH + 'px';
+            refOverlay.style.left = (canvasRect.left - parentRect.left + initialCropData.x * scale) + 'px';
+            refOverlay.style.top = (canvasRect.top - parentRect.top + initialCropData.y * scale) + 'px';
+            refOverlay.style.width = (initialCropData.width * scale) + 'px';
+            refOverlay.style.height = (initialCropData.height * scale) + 'px';
         }
 
         async function presentNow() {

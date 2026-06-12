@@ -126,6 +126,74 @@ remote, temporarily copy `remote_control.html` → `index.html` (and delete it a
 
 ## Change log
 
+- **2026-06-11** — Desktop Edit/Crop — **wheel-zoom viewfinder bug fixed.** The wheel handler's
+  header comment promised a fixed viewfinder (box stays put, document scales underneath), but its
+  body called `UpdateCropRectFromNormalized()` — recomputing the box's screen rect from the
+  document-relative selection — so the crop box scaled/moved *with* the document on every wheel
+  tick (a leftover from the refactor below; the pan path and Zoom-to-Fit were already correct).
+  Now the wheel handler calls `UpdateNormalizedFromCropRect()` instead: the box keeps its
+  absolute screen position/size and only the **selection it frames** is re-derived. The crop box
+  is now fully independent of the document's zoom level (still freely movable/resizable).
+- **2026-06-11** — Desktop Edit/Crop — **wheel zoom now matches the web cropper exactly**
+  (fixed-viewfinder model). The canvas (`picEdit`) draws the image itself with a `_viewZoom`
+  + `_viewPan`. The **selection box stays a fixed rectangle on screen**; the wheel
+  zooms/pans the **page underneath** it (cursor-anchored; zoom-out may go below fit, with
+  margins), so the box never resizes when you scroll and **what gets selected changes** as
+  you frame it (the selection is re-derived from what the box covers — `UpdateNormalizedFromCropRect`).
+  Dragging anywhere except a handle **pans the page** (like Cropper's `dragMode: 'move'`);
+  resize the box with its handles. **[Zoom to Fit]** resets the page to fit, leaving the box
+  in place.
+- **2026-06-11** — Desktop Edit/Crop window — full layout-parity refactor.
+  Rebuilt `EditContentForm`'s footer with **nested layout panels** (TableLayoutPanel /
+  FlowLayoutPanel) instead of absolute X/Y, so rows stay centered + anchored and the canvas
+  expands fluidly on resize (`picEdit` Dock=Fill; `panelFooter` Dock=Bottom):
+  1. **Centered primary actions row** directly under the canvas — **[Present Now]**
+     (lavender / white), **[Done]** (green / white), **[Close]** (white / dark text+border),
+     re-asserted after theming via `ApplyActionButtonStyles()`.
+  2. **Full-width pagination row** — wide **[‹ Prev]** | centered **"x / y"** indicator |
+     wide **[Next ›]** — *new*; wired to the host (`PreviousPage`/`NextPage`/
+     `GetCurrentPdfPage`/`GetTotalPdfPages`), shown only for PDFs and kept in sync by the
+     editor's timer.
+  3. **Advanced controls pinned at the very bottom** — rotate (↺ ↻), **Zoom to Fit**,
+     Live Sync / Auto Send / Auto Scroll, and a 3×3 **D-pad** — centered as one cluster.
+  4. **Resizing/anchoring** — centered rows use `Anchor.None` in full-width
+     `TableLayoutPanel` rows; the pager stretches (`Dock=Fill`); a `MinimumSize` prevents
+     clipping. No overlap on resize.
+- **2026-06-11** — PDF editor gray-box re-fix + desktop "Zoom to Fit":
+  1. **Gray dotted reference box drift (PDF, edit view) — re-fixed (the real cause).**
+     `updateEditorReferenceOverlay()` positioned the box from `cropper.getCanvasData()` —
+     offsets relative to the cropper *container* — but the box is `position:absolute` inside
+     `.modal-content`, where Cropper **centers** its container. That centering offset
+     (vertical for portrait PDF pages) was never added, so the box drifted **down**. Now the
+     box is anchored to the **actual rendered canvas via `getBoundingClientRect()`** and
+     expressed in the overlay's own `offsetParent` space, so no container-centering or header
+     spacing can leak into the X/Y. Verified with a live Cropper (portrait image, canvas
+     centered at an offset): full-image **and** sub-region references overlay the canvas with
+     **zero drift** (errX/Y/W/H = 0).
+  2. **Desktop "Zoom to Fit" (Full Zoom Out port).** Added a **Zoom to Fit** button to the
+     WinForms `EditContentForm` (`ZoomToFit()`) that resets the crop selection to the full,
+     uncropped image/page — mirroring the web remote's full-zoom-out / snap-to-fit so the
+     operator can view the complete page at a glance.
+- **2026-06-11** — Three fixes (desktop parity + two bugs):
+  1. **Desktop Edit/Crop parity** — `EditContentForm`'s footer was restructured into a
+     top→bottom vertical hierarchy that matches the web editor: **Present Now / Done / Close
+     → Rotate → Live Sync / Auto Send → (pinned bottom) Enable Auto Scroll + D-pad**.
+  2. **PDF crop-overlay shift (PDF-only) — fixed.** Root cause: the remote editor was served a
+     *separate* 300-DPI PDF render (`/database/current` → `RenderCurrentPdfPage(300)`) and
+     normalized the crop against it, while the dashboard preview **and the host's
+     normalization** use the 150-DPI `picPreview.Image`. The two independent renders had
+     non-identical rounded aspect ratios, so the editor's normalized crop mapped to a slightly
+     different region on the host → the gray/active selection overlays shifted. Images were
+     unaffected because their edit and dashboard views already share one bitmap. **Fix:**
+     `/database/current` now serves `GetPreviewImage()` (the same `picPreview.Image`) for PDFs
+     too, so the edit view and the dashboard share **one coordinate basis** — exact mapping,
+     no shift. Bonus: drops a redundant 300-DPI render per editor open; presenter output is
+     unaffected (it still renders the region at full resolution).
+  3. **`CopyableMessageBox` invisible button text — fixed.** `SetupButtons()` ran *after*
+     `LinearTheme.Apply()`, so the dynamically-added buttons kept default colors (a light
+     inherited `ForeColor` over a light visual-style button = unreadable in dark mode). **Fix:**
+     apply the theme *after* the buttons exist so they get readable ink-on-surface text in
+     both light and dark modes.
 - **2026-06-11** — PDF page-switch freeze fix (multi-page navigate → stage):
   - **Root cause:** switching to a page rendered it once for the preview
     (`RenderPdfPageToPreview`, 150 DPI), then staging a crop **re-rendered the same page**
