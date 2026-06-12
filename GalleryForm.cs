@@ -222,26 +222,23 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
             catch { }
 
-            if (thumb != null)
-            {
-                if (pb.IsDisposed)
-                {
-                    thumb.Dispose();
-                    return;
-                }
+            if (thumb == null) return;
 
-                if (pb.InvokeRequired)
-                {
-                    pb.Invoke((Action)(() => {
-                        if (!pb.IsDisposed) pb.Image = thumb;
-                        else thumb.Dispose();
-                    }));
-                }
-                else
-                {
-                    pb.Image = thumb;
-                }
+            // The gallery disposes every PictureBox on refresh (folder change, watcher
+            // event) while these loads are still in flight, and IsDisposed can flip
+            // between a check and the Invoke — so treat the marshal itself as the thing
+            // that can fail rather than pre-checking. (On a disposed control
+            // InvokeRequired also returns false, which would route a direct cross-thread
+            // pb.Image assignment — never branch on it here.)
+            try
+            {
+                pb.Invoke((Action)(() => {
+                    if (!pb.IsDisposed) pb.Image = thumb;
+                    else thumb.Dispose();
+                }));
             }
+            catch (ObjectDisposedException) { thumb.Dispose(); }
+            catch (InvalidOperationException) { thumb.Dispose(); }
         }
 
         private void cmbSubfolders_SelectedIndexChanged(object sender, EventArgs e)
