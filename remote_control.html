@@ -1983,6 +1983,11 @@
 
                 const chkScroll = document.getElementById('chkEnableScroll');
                 if (chkScroll) chkScroll.checked = status.enableScroll;
+                // The host ignores move-selection while auto-scroll is off — gray the
+                // dashboard d-pad out instead of letting taps silently do nothing. (The
+                // editor d-pad moves the crop box locally and is not gated.)
+                document.querySelectorAll('.scroll-body .d-pad button').forEach(b =>
+                    b.classList.toggle('button-disabled', status.enableScroll !== true));
 
                 const chkSkip = document.getElementById('chkSkipOnePage');
                 if (chkSkip) chkSkip.checked = status.skipOnePage;

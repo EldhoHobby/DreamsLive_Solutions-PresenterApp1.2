@@ -233,6 +233,23 @@ namespace DreamsLive_Solutions_PresenterApp1
             if (this.btnLeft != null) this.btnLeft.Click += new System.EventHandler(this.btnLeft_Click);
             if (this.btnRight != null) this.btnRight.Click += new System.EventHandler(this.btnRight_Click);
 
+            // MoveSelection only acts while chkEnableScroll is checked — reflect that in the
+            // d-pad's enabled state instead of letting clicks silently no-op. CheckedChanged
+            // also fires when the web remote / edit dialog toggles EnableAutoScroll.
+            if (this.chkEnableScroll != null)
+            {
+                EventHandler syncDpadEnabled = (s, e) =>
+                {
+                    bool on = this.chkEnableScroll.Checked;
+                    if (this.btnUp != null) this.btnUp.Enabled = on;
+                    if (this.btnDown != null) this.btnDown.Enabled = on;
+                    if (this.btnLeft != null) this.btnLeft.Enabled = on;
+                    if (this.btnRight != null) this.btnRight.Enabled = on;
+                };
+                this.chkEnableScroll.CheckedChanged += syncDpadEnabled;
+                syncDpadEnabled(null, EventArgs.Empty);
+            }
+
             // Assuming btnEditContent is already defined in Designer or I'll add it
             Control foundBtnEditContent = this.Controls.Find("btnEditContent", true).FirstOrDefault();
             if (foundBtnEditContent is Button btnEditContent)
