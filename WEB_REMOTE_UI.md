@@ -124,7 +124,41 @@ python -m http.server 8123
 the Claude Code preview tooling. The preview opens `index.html`, so to preview the
 remote, temporarily copy `remote_control.html` â†’ `index.html` (and delete it after).
 
+## Security model
+
+The remote server (`HttpWebServer`, port 21011) binds **all interfaces** (`http://*:21011/`)
+and has **no authentication** — by design, so a phone on the same Wi-Fi can connect via the
+QR/URL with zero friction. Treat the LAN it runs on as the trust boundary: anyone who can
+reach the port can drive the presenter and browse/upload to the media database. **Do not
+expose port 21011 to the public internet / port-forward it.** Adding an optional access
+PIN/token is the recommended next step if untrusted devices share the network (see the
+security review notes in the change log below).
+
+Hardening already in place (enforced server-side, not just in the UI):
+- **Path containment** — every endpoint that takes a path/subfolder (`/action/open`,
+  `/database/file`, `/database/gallery`, `/upload`, and host-side *Add to Database*) resolves
+  it through `MainForm.ResolveWithinDatabase`, which rejects `..`, absolute paths, and
+  sibling-prefix escapes. Files are only ever read/written inside the configured database root.
+- **Upload restrictions** — type allowlist (`.jpg/.jpeg/.png/.gif/.bmp/.pdf` only) and a
+  100 MB size cap checked before buffering the body.
+- **Served-file safety** — `/database/file` serves only allowlisted media types and every
+  response carries `X-Content-Type-Options: nosniff`.
+- **No permissive CORS** — the page is same-origin, so `Access-Control-Allow-Origin` is not
+  emitted; other websites can't read `/status`, previews, or the gallery cross-origin.
+- **Reduced disclosure** — `/status` returns only the file *name* (not the absolute host
+  path), and error responses are generic (details go to the local log, not the client).
+
 ## Change log
+- **2026-06-13** — **Security review + hardening pass** (no UX change). Closed three path-
+  traversal issues (`/action/open`, `/database/gallery`, and the upload/Add-to-Database
+  sibling-prefix bug) via the shared `ResolveWithinDatabase` containment check; added an
+  upload type allowlist + 100 MB cap; restricted `/database/file` to allowlisted media and
+  added `X-Content-Type-Options: nosniff`; dropped the wildcard CORS header; stopped `/status`
+  leaking the absolute file path; sanitized upload/gallery error responses; and HTML-escaped
+  the gallery folder dropdown (`escapeHtml`) to remove an `innerHTML` injection sink. Verified
+  with live traversal/upload/XSS probes. **Residual risk:** the server is still unauthenticated
+  and LAN-open by design — keep it off the public internet; an optional PIN is the next step.
+
 - **2026-06-12** — Dashboard d-pad disabled-state fix: the Auto-scroll & nudge arrows now
   gray out (`button-disabled`, pointer-events off) whenever `status.enableScroll` is false,
   matching the host-side gate in `MoveSelection` that silently ignored the taps. The editor

@@ -21,6 +21,20 @@ namespace DreamsLive_Solutions_PresenterApp1
         private readonly MainForm _mainForm;
         private CancellationTokenSource _cts;
 
+        // Security: the only file types the app can actually present. Uploads and served
+        // database files are restricted to this allowlist so the unauthenticated endpoints
+        // can't write or hand back executables/scripts/HTML.
+        private static readonly HashSet<string> AllowedMediaExtensions =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".pdf" };
+
+        // Security: cap upload size so a single request can't exhaust memory (the body is
+        // buffered to size a MemoryStream). 100 MB comfortably covers real photos/PDFs.
+        private const long MaxUploadBytes = 100L * 1024 * 1024;
+
+        private static bool IsAllowedMedia(string fileName) =>
+            AllowedMediaExtensions.Contains(Path.GetExtension(fileName ?? ""));
+
         public string ServerUrl { get; private set; }
         public bool IsRunning => _listener != null && _listener.IsListening;
 
@@ -153,8 +167,12 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             try
             {
-                response.AddHeader("Access-Control-Allow-Origin", "*");
-                response.AddHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                // Security: the remote page and its fetch()/upload calls are all same-origin
+                // (served from this same host:port), so no permissive CORS is needed. Omitting
+                // Access-Control-Allow-Origin stops other websites from reading /status,
+                // previews, or the gallery listing cross-origin. nosniff stops a served media
+                // file from being MIME-sniffed into executable HTML/JS in the browser.
+                response.AddHeader("X-Content-Type-Options", "nosniff");
 
                 if (request.HttpMethod == "OPTIONS")
                 {
@@ -240,6 +258,13 @@ namespace DreamsLive_Solutions_PresenterApp1
                 return;
             }
 
+            // Security: reject oversized uploads before buffering the body into memory.
+            if (request.ContentLength64 > MaxUploadBytes || request.ContentLength64 > int.MaxValue)
+            {
+                response.StatusCode = 413; // Payload Too Large
+                return;
+            }
+
             try
             {
                 string boundary = Regex.Match(request.ContentType, @"boundary=(.+)").Groups[1].Value;
@@ -311,6 +336,17 @@ namespace DreamsLive_Solutions_PresenterApp1
                     // Sanitize custom filename to prevent path traversal via filename
                     string sanitizedCustomName = !string.IsNullOrEmpty(customName) ? Path.GetFileName(customName) : "";
                     string finalFilename = !string.IsNullOrEmpty(sanitizedCustomName) ? sanitizedCustomName + Path.GetExtension(originalFilename) : Path.GetFileName(originalFilename);
+
+                    // Security: only accept file types the app can actually present. This blocks
+                    // writing .html/.bat/.ps1/etc. into the media folder via the open endpoint.
+                    if (!IsAllowedMedia(finalFilename))
+                    {
+                        response.StatusCode = (int)HttpStatusCode.UnsupportedMediaType;
+                        byte[] rej = Encoding.UTF8.GetBytes("Unsupported file type.");
+                        await response.OutputStream.WriteAsync(rej, 0, rej.Length);
+                        return;
+                    }
+
                     string targetDir = "";
 
                     string dbPath = "";
@@ -322,14 +358,13 @@ namespace DreamsLive_Solutions_PresenterApp1
                         }
 
                         dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
-                        string combinedPath = Path.GetFullPath(Path.Combine(dbPath, targetSubfolder));
 
-                        // Ensure the target subfolder is within the database root
-                        if (combinedPath.StartsWith(dbPath, StringComparison.OrdinalIgnoreCase))
-                        {
-                            targetDir = combinedPath;
-                        }
-                        else
+                        // Empty subfolder = root; otherwise resolve inside the root. The shared
+                        // helper rejects `..` and sibling-prefix escapes (trailing-separator check).
+                        targetDir = string.IsNullOrEmpty(targetSubfolder)
+                            ? dbPath
+                            : _mainForm.ResolveWithinDatabase(targetSubfolder);
+                        if (targetDir == null)
                         {
                             throw new Exception("Invalid target subfolder path");
                         }
@@ -370,8 +405,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
             catch (Exception ex)
             {
+                // Security: don't echo exception details (which can include absolute host paths)
+                // to the client; log them locally instead.
+                Console.WriteLine($"Upload failed: {ex.Message}");
                 response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                byte[] buffer = Encoding.UTF8.GetBytes("Upload failed: " + ex.Message);
+                byte[] buffer = Encoding.UTF8.GetBytes("Upload failed.");
                 await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
             }
         }
@@ -414,8 +452,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Gallery listing failed: {ex.Message}");
                 response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { error = ex.Message }));
+                byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new { error = "Failed to list gallery." }));
                 await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
             }
         }
@@ -431,19 +470,19 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             try
             {
-                string fullPath = Path.GetFullPath(Path.Combine(_mainForm.DatabaseFolderPath, relativePath));
-                string dbPath = Path.GetFullPath(_mainForm.DatabaseFolderPath);
-                if (!dbPath.EndsWith(Path.DirectorySeparatorChar.ToString())) dbPath += Path.DirectorySeparatorChar;
+                // Security: resolve inside the database root (rejects `..`/absolute/sibling-prefix)
+                // and only serve allowlisted media types, never an arbitrary octet-stream.
+                string fullPath = _mainForm.ResolveWithinDatabase(relativePath);
 
-                if (File.Exists(fullPath) && fullPath.StartsWith(dbPath, StringComparison.OrdinalIgnoreCase))
+                if (fullPath != null && File.Exists(fullPath) && IsAllowedMedia(fullPath))
                 {
                     string ext = Path.GetExtension(fullPath).ToLowerInvariant();
-                    string contentType = "application/octet-stream";
+                    string contentType;
                     if (ext == ".jpg" || ext == ".jpeg") contentType = "image/jpeg";
                     else if (ext == ".png") contentType = "image/png";
                     else if (ext == ".gif") contentType = "image/gif";
                     else if (ext == ".bmp") contentType = "image/bmp";
-                    else if (ext == ".pdf") contentType = "application/pdf";
+                    else contentType = "application/pdf"; // only .pdf remains in the allowlist
 
                     byte[] buffer = File.ReadAllBytes(fullPath);
                     response.ContentType = contentType;
@@ -671,7 +710,10 @@ namespace DreamsLive_Solutions_PresenterApp1
 
                 pdfPrevButtonEnabled = _mainForm.IsPdfPrevButtonEnabled;
                 pdfNextButtonEnabled = _mainForm.IsPdfNextButtonEnabled;
-                currentFilePath = _mainForm.SelectedImagePath;
+                // Security: expose only the file NAME, not the absolute host path (which leaks
+                // the username and filesystem layout). The remote uses this purely as a
+                // change-detection token and to toggle the Edit button — never as a path.
+                currentFilePath = Path.GetFileName(_mainForm.SelectedImagePath);
                 currentPage = _mainForm.CurrentPageNumber;
                 currentSelectionNormalized = _mainForm.GetCurrentSelectionNormalized();
                 stagedSelectionNormalized = _mainForm.GetStagedSelectionNormalized();

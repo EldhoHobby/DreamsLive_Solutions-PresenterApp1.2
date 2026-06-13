@@ -84,6 +84,26 @@ These cut across many files; violating them causes UI freezes, crashes, or quali
   (`/preview/main?v={n}`); the version bumps when the underlying `picPreview.Image` /
   `picSecondaryPreview.Image` reference is replaced (computed in `GetStatusJson`).
 
+### Security invariants
+
+The remote server is **unauthenticated and LAN-open by design** (`http://*:21011/`); the local
+network is the trust boundary. Keep these when touching the server or remote:
+
+- **Every path/subfolder from a request must go through `MainForm.ResolveWithinDatabase`** before
+  any file read/write. It returns the absolute path only if it stays inside the database root
+  (rejects `..`, absolute paths, and sibling-prefix escapes). Never `Path.Combine(root, userInput)`
+  and use it directly. Used by `/action/open`, `/database/file`, `/database/gallery`, `/upload`,
+  and host-side *Add to Database*.
+- **Uploads and served files are restricted to the media allowlist** (`AllowedMediaExtensions`:
+  jpg/jpeg/png/gif/bmp/pdf); uploads are capped at `MaxUploadBytes` (100 MB) before buffering.
+- **Don't add permissive CORS or echo exception text to clients.** The page is same-origin; error
+  responses stay generic (log details locally). All responses carry `X-Content-Type-Options: nosniff`.
+- **Don't put absolute host paths in `/status`** or other client-visible JSON — `currentFilePath`
+  is the file name only.
+- **Web UI: data from the host (filenames, folder names, messages) goes into the DOM via
+  `textContent`, or `escapeHtml(...)` if it must build an `innerHTML` string.** Never interpolate
+  host data straight into `innerHTML`.
+
 ### Web remote (`remote_control.html`)
 
 One self-contained file (markup + CSS + a large inline `<script>` that owns all behavior: SSE/poll,

@@ -1017,6 +1017,12 @@
             }
         }
 
+        // Security: escape text destined for innerHTML sinks (e.g. the gallery folder dropdown).
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c =>
+                ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
         function updateSystemStatus(msg, type = 'ready') {
             const el = document.getElementById('system-status-text');
             el.textContent = msg;
@@ -1127,8 +1133,10 @@
                 const currentGalleryVal = gallerySelect.value;
                 const currentUploadVal = uploadSelect.value;
 
+                // Security: folder names come from the host filesystem; escape them before
+                // building option markup so a crafted name can't inject HTML/script into the UI.
                 const optionsHtml = '<option value="">(Root)</option>' +
-                    folders.map(f => `<option value="${f}">${f}</option>`).join('');
+                    folders.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
 
                 uploadSelect.innerHTML = optionsHtml;
                 gallerySelect.innerHTML = optionsHtml;

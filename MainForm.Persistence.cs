@@ -163,8 +163,13 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             try
             {
-                string targetPath = string.IsNullOrEmpty(subfolder) ? DatabaseFolderPath : Path.Combine(DatabaseFolderPath, subfolder);
-                if (!Directory.Exists(targetPath)) return files;
+                // Security: an empty subfolder means the root; anything else must resolve to a
+                // path inside the root, so /database/gallery?subfolder=..\..\ can't enumerate
+                // arbitrary directories and leak their absolute paths.
+                string targetPath = string.IsNullOrEmpty(subfolder)
+                    ? Path.GetFullPath(DatabaseFolderPath)
+                    : ResolveWithinDatabase(subfolder);
+                if (string.IsNullOrEmpty(targetPath) || !Directory.Exists(targetPath)) return files;
 
                 // Requirement: all files in folder without extension filtering, support non-media with icons
                 var allFiles = Directory.EnumerateFiles(targetPath, "*.*", SearchOption.TopDirectoryOnly);
@@ -183,12 +188,42 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         public void OpenMediaFile(string relativePath, bool updateStaging = true)
         {
-            if (string.IsNullOrEmpty(DatabaseFolderPath)) return;
-            string fullPath = Path.Combine(DatabaseFolderPath, relativePath);
-            if (File.Exists(fullPath))
+            // Security: resolve against the database root and reject any path that escapes it
+            // (`..`, absolute paths, sibling-prefix tricks). Without this, the unauthenticated
+            // /action/open endpoint could load any image/PDF on disk into the presenter.
+            string fullPath = ResolveWithinDatabase(relativePath);
+            if (fullPath != null && File.Exists(fullPath))
             {
                 this.Invoke((Action)(() => ProcessNewImage(fullPath, updateStaging)));
             }
+        }
+
+        /// <summary>
+        /// Resolves a caller-supplied relative path against the configured database root and
+        /// returns the absolute path ONLY if it stays inside that root. Returns null for an
+        /// unset root, an empty path, or any traversal attempt. This is the single containment
+        /// check shared by every remote endpoint that accepts a path or subfolder.
+        /// </summary>
+        public string ResolveWithinDatabase(string relativePath)
+        {
+            if (string.IsNullOrEmpty(DatabaseFolderPath) || string.IsNullOrEmpty(relativePath))
+                return null;
+
+            string root = Path.GetFullPath(DatabaseFolderPath);
+            string rootWithSep = root.EndsWith(Path.DirectorySeparatorChar.ToString())
+                ? root : root + Path.DirectorySeparatorChar;
+
+            string full;
+            try { full = Path.GetFullPath(Path.Combine(root, relativePath)); }
+            catch { return null; } // malformed path (illegal chars, too long, etc.)
+
+            // The trailing separator is essential: a bare StartsWith(root) would also accept a
+            // sibling directory whose name merely begins with the root's name.
+            if (full.Equals(root, StringComparison.OrdinalIgnoreCase) ||
+                full.StartsWith(rootWithSep, StringComparison.OrdinalIgnoreCase))
+                return full;
+
+            return null;
         }
 
         private List<ImageSelectionData> LoadSelections()

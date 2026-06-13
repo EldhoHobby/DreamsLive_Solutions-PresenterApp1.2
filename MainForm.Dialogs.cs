@@ -278,9 +278,13 @@ namespace DreamsLive_Solutions_PresenterApp1
                         targetSub = string.IsNullOrEmpty(targetSub) ? sanitizedNewFolder : Path.Combine(targetSub, sanitizedNewFolder);
                     }
 
-                    string targetDir = Path.GetFullPath(Path.Combine(DatabaseFolderPath, targetSub));
-                    // Security check: Ensure target is within DatabaseFolderPath
-                    if (!targetDir.StartsWith(Path.GetFullPath(DatabaseFolderPath), StringComparison.OrdinalIgnoreCase))
+                    // Security check: ensure the target stays within DatabaseFolderPath. An empty
+                    // targetSub means the root; otherwise it must resolve inside the root (the
+                    // shared helper rejects `..` and sibling-prefix escapes).
+                    string targetDir = string.IsNullOrEmpty(targetSub)
+                        ? Path.GetFullPath(DatabaseFolderPath)
+                        : ResolveWithinDatabase(targetSub);
+                    if (targetDir == null)
                     {
                         ShowErrorMessage("Invalid target path.");
                         return;
