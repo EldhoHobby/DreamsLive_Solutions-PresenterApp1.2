@@ -16,6 +16,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             InitializeComponent();
             LinearTheme.Apply(this);
+            this.Icon = LinearTheme.FormIcon("adddb"); // title-bar glyph matching this dialog's purpose
             _existingSubfolders = existingSubfolders;
             txtCustomFileName.Text = Path.GetFileNameWithoutExtension(currentFileName);
 

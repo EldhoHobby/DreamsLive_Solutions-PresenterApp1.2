@@ -457,6 +457,73 @@ namespace DreamsLive_Solutions_PresenterApp1
 
         public static Image BrandMark => LoadEmbedded("Resources.logo_mark.png");
 
+        // ---- Window/title-bar icons -------------------------------------------
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool DestroyIcon(IntPtr hIcon);
+
+        private static readonly Dictionary<string, Icon> _iconCache =
+            new Dictionary<string, Icon>(StringComparer.OrdinalIgnoreCase);
+        private static Icon _brandIcon;
+
+        /// <summary>
+        /// The DreamsLive brand icon (the app's embedded <c>DreamsLive-Logo.ico</c>, surfaced
+        /// here via the EXE's associated icon). Used for the main window and as the fallback
+        /// title-bar icon for any pop-up without a purpose-specific glyph.
+        /// </summary>
+        public static Icon BrandIcon
+        {
+            get
+            {
+                if (_brandIcon != null) return _brandIcon;
+                try
+                {
+                    string exe = Assembly.GetEntryAssembly()?.Location;
+                    if (!string.IsNullOrEmpty(exe))
+                        _brandIcon = Icon.ExtractAssociatedIcon(exe);
+                }
+                catch { _brandIcon = null; }
+                return _brandIcon ?? SystemIcons.Application;
+            }
+        }
+
+        /// <summary>
+        /// A title-bar <see cref="Icon"/> built from one of the embedded purpose glyphs in
+        /// <c>Resources/icons/*.png</c> (e.g. "settings", "gallery", "edit", "adddb", "help").
+        /// Lets every pop-up show an icon that matches its purpose. Falls back to
+        /// <see cref="BrandIcon"/> when the glyph isn't found. Cached for the app's lifetime.
+        /// </summary>
+        public static Icon FormIcon(string purpose)
+        {
+            if (string.IsNullOrEmpty(purpose)) return BrandIcon;
+            lock (_iconCache)
+            {
+                if (_iconCache.TryGetValue(purpose, out var cached)) return cached;
+
+                Icon icon = BrandIcon;
+                Image img = LoadIcon(purpose); // cached embedded PNG; do not dispose (shared)
+                if (img != null)
+                {
+                    IntPtr hIcon = IntPtr.Zero;
+                    try
+                    {
+                        using (var bmp = new Bitmap(img, 32, 32))
+                        {
+                            hIcon = bmp.GetHicon();
+                            // Clone so the managed Icon owns its bits independently of the GDI
+                            // handle, which we then destroy to avoid leaking an HICON.
+                            using (var temp = Icon.FromHandle(hIcon))
+                                icon = (Icon)temp.Clone();
+                        }
+                    }
+                    catch { icon = BrandIcon; }
+                    finally { if (hIcon != IntPtr.Zero) DestroyIcon(hIcon); }
+                }
+
+                _iconCache[purpose] = icon;
+                return icon;
+            }
+        }
+
         // Full brand wordmark (transparent PNG) used in the header bar and splash.
         private static Image _brandLogo;
         public static Image BrandLogo

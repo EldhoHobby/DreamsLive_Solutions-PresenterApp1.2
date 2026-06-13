@@ -102,6 +102,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         public MainForm()
         {
             InitializeComponent();
+            this.Icon = LinearTheme.BrandIcon; // DreamsLive brand mark in the title bar / taskbar
             this.picSecondaryPreview.SizeMode = PictureBoxSizeMode.Normal;
 
             this.Text = $"Presenter App V{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version} {GetActivationStatus()}";

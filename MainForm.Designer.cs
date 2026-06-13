@@ -973,6 +973,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.tableCenter);
             this.Controls.Add(this.panelBottom);
             this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(247)))), ((int)(((byte)(248)))), ((int)(((byte)(248)))));
+            // Floor that keeps the docked previews + the bottom control cards usable; the
+            // TableLayoutPanel/FlowLayoutPanel layout reflows above this and scales up to full screen.
+            this.MinimumSize = new System.Drawing.Size(1024, 640);
             this.Name = "MainForm";
             this.Text = "Presenter App";
             this.Load += new System.EventHandler(this.MainForm_Load);

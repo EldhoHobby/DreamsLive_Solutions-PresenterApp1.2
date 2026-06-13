@@ -114,6 +114,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.flowThumbs);
             this.Controls.Add(this.pnlBottom);
             this.Controls.Add(this.pnlTop);
+            // Thumbnails reflow in the FlowLayoutPanel, so the gallery scales freely; this floor
+            // just keeps the top folder bar and bottom size slider from overlapping.
+            this.MinimumSize = new System.Drawing.Size(440, 320);
             this.Name = "GalleryForm";
             this.Text = "Host Gallery";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.GalleryForm_FormClosing);

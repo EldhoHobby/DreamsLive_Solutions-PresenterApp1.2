@@ -20,6 +20,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             InitializeComponent();
             _mainForm = mainForm;
+            this.Icon = LinearTheme.FormIcon("gallery"); // title-bar glyph matching this dialog's purpose
             this.Opacity = 0.85;
 
             // Enable double buffering for FlowLayoutPanel using reflection to reduce flickering

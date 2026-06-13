@@ -13,11 +13,28 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.txtMessage.Text = message;
             SetupButtons(buttons);
             SetupIcon(icon);
+            // Title-bar icon: reuse the contextual system glyph (info/warning/error/question)
+            // that SetupIcon picked for the body, else the brand mark. The body PictureBox
+            // already conveys the message's purpose.
+            this.Icon = IconForMessage(icon);
             // Theme AFTER the buttons are created so LinearTheme styles them too. If applied
             // first, the dynamically-added buttons keep default colors and inherit the form's
             // light ForeColor over a light visual-style button — making the text unreadable
             // (invisible) in dark mode. Theming here gives them readable ink-on-surface text.
             LinearTheme.Apply(this);
+        }
+
+        // Maps the message severity to a title-bar icon, matching the body glyph.
+        private static System.Drawing.Icon IconForMessage(MessageBoxIcon icon)
+        {
+            switch (icon)
+            {
+                case MessageBoxIcon.Information: return SystemIcons.Information;
+                case MessageBoxIcon.Warning: return SystemIcons.Warning;
+                case MessageBoxIcon.Error: return SystemIcons.Error;
+                case MessageBoxIcon.Question: return SystemIcons.Question;
+                default: return LinearTheme.BrandIcon;
+            }
         }
 
         public static DialogResult Show(string message) => Show(null, message, "", MessageBoxButtons.OK, MessageBoxIcon.None);

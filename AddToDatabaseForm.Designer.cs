@@ -40,6 +40,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             //
             // cmbSubfolders
             //
+            this.cmbSubfolders.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.cmbSubfolders.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbSubfolders.FormattingEnabled = true;
             this.cmbSubfolders.Location = new System.Drawing.Point(12, 35);
@@ -69,6 +70,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             //
             // txtNewFolder
             //
+            this.txtNewFolder.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.txtNewFolder.Location = new System.Drawing.Point(12, 120);
             this.txtNewFolder.Name = "txtNewFolder";
             this.txtNewFolder.Size = new System.Drawing.Size(260, 20);
@@ -86,6 +88,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             //
             // txtCustomFileName
             //
+            this.txtCustomFileName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCustomFileName.Location = new System.Drawing.Point(12, 170);
             this.txtCustomFileName.Name = "txtCustomFileName";
             this.txtCustomFileName.Size = new System.Drawing.Size(260, 20);
@@ -93,6 +96,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             //
             // btnOK
             //
+            this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnOK.Location = new System.Drawing.Point(116, 210);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(75, 25);
@@ -103,6 +107,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             //
             // btnCancel
             //
+            this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancel.Location = new System.Drawing.Point(197, 210);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 25);
@@ -125,9 +130,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.btnToggleNewFolder);
             this.Controls.Add(this.cmbSubfolders);
             this.Controls.Add(this.lblSubfolder);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
+            this.MaximizeBox = true;
             this.MinimizeBox = false;
+            this.MinimumSize = new System.Drawing.Size(300, 289);
             this.Name = "AddToDatabaseForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Add to Database";

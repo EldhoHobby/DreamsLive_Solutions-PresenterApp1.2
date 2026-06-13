@@ -53,6 +53,7 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             InitializeComponent();
             LinearTheme.Apply(this);
+            this.Icon = LinearTheme.FormIcon("edit"); // title-bar glyph matching this dialog's purpose
 
             // Re-assert the primary-action palette AFTER theming. LinearTheme owner-draws
             // buttons from their BackColor/ForeColor; without this they would inherit the

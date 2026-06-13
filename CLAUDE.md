@@ -126,6 +126,20 @@ See `WEB_REMOTE_UI.md` for layout order, design tokens, image routes, and the ch
 - **`UsageManager`** — tracks launch count; enforces a usage limit with a 5-minute grace period before forcing exit.
 - **`MachineIdentifier`** — generates a stable machine ID used to bind licenses.
 - **`LinearTheme`** / `Constants` — Linear.app-inspired color palette used by `ApplyTheme()`.
+  Also exposes window icons: `LinearTheme.BrandIcon` (the app's `DreamsLive-Logo.ico`, via the
+  EXE's associated icon) and `LinearTheme.FormIcon("<purpose>")`, which builds a title-bar `Icon`
+  from an embedded `Resources/icons/<purpose>.png` glyph (cached). Each pop-up sets `this.Icon`
+  to its purpose glyph (settings/gallery/edit/adddb/help); the main window uses `BrandIcon`.
+
+### Forms / layout conventions
+
+- **Dialogs are resizable + adaptive.** All normal forms use `FormBorderStyle.Sizable` with a
+  `MinimumSize` floor; controls use `Anchor`/`Dock`/`TableLayoutPanel`/`FlowLayoutPanel` so they
+  reflow from the minimum up to full screen (inputs anchor `Top|Left|Right` to stretch, action
+  buttons anchor `Bottom|Right`). When adding a control to a dialog, give it an anchor — don't
+  leave it pinned top-left. **Exceptions (intentionally fixed/borderless):** `SplashForm`
+  (startup splash), `PresentationForm` (borderless presenter output sized to the target monitor),
+  and `SnipForm` (fullscreen capture overlay).
 
 ### License key generation
 

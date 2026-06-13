@@ -12,6 +12,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             _mainForm = mainForm;
             InitializeComponent();
+            this.Icon = LinearTheme.FormIcon("settings"); // title-bar glyph matching this dialog's purpose
 
             chkSkipOnePage.Checked = _mainForm.SkipOnePage;
             chkTwoPagePdf.Checked = _mainForm.TwoPagePdf;

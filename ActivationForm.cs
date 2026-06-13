@@ -10,6 +10,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         {
             InitializeComponent();
             LinearTheme.Apply(this);
+            this.Icon = LinearTheme.FormIcon("help"); // title-bar glyph matching this dialog's purpose
             this.TopMost = true;
 
             // Handle focus explicitly when the form is fully displayed
@@ -147,6 +148,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.supportLabel.Text = "Contact us at the same address for support or requests.";
 
             // machineIdTextBox
+            this.machineIdTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.machineIdTextBox.Location = new System.Drawing.Point(83, 80);
             this.machineIdTextBox.Name = "machineIdTextBox";
             this.machineIdTextBox.ReadOnly = true;
@@ -154,6 +156,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.machineIdTextBox.TabIndex = 6;
 
             // activateButton
+            this.activateButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.activateButton.Location = new System.Drawing.Point(116, 210);
             this.activateButton.Name = "activateButton";
             this.activateButton.Size = new System.Drawing.Size(75, 23);
@@ -163,6 +166,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.activateButton.Click += new System.EventHandler(this.activateButton_Click);
 
             // closeButton
+            this.closeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.closeButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.closeButton.Location = new System.Drawing.Point(197, 210);
             this.closeButton.Name = "closeButton";
@@ -189,6 +193,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.statusLabel.Text = "Status: ...";
 
             // licenseKeyTextBox
+            this.licenseKeyTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.licenseKeyTextBox.Location = new System.Drawing.Point(15, 128);
             this.licenseKeyTextBox.Multiline = true;
             this.licenseKeyTextBox.Name = "licenseKeyTextBox";
@@ -196,6 +201,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.licenseKeyTextBox.TabIndex = 2; // Changed to 2
 
             // taglineLabel
+            this.taglineLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.taglineLabel.AutoSize = true;
             this.taglineLabel.Font = new System.Drawing.Font("Segoe UI", 7.5F, System.Drawing.FontStyle.Italic);
             this.taglineLabel.ForeColor = System.Drawing.Color.Gray;
@@ -220,9 +226,10 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.supportLabel);
             this.Controls.Add(this.emailLabel);
             this.Controls.Add(this.instructionLabel);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
+            this.MaximizeBox = true;
             this.MinimizeBox = false;
+            this.MinimumSize = new System.Drawing.Size(300, 284);
             this.Name = "ActivationForm";
             this.Text = "Software Activation";
             this.ResumeLayout(false);

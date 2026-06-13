@@ -65,7 +65,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.Controls.Add(this.flpButtons);
             this.Controls.Add(this.txtMessage);
             this.Controls.Add(this.picIcon);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            // Sizable so long messages can be enlarged; no maximize box (a message box that
+            // fills the screen is undesirable). Inner controls are already anchored.
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(400, 180);
