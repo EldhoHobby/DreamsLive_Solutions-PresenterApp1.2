@@ -689,8 +689,11 @@ namespace DreamsLive_Solutions_PresenterApp1
                     _ctlsResolved = true;
                 }
 
-                if (_ctlPicSecondary != null && _ctlPicSecondary.Height > 0)
-                    secondaryPreviewAspectRatio = (double)_ctlPicSecondary.Width / _ctlPicSecondary.Height;
+                // Presenter aspect = the TARGET DISPLAY ratio (fixed output shape), not the
+                // on-screen preview box. Deriving it from the box made it swing as the desktop
+                // window resized, which warped the web remote's presenter framing and the
+                // editor's crop aspect.
+                secondaryPreviewAspectRatio = _mainForm.GetPresenterAspectRatio();
 
                 if (_ctlPanelSecondaryBorder != null) secondaryPreviewBorderColor = ColorTranslator.ToHtml(_ctlPanelSecondaryBorder.BackColor);
 

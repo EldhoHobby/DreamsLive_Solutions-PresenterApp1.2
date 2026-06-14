@@ -284,6 +284,18 @@ namespace DreamsLive_Solutions_PresenterApp1
             return 0.0f; // Fallback: no constraint or error (e.g. no display selected, or a display with zero width/height). Using 0.0f for clarity.
         }
 
+        /// <summary>
+        /// The presenter OUTPUT aspect ratio — i.e. the selected target display's ratio. The web
+        /// remote uses this to frame the presenter preview and to constrain the editor's crop, so
+        /// it must reflect the fixed output shape, NOT the on-screen preview box (which changes
+        /// with the desktop window size). Falls back to 16:9 when no display is resolved.
+        /// </summary>
+        public double GetPresenterAspectRatio()
+        {
+            float ar = GetTargetAspectRatio();
+            return ar > 0f ? ar : (16.0 / 9.0);
+        }
+
         // In MainForm.cs
         private Rectangle ConvertOriginalImageRectToPreviewRect(RectangleF originalImageRect)
         {
