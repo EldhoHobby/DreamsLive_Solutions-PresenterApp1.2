@@ -19,56 +19,43 @@ namespace DreamsLive_Solutions_PresenterApp1
 {
     public partial class MainForm
     {
+        // Sizes the program preview to the PRESENTER (target-display) aspect ratio, fitted into
+        // the space the program pane currently has. The border panel is Anchor=None, so giving
+        // it a fixed aspect-correct size leaves it centered with dark pane space around it — true
+        // letterbox bars. This must run on every resize: if the box keeps a stale aspect, the
+        // staged-content paint maps the box's bar areas onto adjacent page pixels and "bleeds"
+        // extra content (more as the box gets squarer), which is the resize artifact users saw.
         private void UpdateSecondaryPreviewAspectRatio()
         {
-            // Define max dimensions for the preview panel on the MainForm at the start of the method
-            // These values might need to be adjusted based on your MainForm layout
-            const int maxPreviewPanelWidth = 600;
-            const int maxPreviewPanelHeight = 425;
+            if (this.paneProgram == null || this.panelSecondaryPreviewBorder == null) return;
 
-            if (cmbDisplays.SelectedItem is DisplayItem selectedDisplayItem && selectedDisplayItem.DisplayScreen != null)
+            float aspect = (float)GetPresenterAspectRatio(); // target display W/H, 16:9 fallback
+            if (aspect <= 0f) aspect = 16f / 9f;
+
+            var panel = this.panelSecondaryPreviewBorder;
+
+            // Available area = the program pane minus the 22px label row and the panel's margin.
+            int availW = this.paneProgram.ClientSize.Width - panel.Margin.Horizontal;
+            int availH = this.paneProgram.ClientSize.Height - 22 - panel.Margin.Vertical;
+            if (availW < 50 || availH < 50) return; // pane not laid out yet
+
+            // The picture box target (inside the border padding) at the presenter aspect.
+            int picW = availW - panel.Padding.Horizontal;
+            int picH = (int)(picW / aspect);
+            int maxPicH = availH - panel.Padding.Vertical;
+            if (picH > maxPicH)
             {
-                Screen presenterScreen = selectedDisplayItem.DisplayScreen;
-                float presenterAspectRatio = (float)presenterScreen.Bounds.Width / presenterScreen.Bounds.Height;
-
-                int newWidth = maxPreviewPanelWidth;
-                int newHeight = (int)(newWidth / presenterAspectRatio);
-
-                if (newHeight > maxPreviewPanelHeight)
-                {
-                    newHeight = maxPreviewPanelHeight;
-                    newWidth = (int)(newHeight * presenterAspectRatio);
-                }
-
-                // Ensure minimum size if aspect ratio is extreme or calculations result in zero/small values
-                newWidth = Math.Max(50, newWidth); // Min width of 50
-                newHeight = Math.Max(50, Math.Max(1, newHeight)); // Min height of 50, ensure at least 1 if aspect ratio is extreme
-
-                Control borderControl = this.Controls.Find("panelSecondaryPreviewBorder", true).FirstOrDefault();
-                if (borderControl is Panel panelSecondaryPreviewBorder)
-                {
-                    // The panel size includes its own padding (which acts as the border thickness)
-                    // So the target size for the panel should be newWidth + panel's horizontal padding, newHeight + panel's vertical padding
-                    // If panelSecondaryPreviewBorder.Padding is (2,2,2,2), then total horizontal padding is 4.
-                    int panelPaddingHorizontal = panelSecondaryPreviewBorder.Padding.Horizontal;
-                    int panelPaddingVertical = panelSecondaryPreviewBorder.Padding.Vertical;
-
-                    panelSecondaryPreviewBorder.Size = new Size(newWidth + panelPaddingHorizontal, newHeight + panelPaddingVertical);
-                    // picSecondaryPreview inside will fill this, its ClientSize will be newWidth x newHeight
-                }
+                picH = maxPicH;
+                picW = (int)(picH * aspect);
             }
-            else
+            picW = Math.Max(50, picW);
+            picH = Math.Max(50, picH);
+
+            Size target = new Size(picW + panel.Padding.Horizontal, picH + panel.Padding.Vertical);
+            if (panel.Size != target)
             {
-                // Default size if no display selected or error
-                Control borderControl = this.Controls.Find("panelSecondaryPreviewBorder", true).FirstOrDefault();
-                if (borderControl is Panel panelSecondaryPreviewBorder)
-                {
-                    // Revert to a default size, e.g., the one from the designer or a fixed default
-                    // For now, let's use the max dimensions as a default fallback if no screen.
-                    int panelPaddingHorizontal = panelSecondaryPreviewBorder.Padding.Horizontal;
-                    int panelPaddingVertical = panelSecondaryPreviewBorder.Padding.Vertical;
-                    panelSecondaryPreviewBorder.Size = new Size(maxPreviewPanelWidth + panelPaddingHorizontal, maxPreviewPanelHeight + panelPaddingVertical);
-                }
+                panel.Size = target;
+                this.picSecondaryPreview.Invalidate();
             }
         }
 

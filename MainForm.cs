@@ -285,6 +285,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.picSecondaryPreview.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.picSecondaryPreview_MouseWheel);
                 this.picSecondaryPreview.Paint += new System.Windows.Forms.PaintEventHandler(this.picSecondaryPreview_Paint); // Add Paint event
                 this.picSecondaryPreview.SizeChanged += (s, e) => this.picSecondaryPreview.Invalidate(); // recenter empty-state / repaint cleanly on resize
+                // Re-fit the program preview to the presenter aspect ratio whenever the pane
+                // resizes, so the staged content stays letterboxed (no content bleed on resize).
+                if (this.paneProgram != null)
+                    this.paneProgram.SizeChanged += (s, e) => UpdateSecondaryPreviewAspectRatio();
                 this.picSecondaryPreview.MouseEnter += new System.EventHandler(this.picSecondaryPreview_MouseEnter);
                 this.picSecondaryPreview.MouseLeave += new System.EventHandler(this.picSecondaryPreview_MouseLeave);
             }
