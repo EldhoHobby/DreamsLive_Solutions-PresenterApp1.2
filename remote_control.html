@@ -1005,6 +1005,12 @@
         let lastRotationValue = 0;
         let isPinching = false;
         let lastGalleryVersion = -1;
+
+
+        let secondaryPan = { x: 0, y: 0 };
+        let secondaryZoom = 1.0;
+        let lastTouchDist = 0;
+        let lastTouchCenter = null;
         let systemStatusTimer = null;
 
         function triggerHaptic(duration = 20) {
@@ -2124,9 +2130,42 @@
             refreshGallery();
         });
 
-        // Presenter view is a fixed, read-only preview: pan/zoom were removed because they only
-        // transformed the image locally (no effect on the actual presenter output) and never
-        // reset, so an accidental drag left the preview stuck offset.
+        // --- Pinch-to-zoom on Staging Preview ---
+        const secondaryContainer = document.getElementById('picSecondaryContainer');
+        const secondaryImg = document.getElementById('picSecondaryPreview');
+
+        secondaryContainer.onwheel = (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            secondaryZoom *= delta;
+            applySecondaryTransform();
+        };
+
+        secondaryContainer.onpointerdown = (e) => {
+            secondaryContainer.setPointerCapture(e.pointerId);
+            lastTouchCenter = { x: e.clientX, y: e.clientY };
+        };
+
+        secondaryContainer.onpointermove = (e) => {
+            if (!secondaryContainer.hasPointerCapture(e.pointerId)) return;
+
+            const dx = e.clientX - lastTouchCenter.x;
+            const dy = e.clientY - lastTouchCenter.y;
+
+            secondaryPan.x += dx / secondaryZoom;
+            secondaryPan.y += dy / secondaryZoom;
+
+            lastTouchCenter = { x: e.clientX, y: e.clientY };
+            applySecondaryTransform();
+        };
+
+        secondaryContainer.onpointerup = (e) => {
+            secondaryContainer.releasePointerCapture(e.pointerId);
+        };
+
+        function applySecondaryTransform() {
+            secondaryImg.style.transform = `scale(${secondaryZoom}) translate(${secondaryPan.x}px, ${secondaryPan.y}px)`;
+        }
 
         const themeToggle = document.getElementById('theme-toggle');
         const body = document.body;

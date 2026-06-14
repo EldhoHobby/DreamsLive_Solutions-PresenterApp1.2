@@ -149,12 +149,6 @@ Hardening already in place (enforced server-side, not just in the UI):
   path), and error responses are generic (details go to the local log, not the client).
 
 ## Change log
-- **2026-06-14** — Removed the local pan/zoom (wheel + pointer drag) on the **Presenter view**
-  (`#picSecondaryContainer`). It only transformed the preview image client-side (no effect on
-  the actual presenter output) and never reset, so an accidental drag left the preview stuck
-  offset. The presenter view is now a fixed, read-only preview; deleted the orphaned
-  `secondaryPan`/`secondaryZoom`/`lastTouchDist`/`lastTouchCenter` state and
-  `applySecondaryTransform()`.
 - **2026-06-13** — **Security review + hardening pass** (no UX change). Closed three path-
   traversal issues (`/action/open`, `/database/gallery`, and the upload/Add-to-Database
   sibling-prefix bug) via the shared `ResolveWithinDatabase` containment check; added an
