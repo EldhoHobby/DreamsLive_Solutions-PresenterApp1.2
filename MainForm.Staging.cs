@@ -27,6 +27,41 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
+        // The gray reference box on the local preview marks the region that is currently LIVE on
+        // the presenter. It is shown ONLY when the local preview is displaying the same image and
+        // PDF page that is live; navigating to a different image or page hides it, and returning
+        // to the live image/page restores it as a reference. The web remote reads this through
+        // GetStagedSelectionNormalized() in /status, so the same show/hide behaviour applies to
+        // the web overlay automatically. This method is the single source of truth for the gray
+        // box; call it whenever the live content or the displayed image/page changes.
+        private void UpdateLiveReferenceBox()
+        {
+            bool onLiveView =
+                this.isPresenterShowingLiveContent &&
+                this.liveContentRegion.HasValue &&
+                !string.IsNullOrEmpty(this.liveContentPath) &&
+                string.Equals(this.selectedImagePath, this.liveContentPath, StringComparison.OrdinalIgnoreCase) &&
+                (this.currentPdfDocument == null || this.currentPageNumber == this.liveContentPageNum);
+
+            if (onLiveView && this.picPreview.Image != null)
+            {
+                RectangleF region = this.liveContentRegion.Value;
+                RectangleF pixelOnSource = this.liveContentIsNormalized
+                    ? new RectangleF(
+                        region.X * this.picPreview.Image.Width,
+                        region.Y * this.picPreview.Image.Height,
+                        region.Width * this.picPreview.Image.Width,
+                        region.Height * this.picPreview.Image.Height)
+                    : region;
+                this.stagedSelectionRectangle = ConvertOriginalImageRectToPreviewRect(pixelOnSource);
+            }
+            else
+            {
+                this.stagedSelectionRectangle = Rectangle.Empty;
+            }
+            this.picPreview.Invalidate();
+        }
+
         // Sets the local-preview red selection to cover the whole page (used when the program
         // preview is zoomed all the way out, where the staged region is "full page" / null).
         private void SelectFullPageOnMainPreview()
@@ -173,7 +208,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
 
             this.stagedContentRotationAngle = this.currentManualRotationAngle;
-            this.stagedSelectionRectangle = this.selectionRectangle;
+            // Note: the gray box is no longer set here. It is a LIVE reference, driven solely by
+            // UpdateLiveReferenceBox() once content actually goes live (Go Live / auto-link).
 
             // Render this staged content to the secondary preview
             RenderContentToPictureBox(

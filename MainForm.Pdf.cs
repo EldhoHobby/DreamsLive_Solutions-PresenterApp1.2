@@ -340,6 +340,8 @@ namespace DreamsLive_Solutions_PresenterApp1
 
             // After loading, update the UI state.
             UpdateButtonAppearanceAndState();
+            // Show the gray reference box only if this newly-loaded file/page is the live one.
+            UpdateLiveReferenceBox();
         }
 
         private void HandlePdfLoading(string pdfPath)
@@ -552,6 +554,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
                 this.currentPageNumber = pageIndex;
                 RenderPdfPageToPreview(this.currentPageNumber);
+                // Hide the gray reference box unless this page is the live one (then show it).
+                UpdateLiveReferenceBox();
             }
         }
 
@@ -678,6 +682,8 @@ namespace DreamsLive_Solutions_PresenterApp1
                 {
                     this.currentPageNumber = desiredPageIndex;
                     RenderPdfPageToPreview(this.currentPageNumber);
+                    // Hide the gray reference box unless this page is the live one (then show it).
+                    UpdateLiveReferenceBox();
                 }
             }
             else

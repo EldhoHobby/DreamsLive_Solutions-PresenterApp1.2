@@ -74,6 +74,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 }
                 UpdateButtonAppearanceAndState(); // Update text and color for btnClearPresenterDisplay
                 UpdateSecondaryPreviewBorderColor(); // Update border color
+                UpdateLiveReferenceBox();            // blackout hides / restore shows the gray reference box
             }
             // If no active presentation or no content staged, the button should be disabled by UpdateButtonAppearanceAndState(),
             // so this click handler might not even be reached in those states.
@@ -97,6 +98,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 UpdateButtonEnableStates();
 
                 UpdateSecondaryPreviewBorderColor(); // Update border
+                UpdateLiveReferenceBox();            // nothing live → hide the gray reference box
                 return;
             }
 
@@ -136,6 +138,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             UpdateButtonEnableStates();
 
             UpdateSecondaryPreviewBorderColor(); // Update border
+            UpdateLiveReferenceBox();            // content went live → show/refresh the gray reference box
 
         }
 
@@ -182,6 +185,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                         UpdateButtonAppearanceAndState();
                         UpdateButtonEnableStates();
                         UpdateSecondaryPreviewBorderColor(); // Update border
+                        UpdateLiveReferenceBox();            // presenter closed → hide the gray reference box
 
                     }
                 };

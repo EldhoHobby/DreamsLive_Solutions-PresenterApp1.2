@@ -92,7 +92,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             // Sync back to main preview
             SyncStagedSelectionToMain();
             this.previousSelectionRectangle = Rectangle.Empty;
-            this.stagedSelectionRectangle = this.selectionRectangle;
+            // The gray box is a LIVE reference now (set by UpdateLiveReferenceBox when content
+            // goes live), so it is not assigned here on stage.
 
             UpdateButtonAppearanceAndState();
             UpdateButtonEnableStates();
