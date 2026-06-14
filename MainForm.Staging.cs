@@ -369,7 +369,24 @@ namespace DreamsLive_Solutions_PresenterApp1
                 actualSrcRect.Width = Math.Max(0.001F, actualSrcRect.Width);
                 actualSrcRect.Height = Math.Max(0.001F, actualSrcRect.Height);
 
-                Bitmap finalBitmapForTarget = CreateFittedBitmap(sourceBitmap, targetBox.ClientSize, targetBox.BackColor, actualSrcRect);
+                // The preview box's ClientSize is 0 when the main window is minimized / not yet
+                // laid out (common when the operator drives everything from the phone). In that
+                // case CreateFittedBitmap would return null, leaving the preview Image null so
+                // staging looks like it produced nothing — which made web "Present Now" wrongly
+                // report "no content staged" on the published build. Fall back to a thumbnail
+                // size derived from the cropped region so staging never depends on the on-screen
+                // control being visible. (The presenter output itself uses the full-res
+                // stagedMasterImage, so preview-thumbnail sizing never affects output quality.)
+                Size fitSize = targetBox.ClientSize;
+                if (fitSize.Width < 2 || fitSize.Height < 2)
+                {
+                    float rw = Math.Max(1f, actualSrcRect.Width);
+                    float rh = Math.Max(1f, actualSrcRect.Height);
+                    float scale = Math.Min(1f, 1280f / Math.Max(rw, rh)); // cap the longest side at 1280px
+                    fitSize = new Size(Math.Max(2, (int)(rw * scale)), Math.Max(2, (int)(rh * scale)));
+                }
+
+                Bitmap finalBitmapForTarget = CreateFittedBitmap(sourceBitmap, fitSize, targetBox.BackColor, actualSrcRect);
 
                 if (targetBox == this.picSecondaryPreview)
                 {
