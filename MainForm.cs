@@ -1,4 +1,4 @@
-// Version DreamsLive_Solutions-PresenterApp1.2_V1.2.0.2 (0)
+// Version DreamsLive_Solutions-PresenterApp1.2_V1.2.0.3 (0)
 // stable build_06 14 2026
 using System;
 using System.Collections.Generic;
