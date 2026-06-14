@@ -27,6 +27,17 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
+        // Sets the local-preview red selection to cover the whole page (used when the program
+        // preview is zoomed all the way out, where the staged region is "full page" / null).
+        private void SelectFullPageOnMainPreview()
+        {
+            if (this.picPreview.Image == null) return;
+            RectangleF full = new RectangleF(0, 0, this.picPreview.Image.Width, this.picPreview.Image.Height);
+            this.selectionRectangle = ConvertOriginalImageRectToPreviewRect(full);
+            UpdateSelectionSizeLabel();
+            this.picPreview.Invalidate();
+        }
+
         private void SyncStagedSelectionToMain()
         {
             if (this.picPreview.Image == null || !this.stagedContentRegion.HasValue) return;
@@ -761,6 +772,10 @@ namespace DreamsLive_Solutions_PresenterApp1
                         this.secondaryPreviewZoom = 1.0f;
                         this.picSecondaryPreview.Invalidate();
 
+                        // Zoomed out to the whole page → the red selection on the local preview
+                        // now covers the full page too.
+                        SelectFullPageOnMainPreview();
+
                         if (this.chkLinkLocalPreviewToPresenter.Checked)
                         {
                         UpdateMainPresentation(this.stagedContentPath, this.stagedContentPageNum, null, false, null, 0);
@@ -1027,6 +1042,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.secondaryPreviewPan = PointF.Empty;
             this.secondaryPreviewZoom = 1.0f;
             this.picSecondaryPreview.Invalidate();
+
+            // Bidirectional sync: pan/zoom on the program preview just changed the staged
+            // region, so move the red selection box on the local preview to match. (This call
+            // was dropped during the MainForm partial-class split; restoring it.)
+            SyncStagedSelectionToMain();
 
             UpdateButtonEnableStates();
             UpdateSecondaryPreviewBorderColor();
