@@ -143,6 +143,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.picPreview.MouseMove += new System.Windows.Forms.MouseEventHandler(this.picPreview_MouseMove);
                 this.picPreview.MouseUp += new System.Windows.Forms.MouseEventHandler(this.picPreview_MouseUp);
                 this.picPreview.Paint += new System.Windows.Forms.PaintEventHandler(this.picPreview_Paint);
+                this.picPreview.SizeChanged += new System.EventHandler(this.picPreview_SizeChanged);
                 this.picPreview.KeyDown += new System.Windows.Forms.KeyEventHandler(this.picPreview_KeyDown);
 
                 // Add for Drag and Drop
@@ -283,6 +284,7 @@ namespace DreamsLive_Solutions_PresenterApp1
                 this.picSecondaryPreview.MouseUp += new System.Windows.Forms.MouseEventHandler(this.picSecondaryPreview_MouseUp);
                 this.picSecondaryPreview.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.picSecondaryPreview_MouseWheel);
                 this.picSecondaryPreview.Paint += new System.Windows.Forms.PaintEventHandler(this.picSecondaryPreview_Paint); // Add Paint event
+                this.picSecondaryPreview.SizeChanged += (s, e) => this.picSecondaryPreview.Invalidate(); // recenter empty-state / repaint cleanly on resize
                 this.picSecondaryPreview.MouseEnter += new System.EventHandler(this.picSecondaryPreview_MouseEnter);
                 this.picSecondaryPreview.MouseLeave += new System.EventHandler(this.picSecondaryPreview_MouseLeave);
             }
@@ -382,6 +384,9 @@ namespace DreamsLive_Solutions_PresenterApp1
             PopulateDisplayComboBox();
             UpdateSecondaryPreviewAspectRatio(); // Call after populating and selecting a default display
             DisplayConnectionInfo();
+            // Seed the resize baseline now that layout has settled, so the very first window
+            // resize can remap the selection from the correct previous canvas size.
+            _lastPreviewClientSize = picPreview.ClientSize;
         }
 
 

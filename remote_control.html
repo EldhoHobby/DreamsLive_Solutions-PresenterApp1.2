@@ -225,6 +225,8 @@
         }
 
             .preview-box img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; color: transparent; }
+            /* Empty state: DreamsLive brand mark centered/dimmed when no document is loaded. */
+            .preview-box img.preview-empty { object-fit: contain; opacity: 0.5; padding: 16%; box-sizing: border-box; }
 
         #picPreviewContainer { cursor: pointer; }
 
@@ -1015,6 +1017,20 @@
             if ("vibrate" in navigator) {
                 navigator.vibrate(duration);
             }
+        }
+
+        // Points a preview <img> at its versioned URL, or — when there's no content — at the
+        // DreamsLive brand mark as a centered, dimmed empty state. Only touches src when it
+        // actually changes, preserving the version-stamped no-refetch behavior.
+        const EMPTY_PREVIEW_SRC = '/brand_logo.png';
+        function applyPreview(imgEl, url) {
+            const empty = !url;
+            const target = empty ? EMPTY_PREVIEW_SRC : url;
+            if (imgEl.getAttribute('src') !== target) {
+                imgEl.decoding = 'async';
+                imgEl.src = target;
+            }
+            imgEl.classList.toggle('preview-empty', empty);
         }
 
         // Security: escape text destined for innerHTML sinks (e.g. the gallery folder dropdown).
@@ -1852,11 +1868,8 @@
                 // frames the true active presentation aspect inside the box.
                 const firstPreview = document.getElementById('picSecondaryPreview');
                 // Re-fetch only when the version-stamped URL actually changed (perf: avoids
-                // re-downloading/decoding an unchanged preview every poll).
-                if (firstPreview.getAttribute('src') !== status.secondaryPreview) {
-                    firstPreview.decoding = 'async';
-                    firstPreview.src = status.secondaryPreview;
-                }
+                // re-downloading/decoding an unchanged preview every poll). Empty -> brand mark.
+                applyPreview(firstPreview, status.secondaryPreview);
                 const picSecondaryContainer = document.getElementById('picSecondaryContainer');
                 picSecondaryContainer.style.outlineColor = status.secondaryPreviewBorderColor;
 
@@ -1876,10 +1889,7 @@
                 // Local/source preview (left box) — fixed 16:9; image scales with
                 // object-fit: contain, so overlays are placed against the image rect.
                 const secondPreview = document.getElementById('picPreview');
-                if (secondPreview.getAttribute('src') !== status.mainPreview) {
-                    secondPreview.decoding = 'async';
-                    secondPreview.src = status.mainPreview;
-                }
+                applyPreview(secondPreview, status.mainPreview);
                 const previewContainer = document.getElementById('picPreviewContainer');
 
                 // Active selection overlay update

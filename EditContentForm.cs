@@ -39,6 +39,7 @@ namespace DreamsLive_Solutions_PresenterApp1
         private bool _isPanning = false;
         private float _viewZoom = 1f;                       // 1 = fit-to-window; >1 in; <1 out (smaller than window)
         private System.Drawing.PointF _viewPan = System.Drawing.PointF.Empty;
+        private Size _lastCanvasSize = Size.Empty;          // for proportional pan rescale across a resize
 
         private const int HandleSize = 10;
 
@@ -63,6 +64,11 @@ namespace DreamsLive_Solutions_PresenterApp1
             // The canvas paints the image itself (so the wheel can zoom past / below fit).
             picEdit.Image = null;
             picEdit.BackColor = System.Drawing.Color.Black;
+            // Double-buffer the canvas so live drag-resize doesn't leave ghosting/trails
+            // (PictureBox doesn't expose DoubleBuffered publicly).
+            typeof(Control).GetProperty("DoubleBuffered",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(picEdit, true);
 
             this.Text = "Edit / Crop Content";
             this.Size = new Size(1000, 800);
@@ -75,7 +81,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             picEdit.MouseUp += PicEdit_MouseUp;
             picEdit.MouseWheel += PicEdit_MouseWheel;
             picEdit.Paint += PicEdit_Paint;
-            picEdit.Resize += (s, e) => UpdateCropRectFromNormalized();
+            picEdit.Resize += PicEdit_Resize;
             this.KeyDown += EditContentForm_KeyDown;
             this.KeyPreview = true;
 
@@ -292,6 +298,35 @@ namespace DreamsLive_Solutions_PresenterApp1
                 (int)(_cropRegionNormalized.Height * displayRect.Height)
             );
             picEdit.Invalidate();
+        }
+
+        // Canvas resize: keep the (uniform/letterbox) view stable. The crop box is re-derived
+        // from its normalized region against the new bounds; a zoomed/panned view has its pan
+        // rescaled by the fit-ratio change so it stays anchored instead of jumping. The whole
+        // canvas is invalidated so nothing ghosts.
+        private void PicEdit_Resize(object sender, EventArgs e)
+        {
+            if (_displayImage != null && !_lastCanvasSize.IsEmpty &&
+                (_viewZoom != 1f || _viewPan != PointF.Empty))
+            {
+                float oldFit = FitRatioFor(_lastCanvasSize);
+                float newFit = FitRatioFor(picEdit.ClientSize);
+                if (oldFit > 0f && newFit > 0f)
+                {
+                    float k = newFit / oldFit;
+                    _viewPan = new PointF(_viewPan.X * k, _viewPan.Y * k);
+                }
+            }
+            _lastCanvasSize = picEdit.ClientSize;
+            UpdateCropRectFromNormalized(); // recompute the crop box for the new bounds (calls Invalidate)
+        }
+
+        private float FitRatioFor(Size box)
+        {
+            if (_displayImage == null) return 0f;
+            float iw = _displayImage.Width, ih = _displayImage.Height;
+            if (iw <= 0 || ih <= 0 || box.Width <= 0 || box.Height <= 0) return 0f;
+            return Math.Min(box.Width / iw, box.Height / ih);
         }
 
         private RectangleF GetDisplayedImageRect()

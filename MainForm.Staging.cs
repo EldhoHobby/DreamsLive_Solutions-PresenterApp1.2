@@ -642,7 +642,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             {
                 if (this.picSecondaryPreview.Image == null && this.stagedMasterImage == null && this.stagedStitchedImage == null)
                 {
-                    e.Graphics.Clear(this.picSecondaryPreview.BackColor);
+                    // Empty state: nothing staged → DreamsLive brand mark centered on the canvas.
+                    DrawBrandEmptyState(e.Graphics, this.picSecondaryPreview);
                     return;
                 }
 

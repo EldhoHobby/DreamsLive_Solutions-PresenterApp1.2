@@ -92,8 +92,20 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
+        // Tracks the canvas size the selection rectangles were last laid out against, so a
+        // resize can remap them from the old display rect to the new one.
+        private Size _lastPreviewClientSize = Size.Empty;
+
         private void picPreview_Paint(object sender, PaintEventArgs e)
         {
+            // Empty state: no document loaded → show the DreamsLive brand mark centered on the
+            // dark canvas (mirrors the web remote's empty preview).
+            if (this.picPreview.Image == null)
+            {
+                DrawBrandEmptyState(e.Graphics, this.picPreview);
+                return;
+            }
+
             // Draw staged selection as a persistent gray reference
             if (!this.stagedSelectionRectangle.IsEmpty)
             {
@@ -126,13 +138,93 @@ namespace DreamsLive_Solutions_PresenterApp1
             }
         }
 
-        private RectangleF GetDisplayedImageRect()
+        // On resize the PictureBox (SizeMode.Zoom) re-letterboxes the image, so the selection
+        // rectangles — stored in control coordinates — must be remapped from the previous
+        // display rect into the new one or they drift off the content. Runs on every
+        // SizeChanged of the canvas.
+        private void picPreview_SizeChanged(object sender, EventArgs e)
+        {
+            Size newSize = picPreview.ClientSize;
+
+            // No image, or first layout: nothing to remap — just track the size and repaint
+            // (so the empty-state brand mark recenters).
+            if (picPreview.Image == null || _lastPreviewClientSize.IsEmpty ||
+                _lastPreviewClientSize == newSize)
+            {
+                _lastPreviewClientSize = newSize;
+                picPreview.Invalidate();
+                return;
+            }
+
+            RectangleF oldDisp = GetDisplayedImageRectFor(_lastPreviewClientSize);
+            RectangleF newDisp = GetDisplayedImageRectFor(newSize);
+            _lastPreviewClientSize = newSize;
+
+            if (oldDisp.Width > 0 && oldDisp.Height > 0 && newDisp.Width > 0 && newDisp.Height > 0)
+            {
+                this.selectionRectangle = RemapRect(this.selectionRectangle, oldDisp, newDisp);
+                this.stagedSelectionRectangle = RemapRect(this.stagedSelectionRectangle, oldDisp, newDisp);
+                this.previousSelectionRectangle = RemapRect(this.previousSelectionRectangle, oldDisp, newDisp);
+                UpdateSelectionSizeLabel();
+            }
+            picPreview.Invalidate();
+        }
+
+        // Re-expresses a control-space rect from one displayed-image rect into another by going
+        // through normalized (0..1) image coordinates — the size-independent source of truth.
+        private static Rectangle RemapRect(Rectangle r, RectangleF oldDisp, RectangleF newDisp)
+        {
+            if (r.IsEmpty || r.Width <= 0 || r.Height <= 0) return r;
+            float nx = (r.X - oldDisp.X) / oldDisp.Width;
+            float ny = (r.Y - oldDisp.Y) / oldDisp.Height;
+            float nw = r.Width / oldDisp.Width;
+            float nh = r.Height / oldDisp.Height;
+            return new Rectangle(
+                (int)Math.Round(newDisp.X + nx * newDisp.Width),
+                (int)Math.Round(newDisp.Y + ny * newDisp.Height),
+                (int)Math.Round(nw * newDisp.Width),
+                (int)Math.Round(nh * newDisp.Height));
+        }
+
+        // Paints the DreamsLive brand mark centered on a preview canvas that has no content yet.
+        // Shared by the local (picPreview) and program (picSecondaryPreview) previews.
+        private void DrawBrandEmptyState(Graphics g, Control box)
+        {
+            g.Clear(box.BackColor);
+            Image logo = LinearTheme.BrandLogo;
+            Rectangle client = box.ClientRectangle;
+            if (logo == null || client.Width <= 4 || client.Height <= 4) return;
+
+            float maxW = client.Width * 0.5f;
+            float maxH = client.Height * 0.4f;
+            float scale = Math.Min(maxW / logo.Width, maxH / logo.Height);
+            if (scale <= 0) return;
+            if (scale > 1f) scale = 1f; // never upscale past native size
+
+            float w = logo.Width * scale;
+            float h = logo.Height * scale;
+            float x = client.X + (client.Width - w) / 2f;
+            float y = client.Y + (client.Height - h) / 2f;
+
+            var prevMode = g.InterpolationMode;
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            g.DrawImage(logo, x, y, w, h);
+            g.InterpolationMode = prevMode;
+        }
+
+        private RectangleF GetDisplayedImageRect() => GetDisplayedImageRectFor(picPreview.ClientSize);
+
+        // The letterboxed rect the image occupies for an ARBITRARY canvas size. Parameterizing
+        // the size lets the resize handler compute the OLD display rect (from the previous
+        // client size) so it can remap the selection into the NEW one — keeping the crop box
+        // glued to the same image region instead of drifting when the window resizes.
+        private RectangleF GetDisplayedImageRectFor(Size box)
         {
             if (picPreview.Image == null)
                 return RectangleF.Empty;
 
-            float picBoxWidth = picPreview.ClientSize.Width;
-            float picBoxHeight = picPreview.ClientSize.Height;
+            float picBoxWidth = box.Width;
+            float picBoxHeight = box.Height;
 
             if (picBoxWidth <= 0 || picBoxHeight <= 0)
                 return RectangleF.Empty;
