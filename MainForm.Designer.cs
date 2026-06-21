@@ -742,8 +742,8 @@ namespace DreamsLive_Solutions_PresenterApp1
             this.panelBottom.Name = "panelBottom";
             this.panelBottom.RowCount = 2;
             this.panelBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 152F));
-            this.panelBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
-            this.panelBottom.Size = new System.Drawing.Size(1359, 186);
+            this.panelBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 54F));
+            this.panelBottom.Size = new System.Drawing.Size(1359, 208);
             this.panelBottom.TabIndex = 1;
             // 
             // tableDocks
@@ -938,7 +938,7 @@ namespace DreamsLive_Solutions_PresenterApp1
             // tableStatus
             // 
             this.tableStatus.ColumnCount = 2;
-            this.tableStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 132F));
+            this.tableStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 180F));
             this.tableStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableStatus.Controls.Add(this.logoBox, 0, 0);
             this.tableStatus.Controls.Add(this.flowStatus, 1, 0);
